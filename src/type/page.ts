@@ -4,3 +4,8 @@ export interface INavbar{
     link : string
 }
 
+export interface QuestionItem {
+  id: number;
+  question: string;
+  answer: string;
+}

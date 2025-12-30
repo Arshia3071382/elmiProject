@@ -19,6 +19,11 @@ function ClassCart() {
       title: "کارگاه مشاوره کنکور",
       image : "/image/1.jpg"
     },
+    {
+      id: 4,
+      title: "آزمون جامع پایه هفتم",
+      image : "/image/1.jpg"
+    },
   ];
 
   return (
@@ -43,8 +48,8 @@ function ClassCart() {
                 {item.title}
               </h3>
             </div>
-            <div className="bg-accent px-20 w-3/4 py-1 rounded shadow mb-5 opacity-0 transform translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 mx-auto">
-              <button className="font-[iranBold] text-white w-full">
+            <div className="bg-accent px-20 w-full py-5 rounded shadow  opacity-0 transform translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 mx-auto">
+              <button className="font-[iranBold]  text-white w-full">
                 جزئیات
               </button>
             </div>
