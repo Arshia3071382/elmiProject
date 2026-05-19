@@ -3,6 +3,7 @@ import Container from './Container'
 import Image from 'next/image'
 import heroImg from "./../../public/image/hero.png"
 
+
 function HeroSec() {
   return (
     <Container>
@@ -12,6 +13,7 @@ function HeroSec() {
           alt='herosection' 
           className="w-full h-full object-cover rounded "
         />
+          
       </div>
     </Container>
   )

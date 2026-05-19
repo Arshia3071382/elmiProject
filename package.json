@@ -9,9 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.14.0",
+    "mongodb": "^7.2.0",
+    "mongoose": "^9.6.1",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-intersection-observer": "^10.0.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
