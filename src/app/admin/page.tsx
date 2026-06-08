@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, AlertCircle, FolderPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle, AlertCircle, FolderPlus, Clock, BookOpen, LogOut } from "lucide-react";
 import StatsCards from "./../../component/adminpaneldet/StatsCards";
 import AddCourseForm from "./../../component/adminpaneldet/AddCourseForm";
 import CourseManager from "./../../component/adminpaneldet/CourseManager";
@@ -21,6 +22,8 @@ interface Course {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -28,11 +31,39 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeTab, setActiveTab] = useState<'courses' | 'categories'>('courses');
+  
+  // ۱. مقدار اولیه را true می‌گذاریم تا به هیچ عنوان تا تایید نهایی، پنل رندر نشود
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true); 
 
+  // چک کردن وضعیت لاگین (اولین useEffect)
   useEffect(() => {
-    fetchCategories();
-    fetchCourses();
-  }, []);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/check-auth');
+        const data = await res.json();
+        
+        if (data && data.isLoggedIn) {
+          // اگر لاگین بود، لودینگ را برمی‌داریم تا پنل باز شود
+          setIsCheckingAuth(false);
+        } else {
+          // اگر لاگین نبود، بلافاصله هدایت به صفحه اصلی
+          router.replace('/');
+        }
+      } catch (error) {
+        router.replace('/');
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
+
+  // لود اطلاعات دیتابیس (دومین useEffect - فقط زمانی که لاگین تایید شده باشد)
+  useEffect(() => {
+    if (!isCheckingAuth) {
+      fetchCategories();
+      fetchCourses();
+    }
+  }, [isCheckingAuth]);
 
   const fetchCategories = async () => {
     try {
@@ -45,7 +76,7 @@ export default function AdminPage() {
         }
       }
     } catch (error) {
-      console.error("خطا:", error);
+      console.error("خطا در دریافت گروه‌ها:", error);
     }
   };
 
@@ -57,7 +88,7 @@ export default function AdminPage() {
         setCourses(data.courses);
       }
     } catch (error) {
-      console.error("خطا:", error);
+      console.error("خطا در دریافت دوره‌ها:", error);
     }
   };
 
@@ -111,7 +142,6 @@ export default function AdminPage() {
       });
 
       const data = await res.json();
-      
       if (data.success) {
         showMessage('success', `دوره "${courseName}" با موفقیت اضافه شد`);
         fetchCourses();
@@ -123,102 +153,167 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin-logout', { method: 'POST' });
+      router.replace('/');
+    } catch (error) {
+      console.error('خطا در خروج:', error);
+      showMessage('error', 'خطا در خروج از پنل');
+    }
+  };
+
   const getCategoryCourseCount = (categoryId: string) => {
     return courses.filter(course => course.category?._id === categoryId).length;
   };
+
+  const recentCourses = [...courses]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
 
   const averageCourses = categories.length > 0 
     ? (courses.length / categories.length).toFixed(1) 
     : 0;
 
+  // ۲. بخش حیاتی: تا زمانی که پاسخ API نیامده، این لودینگ تمام صفحه جلوی رندر شدن پنل را می‌گیرد
+  if (isCheckingAuth) {
+    return (
+      <div dir="rtl" className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-400 font-medium">در حال بررسی دسترسی...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ۳. رندر پنل اصلی (فقط و فقط بعد از تایید صادر می‌شود)
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-8 mt-20">
-          <h1 className="text-3xl font-bold mb-2">پنل مدیریت دوره‌ها</h1>
-          <p className="text-blue-100">مدیریت گروه‌ها و دوره‌های آموزشی</p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        
-        <StatsCards
-          categoriesCount={categories.length}
-          coursesCount={courses.length}
-          averageCourses={Number(averageCourses)}
-        />
-
-        
-        <div className="bg-white rounded-2xl shadow-sm mb-6">
-          <div className="flex border-b border-gray-200">
+      {/* هدر پنل */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pt-12 pb-12 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-black mb-2">پنل مدیریت دوره‌ها</h1>
+              <p className="text-blue-100">مدیریت مستقیم گروه‌ها و دوره‌های آموزشی علمی منتظران</p>
+            </div>
+            
             <button
-              onClick={() => setActiveTab('courses')}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-all relative ${
-                activeTab === 'courses'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200 shadow-lg"
             >
-              مدیریت دوره‌ها
-            </button>
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-all relative ${
-                activeTab === 'categories'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              مدیریت گروه‌ها
+              <LogOut className="w-5 h-5" />
+              خروج از پنل
             </button>
           </div>
         </div>
+      </div>
 
-        
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          {activeTab === 'courses' ? (
-            <>
-              <AddCourseForm
+      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('courses')}
+                className={`flex items-center gap-2 px-6 py-4 font-bold transition-all relative text-base ${
+                  activeTab === 'courses' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                مدیریت دوره‌ها
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`flex items-center gap-2 px-6 py-4 font-bold transition-all relative text-base ${
+                  activeTab === 'categories' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                مدیریت گروه‌ها
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+            {activeTab === 'courses' ? (
+              <>
+                <AddCourseForm
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={setSelectedCategory}
+                  onAddCourse={handleAddCourse}
+                  coursesCount={getCategoryCourseCount}
+                />
+                <CourseManager
+                  courses={courses}
+                  categories={categories}
+                  onCourseUpdate={fetchCourses}
+                  onShowMessage={showMessage}
+                />
+              </>
+            ) : (
+              <CategoryManager
                 categories={categories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-                onAddCourse={handleAddCourse}
                 coursesCount={getCategoryCourseCount}
-              />
-              <CourseManager
-                courses={courses}
-                categories={categories}
-                onCourseUpdate={fetchCourses}
+                onCategoryUpdate={() => {
+                  fetchCategories();
+                  fetchCourses();
+                }}
                 onShowMessage={showMessage}
+                onOpenAddModal={() => setShowCategoryModal(true)}
               />
-            </>
-          ) : (
-            <CategoryManager
-              categories={categories}
-              coursesCount={getCategoryCourseCount}
-              onCategoryUpdate={() => {
-                fetchCategories();
-                fetchCourses();
-              }}
-              onShowMessage={showMessage}
-              onOpenAddModal={() => setShowCategoryModal(true)}
-            />
-          )}
+            )}
+          </div>
         </div>
 
-        {/* پیغام */}
-        {message && (
-          <div className={`fixed bottom-6 right-6 left-auto flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg z-50 ${
-            message.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-          }`}>
-            {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-            <span>{message.text}</span>
+        <div className="space-y-6">
+          <StatsCards
+            categoriesCount={categories.length}
+            coursesCount={courses.length}
+            averageCourses={Number(averageCourses)}
+          />
+
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-bold text-gray-800">۱۰ دوره اخیر ثبت شده</h3>
+            </div>
+            
+            {recentCourses.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">هنوز دوره‌ای ثبت نشده است.</p>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                {recentCourses.map((course) => (
+                  <div key={course._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-blue-50/50 transition border border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-800 line-clamp-1">{course.name}</h4>
+                        <span className="text-xs text-gray-400">{course.category?.name || "بدون گروه"}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md shadow-sm">
+                      {new Date(course.createdAt).toLocaleDateString("fa-IR")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* مودال ساخت گروه */}
+      {message && (
+        <div className={`fixed bottom-6 right-6 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg z-50 ${
+          message.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          <span>{message.text}</span>
+        </div>
+      )}
+
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
