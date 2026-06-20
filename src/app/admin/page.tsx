@@ -19,6 +19,9 @@ interface Course {
   name: string;
   category: Category;
   createdAt: string;
+  videoUrl?: string;
+  description?: string;
+  duration?: string;
 }
 
 export default function AdminPage() {
@@ -31,11 +34,8 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeTab, setActiveTab] = useState<'courses' | 'categories'>('courses');
-  
-  // ۱. مقدار اولیه را true می‌گذاریم تا به هیچ عنوان تا تایید نهایی، پنل رندر نشود
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true); 
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // چک کردن وضعیت لاگین (اولین useEffect)
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -43,13 +43,12 @@ export default function AdminPage() {
         const data = await res.json();
         
         if (data && data.isLoggedIn) {
-          // اگر لاگین بود، لودینگ را برمی‌داریم تا پنل باز شود
           setIsCheckingAuth(false);
         } else {
-          // اگر لاگین نبود، بلافاصله هدایت به صفحه اصلی
           router.replace('/');
         }
       } catch (error) {
+        console.error("خطا در بررسی احراز هویت:", error);
         router.replace('/');
       }
     };
@@ -57,7 +56,6 @@ export default function AdminPage() {
     checkAuth();
   }, [router]);
 
-  // لود اطلاعات دیتابیس (دومین useEffect - فقط زمانی که لاگین تایید شده باشد)
   useEffect(() => {
     if (!isCheckingAuth) {
       fetchCategories();
@@ -74,9 +72,12 @@ export default function AdminPage() {
         if (data.categories.length > 0 && !selectedCategory) {
           setSelectedCategory(data.categories[0]._id);
         }
+      } else {
+        console.error("خطا در دریافت گروه‌ها:", data.error);
       }
     } catch (error) {
       console.error("خطا در دریافت گروه‌ها:", error);
+      showMessage('error', 'خطا در دریافت گروه‌ها');
     }
   };
 
@@ -86,9 +87,12 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setCourses(data.courses);
+      } else {
+        console.error("خطا در دریافت دوره‌ها:", data.error);
       }
     } catch (error) {
       console.error("خطا در دریافت دوره‌ها:", error);
+      showMessage('error', 'خطا در دریافت دوره‌ها');
     }
   };
 
@@ -97,7 +101,7 @@ export default function AdminPage() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  const handleAddCategory = async (e: React.FormEvent) => {
+const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) {
       showMessage('error', 'لطفاً نام گروه را وارد کنید');
@@ -108,48 +112,63 @@ export default function AdminPage() {
       const res = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newCategoryName }),
+        body: JSON.stringify({ name: newCategoryName.trim() }),
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.category) {
         showMessage('success', `گروه "${newCategoryName}" با موفقیت اضافه شد`);
+        
+        // ۱. اضافه کردن مستقیم گروه جدیدِ ساخته شده به ابتدای آرایه استیت کلاینت
+        setCategories((prev) => [data.category, ...prev]);
+        
+        // ۲. قرار دادنِ منوی انتخاب گروه (دراپ‌داون) روی گروهی که همین الان ساخته شد!
+        setSelectedCategory(data.category._id);
+        
         setShowCategoryModal(false);
         setNewCategoryName("");
-        fetchCategories();
       } else {
         showMessage('error', data.error || "خطا در ایجاد گروه");
       }
     } catch (error) {
+      console.error("خطا:", error);
       showMessage('error', "خطا در ارتباط با سرور");
     }
   };
 
-  const handleAddCourse = async (courseName: string) => {
+  const handleAddCourse = async (formData: FormData) => {
     if (!selectedCategory) {
       showMessage('error', 'لطفاً یک گروه انتخاب کنید');
-      return;
+      return false;
     }
+
+    // 🔴 باگ اصلی اینجا حل می‌شود: اضافه کردن شناسه گروه به اطلاعات ارسالی فرم
+    formData.set("categoryId", selectedCategory);
+
+    // دیباگ سریع در کنسول مرورگر برای اطمینان از صحت فایل ویدیو
+    console.log("فایل ویدیوی ارسالی:", formData.get("video"));
+    console.log("شناسه گروه ارسالی:", formData.get("categoryId"));
 
     try {
       const res = await fetch("/api/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name: courseName,
-          categoryId: selectedCategory 
-        }),
+        // در متدهای دارای FormData، هدر Content-Type نباید دستی ست شود (Next.js خودش مدیریت می‌کند)
+        method: "POST", 
+        body: formData,
       });
 
       const data = await res.json();
       if (data.success) {
-        showMessage('success', `دوره "${courseName}" با موفقیت اضافه شد`);
+        showMessage('success', `دوره با موفقیت اضافه شد`);
         fetchCourses();
+        return true;
       } else {
         showMessage('error', data.error || "خطا در ثبت دوره");
+        return false;
       }
     } catch (error) {
+      console.error("خطا در ارتباط با سرور:", error);
       showMessage('error', "خطا در ارتباط با سرور");
+      return false;
     }
   };
 
@@ -175,7 +194,6 @@ export default function AdminPage() {
     ? (courses.length / categories.length).toFixed(1) 
     : 0;
 
-  // ۲. بخش حیاتی: تا زمانی که پاسخ API نیامده، این لودینگ تمام صفحه جلوی رندر شدن پنل را می‌گیرد
   if (isCheckingAuth) {
     return (
       <div dir="rtl" className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -187,11 +205,9 @@ export default function AdminPage() {
     );
   }
 
-  // ۳. رندر پنل اصلی (فقط و فقط بعد از تایید صادر می‌شود)
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       
-      {/* هدر پنل */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pt-12 pb-12 shadow-sm">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between items-start">

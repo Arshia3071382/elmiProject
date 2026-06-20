@@ -1,198 +1,162 @@
-// app/api/courses/route.ts
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import Course from './../../../../models/Course';
-import Category from './../../../../models/Category';
-import { connectToDB } from './../../../../lib/dbConnect';
-import { log } from 'console';
+// کد نهایی و یکپارچه در مسیر: src/app/api/courses/route.ts
 
+import { NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { connectToDB } from "./../../../../lib/dbConnect"; 
+import Course from "./../../../../models/Course";
+import Category from "./../../../../models/Category"; 
 
-export async function POST(request: Request) {
+// تابع کمکی برای رجیستر شدن حتمی مدل‌ها در Mongoose
+const registerModels = () => {
+  if (!Category) console.log("Category model initialized");
+  if (!Course) console.log("Course model initialized");
+};
+
+// ۱. دریافت دوره‌ها
+export async function GET(req: Request) {
   try {
     await connectToDB();
-    
-    const { name, categoryId } = await request.json();
-    
-   
-    
-    // validation
-    if (!name || name.trim() === '') {
-      return NextResponse.json(
-        { success: false, error: 'نام دوره الزامی است' },
-        { status: 400 }
-      );
-    }
-    
-    if (!categoryId) {
-      return NextResponse.json(
-        { success: false, error: 'شناسه گروه الزامی است' },
-        { status: 400 }
-      );
-    }
-    
-    //  ObjectId
-    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-      return NextResponse.json(
-        { success: false, error: 'شناسه گروه نامعتبر است' },
-        { status: 400 }
-      );
-    }
-    
-    // find group
-    const category = await Category.findById(categoryId);
-     
-    
-    if (!category) {
-      return NextResponse.json(
-        { success: false, error: `گروه با شناسه ${categoryId} یافت نشد` },
-        { status: 404 }
-      );
-    }
-    
-    // create course
-    const course = await Course.create({
-      name: name.trim(),
-      category: categoryId,
-    });
-    
-    const populatedCourse = await course.populate('category', 'name');
-    
-    return NextResponse.json({ 
-      success: true, 
-      course: populatedCourse 
-    });
-    
-  } catch (error) {
-    console.error('Error in POST /api/courses:', error);
-    return NextResponse.json(
-      { success: false, error: error },
-      { status: 500 }
-    );
-  }
-}
+    registerModels();
 
-export async function GET(request: Request) {
-  try {
-    await connectToDB();
-    
-    const { searchParams } = new URL(request.url);
-    const categoryId = searchParams.get('category');
-    
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get("category");
+
     let query = {};
-    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-      query = { category: categoryId };
+    if (category) {
+      query = { category };
     }
-    
+
     const courses = await Course.find(query)
-      .populate('category', 'name')
-      .sort({ createdAt: -1 });
-    
-    return NextResponse.json({ success: true, courses });
-    
+      .populate("category")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({ success: true, courses: Array.isArray(courses) ? courses : [] });
   } catch (error) {
-    console.error('Error in GET /api/courses:', error);
-    return NextResponse.json(
-      { success: false, error: error },
-      { status: 500 }
-    );
+    console.error("خطا در GET courses:", error);
+    return NextResponse.json({ success: false, error: "خطا در دریافت دوره‌ها", courses: [] }, { status: 500 });
   }
 }
 
-
-
-// delete course
-
-export async function DELETE(request: Request) {
+// ۲. ایجاد دوره جدید (پشتیبانی هوشمند از FormData برای آپلود فایل)
+export async function POST(req: Request) {
   try {
     await connectToDB();
+    registerModels();
     
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const formData = await req.formData();
+    const name = formData.get("name") as string;
+    const categoryId = formData.get("categoryId") as string;
+    const description = (formData.get("description") as string) || "";
+    const duration = (formData.get("duration") as string) || "";
     
-    
-    
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: 'آیدی دوره الزامی است' },
-        { status: 400 }
-      );
+    // 🔍 گرفتن هوشمند فایل ویدیو با هر کلیدی که فرانت‌آند فرستاده باشد
+    let videoFile = formData.get("video") as File | null; 
+    if (!videoFile) videoFile = formData.get("file") as File | null;
+    if (!videoFile) videoFile = formData.get("videoUrl") as File | null;
+
+    let videoUrl = "";
+
+    if (!name || !categoryId) {
+      return NextResponse.json({ success: false, error: "نام دوره و گروه الزامی است" }, { status: 400 });
     }
-    
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, error: 'آیدی دوره نامعتبر است' },
-        { status: 400 }
-      );
+
+    // پردازش و ذخیره فایل ویدیو روی هارد سرور در صورت وجود
+    if (videoFile && videoFile.size > 0 && typeof videoFile.arrayBuffer === "function") {
+      const buffer = Buffer.from(await videoFile.arrayBuffer());
+      
+      // نام‌گذاری امن برای فایل (حذف فاصله‌ها و کاراکترهای غیرمجاز)
+      const safeFilename = `${Date.now()}-${videoFile.name.replace(/[^a-zA-Z0-9.]/g, "-")}`;
+      
+      // مسیر ذخیره در پوشه public/uploads
+      const uploadDir = path.join(process.cwd(), "public", "uploads");
+      const filePath = path.join(uploadDir, safeFilename);
+
+      // مطمئن می‌شویم پوشه uploads وجود دارد، اگر نبود می‌سازیم
+      await mkdir(uploadDir, { recursive: true });
+      
+      // نوشتن فایل روی هارد سرور
+      await writeFile(filePath, buffer);
+      
+      // آدرسی که در دیتابیس ذخیره می‌شود
+      videoUrl = `/uploads/${safeFilename}`;
+      console.log("✅ ویدیو با موفقیت ذخیره شد:", videoUrl);
+    } else {
+      console.log("⚠️ فایلی در ریکوئست یافت نشد؛ دوره بدون ویدیو ساخته می‌شود.");
     }
-    
-    
-    const deletedCourse = await Course.findByIdAndDelete(id);
-    
-    
-    
-    if (!deletedCourse) {
-      return NextResponse.json(
-        { success: false, error: 'دوره مورد نظر یافت نشد' },
-        { status: 404 }
-      );
-    }
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'دوره با موفقیت حذف شد',
-      deletedCourse 
-    });
-    
+
+ // مطمئن شوید در بخش پایانی متد POST ساختار ذخیره‌سازی به این شکل پایدار است:
+const course = await Course.create({
+  name: name.trim(),
+  category: categoryId,
+  description: description.trim(),
+  duration: duration.trim(),
+  videoUrl: videoUrl || "", // 👈 تضمین وجود فیلد در داکیومنت مونگو
+});
+    const populatedCourse = await Course.findById(course._id).populate("category").lean();
+    return NextResponse.json({ success: true, course: populatedCourse });
+
   } catch (error) {
-    console.error('❌ Error in DELETE:', error);
-    return NextResponse.json(
-      { success: false, error: error },
-      { status: 500 }
-    );
+    console.error("خطا در POST course:", error);
+    return NextResponse.json({ success: false, error: "خطا در ایجاد دوره" }, { status: 500 });
   }
 }
 
-//update course
+// ۳. ویرایش دوره
+export async function PUT(req: Request) {
+  try {
+    await connectToDB();
+    registerModels();
+    
+    const body = await req.json();
+    const { id, name, categoryId, description, duration } = body;
 
-export async function PUT(request : Request){
- try{
-  await connectToDB()
+    if (!id || !name || !categoryId) {
+      return NextResponse.json({ success: false, error: "تمامی فیلدها الزامی هستند" }, { status: 400 });
+    }
 
-  const{id , name , categoryId} = await request.json()
+    const updatedCourse = await Course.findByIdAndUpdate(
+      id,
+      { 
+        name: name.trim(), 
+        category: categoryId,
+        description: description ? description.trim() : "",
+        duration: duration ? duration.trim() : ""
+      },
+      { new: true, runValidators: true }
+    ).populate("category").lean();
 
-  if(!id || !name){
-    return NextResponse.json(
-      {success : false , error : 'آیدی و نام دوره الزامی است'} ,
-      {status : 400}
-    )
-
+    return NextResponse.json({ success: true, course: updatedCourse });
+  } catch (error) {
+    console.error("خطا در PUT course:", error);
+    return NextResponse.json({ success: false, error: "خطا در ویرایش دوره" }, { status: 500 });
   }
-  const existingCourse = await Course.findById(id)
+}
 
-  if(!existingCourse){
-    return NextResponse.json(
-      {success : false , error:"دوره مورد نظر یافت نشد"} , 
-      {status : 400}
-    )
+// ۴. حذف دوره
+export async function DELETE(req: Request) {
+  try {
+    await connectToDB();
+    registerModels();
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "شناسه دوره الزامی است" }, { status: 400 });
+    }
+
+    await Course.findByIdAndDelete(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("خطا در DELETE course:", error);
+    return NextResponse.json({ success: false, error: "خطا در حذف دوره" }, { status: 500 });
   }
-
-  const updatedCourse = await Course.findByIdAndUpdate(id , 
-    {
-      name : name.trim() ,
-      category : categoryId || existingCourse.category ,
-      updateAt : new Date()
-
-    },
-  {new : true}).populate('category' , 'name')
-
-  return NextResponse.json(
-    {success : true , course : updatedCourse}
-  )
- } catch(error){
-  return NextResponse.json({
-   success : false , error 
+}
+export const config = {
+  api: {
+    bodyParser: false, // غیرفعال کردن بادی‌پارسر پیش‌فرض برای مدیریت دستی FormData
+    sizeLimit: "500mb", // افزایش سقف مجاز دریافت فایل تا ۵۰۰ مگابایت
   },
-{status : 500})
- }
-}
+};

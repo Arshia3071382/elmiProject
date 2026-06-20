@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil, Trash2, X, CheckCircle, BookOpen } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Pencil, Trash2, X, CheckCircle, BookOpen, PlayCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 
 interface Category {
@@ -15,6 +15,7 @@ interface Course {
   category: Category;
   createdAt: string;
   updatedAt?: string;
+  videoUrl?: string;
 }
 
 interface CourseManagerProps {
@@ -39,6 +40,62 @@ export default function CourseManager({
     name: "",
   });
   const [loading, setLoading] = useState(false);
+
+  // استیت و رفرنس برای مدیریت ویدیوی تمام‌صفحه
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string>("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // گوش‌به‌زنگ سراسری مرورگر برای مدیریت خروج از حالت تمام‌صفحه (تایپ‌سیف و قطعی)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+        if (videoRef.current) {
+          videoRef.current.pause();
+        }
+        setActiveVideoUrl(""); // ریست کردن آدرس ویدیو برای آزاد شدن پپ‌لود سیستم
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // تابع اجرای ویدیو در حالت تمام‌صفحه
+  const handlePlayFullscreen = async (videoUrl: string) => {
+    if (!videoUrl) {
+      onShowMessage('error', 'فایل ویدیویی برای این دوره یافت نشد');
+      return;
+    }
+
+    setActiveVideoUrl(videoUrl);
+
+    // یک وقفه بسیار کوتاه برای بازنشانی سورس جدید در DOM ویدیو
+    setTimeout(async () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      try {
+        if (video.requestFullscreen) {
+          await video.requestFullscreen();
+        } else if ((video as any).webkitRequestFullscreen) {
+          await (video as any).webkitRequestFullscreen(); // Safari / iOS
+        } else if ((video as any).msRequestFullscreen) {
+          await (video as any).msRequestFullscreen(); // IE / Edge
+        }
+        
+        // پخش خودکار بعد از ماکسیمایز شدن طول و عرض صفحه
+        await video.play();
+      } catch (error) {
+        console.error("خطا در اجرای تمام‌صفحه:", error);
+        video.play();
+      }
+    }, 50);
+  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -100,7 +157,12 @@ export default function CourseManager({
   const startEdit = (course: Course) => {
     setEditingCourse(course);
     setEditName(course.name);
-    setEditCategoryId(course.category._id);
+    
+    if (course.category && typeof course.category === 'object') {
+      setEditCategoryId(course.category._id || "");
+    } else {
+      setEditCategoryId((course.category as unknown as string) || "");
+    }
   };
 
   const cancelEdit = () => {
@@ -111,6 +173,14 @@ export default function CourseManager({
 
   return (
     <>
+      {/* تگ ویدیوی پنهان و ایمن از خطای تایپ‌اسکریپت */}
+      <video
+        ref={videoRef}
+        src={activeVideoUrl}
+        className="hidden"
+        controls
+      />
+
       <div className="space-y-3">
         <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-blue-600" />
@@ -121,7 +191,7 @@ export default function CourseManager({
           <div className="text-center py-8 text-gray-500">هیچ دوره‌ای وجود ندارد</div>
         ) : (
           courses.map((course) => (
-            <div key={course._id} className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+            <div key={course._id} className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition border border-gray-100">
               {editingCourse?._id === course._id ? (
                 <div className="space-y-3">
                   <input
@@ -150,17 +220,31 @@ export default function CourseManager({
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-gray-800">{course.name}</h4>
-                    <p className="text-sm text-gray-500">گروه: {course.category?.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {course.updatedAt 
-                        ? `آخرین ویرایش: ${new Date(course.updatedAt).toLocaleDateString("fa-IR")}`
-                        : `ایجاد: ${new Date(course.createdAt).toLocaleDateString("fa-IR")}`}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {/* دکمه اختصاصی پخش مستقیم و تمام‌صفحه */}
+                    <button
+                      onClick={() => handlePlayFullscreen(course.videoUrl || "")}
+                      className="p-1 text-blue-600 hover:text-blue-700 hover:scale-110 transition duration-200"
+                      title="پخش تمام‌صفحه دوره"
+                    >
+                      <PlayCircle className="w-9 h-9 fill-blue-50" />
+                    </button>
+                    
+                    <div>
+                      <h4 className="font-bold text-gray-800">{course.name}</h4>
+                      <p className="text-sm text-gray-500">
+                        گروه: {course.category && typeof course.category === 'object' ? (course.category.name || "بدون گروه") : "بدون گروه"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {course.updatedAt 
+                          ? `آخرین ویرایش: ${new Date(course.updatedAt).toLocaleDateString("fa-IR")}`
+                          : `ایجاد: ${new Date(course.createdAt).toLocaleDateString("fa-IR")}`}
+                      </p>
+                    </div>
                   </div>
+                  
                   <div className="flex gap-2">
-                    <button onClick={() => startEdit(course)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="ویرایش">
+                    <button onClick={() => startEdit(course)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="ویرایش">
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button onClick={() => setDeleteModal({ isOpen: true, id: course._id, name: course.name })} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="حذف">

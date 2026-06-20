@@ -2,16 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, 
+import {
+  BookOpen,
   Sparkles,
   Users,
   Star,
-  PlayCircle,
-  Calendar,
   GraduationCap,
   ChevronRight,
-  LayoutGrid
+  LayoutGrid,
 } from "lucide-react";
 import Container from "./../../component/Container";
 
@@ -24,6 +22,8 @@ interface Course {
   _id: string;
   name: string;
   category: Category;
+  description?: string; // 👈 اضافه شد
+  videoUrl?: string;    // 👈 اضافه شد برای ذخیره مسیر ویدیو
   createdAt: string;
 }
 
@@ -33,9 +33,11 @@ export default function CoursesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [clientTime, setClientTime] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCategories();
+    setClientTime(Date.now()); // تنظیم زمان در سمت کلاینت برای جلوگیری از باگ Hydration
   }, []);
 
   useEffect(() => {
@@ -50,55 +52,65 @@ export default function CoursesPage() {
         setCategories(data.categories);
       }
     } catch (error) {
-      console.error("خطا:", error);
+      console.error("خطا در دریافت دسته‌بندی‌ها:", error);
     }
   };
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const url = selectedCategory 
+      const url = selectedCategory
         ? `/api/courses?category=${selectedCategory}`
         : "/api/courses";
       const res = await fetch(url);
       const data = await res.json();
-      if (data.success) {
+
+      if (data.success && Array.isArray(data.courses)) {
         setCourses(data.courses);
+      } else {
+        console.error("داده نامعتبر:", data);
+        setCourses([]);
       }
     } catch (error) {
-      console.error("خطا:", error);
+      console.error("خطا در دریافت دوره‌ها:", error);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
       <Container>
         <main dir="rtl" className="py-8">
-          
-          {/* هدر جدید - کوچک و ساده */}
+          {/* هدر */}
           <div className="text-center mb-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="inline-flex items-center gap-2 bg-blue-50 px-4 py-10 rounded-full mb-3">
-                <GraduationCap className="w-4 h-4" style={{ color: '#2563EB' }} />
-                <span className="text-sm" style={{ color: '#2563EB', fontFamily: 'iranSans-r' }}>
-                 مجموعه علمی منتظران
+              <div className="inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-3">
+                <GraduationCap
+                  className="w-4 h-4"
+                  style={{ color: "#2563EB" }}
+                />
+                <span
+                  className="text-sm"
+                  style={{ color: "#2563EB", fontFamily: "iranSans-r" }}
+                >
+                  مجموعه علمی منتظران
                 </span>
               </div>
-              <h1 
-                className="text-3xl font-bold mb-2" 
-                style={{ color: '#1F3A5F', fontFamily: 'iranBold' }}
+              <h1
+                className="text-3xl font-bold mb-2"
+                style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
               >
                 دوره‌های آموزشی
               </h1>
-              <p 
-                className="text-base" 
-                style={{ color: '#475569', fontFamily: 'iranSans-r' }}
+              <p
+                className="text-base"
+                style={{ color: "#475569", fontFamily: "iranSans-r" }}
               >
                 جدیدترین و تخصصی‌ترین دوره‌های آموزشی
               </p>
@@ -118,25 +130,27 @@ export default function CoursesPage() {
                     : "bg-white hover:shadow-md border"
                 }`}
                 style={{
-                  backgroundColor: !selectedCategory ? '#2563EB' : '#FFFFFF',
-                  color: !selectedCategory ? '#FFFFFF' : '#475569',
-                  borderColor: '#E5E7EB',
-                  fontFamily: 'iranSans-r'
+                  backgroundColor: !selectedCategory ? "#2563EB" : "#FFFFFF",
+                  color: !selectedCategory ? "#FFFFFF" : "#475569",
+                  borderColor: "#E5E7EB",
+                  fontFamily: "iranSans-r",
                 }}
               >
                 <LayoutGrid className="w-4 h-4" />
                 همه دوره‌ها
-                <span 
+                <span
                   className="px-2 py-0.5 rounded-full text-xs"
                   style={{
-                    backgroundColor: !selectedCategory ? 'rgba(255,255,255,0.2)' : '#F1F5F9',
-                    color: !selectedCategory ? '#FFFFFF' : '#475569'
+                    backgroundColor: !selectedCategory
+                      ? "rgba(255,255,255,0.2)"
+                      : "#F1F5F9",
+                    color: !selectedCategory ? "#FFFFFF" : "#475569",
                   }}
                 >
                   {courses.length}
                 </span>
               </motion.button>
-              
+
               {categories.map((cat) => (
                 <motion.button
                   key={cat._id}
@@ -149,10 +163,11 @@ export default function CoursesPage() {
                       : "bg-white hover:shadow-md border"
                   }`}
                   style={{
-                    backgroundColor: selectedCategory === cat._id ? '#2563EB' : '#FFFFFF',
-                    color: selectedCategory === cat._id ? '#FFFFFF' : '#475569',
-                    borderColor: '#E5E7EB',
-                    fontFamily: 'iranSans-r'
+                    backgroundColor:
+                      selectedCategory === cat._id ? "#2563EB" : "#FFFFFF",
+                    color: selectedCategory === cat._id ? "#FFFFFF" : "#475569",
+                    borderColor: "#E5E7EB",
+                    fontFamily: "iranSans-r",
                   }}
                 >
                   {cat.name}
@@ -172,9 +187,20 @@ export default function CoursesPage() {
               >
                 <div className="relative">
                   <div className="w-12 h-12 border-4 border-blue-200 rounded-full animate-spin"></div>
-                  <div className="w-12 h-12 border-4 rounded-full animate-spin absolute top-0 left-0 border-t-transparent" style={{ borderColor: '#2563EB', borderTopColor: 'transparent' }}></div>
+                  <div
+                    className="w-12 h-12 border-4 rounded-full animate-spin absolute top-0 left-0 border-t-transparent"
+                    style={{
+                      borderColor: "#2563EB",
+                      borderTopColor: "transparent",
+                    }}
+                  ></div>
                 </div>
-                <p className="mt-4 text-sm" style={{ color: '#475569', fontFamily: 'iranSans-r' }}>در حال بارگذاری دوره‌ها...</p>
+                <p
+                  className="mt-4 text-sm"
+                  style={{ color: "#475569", fontFamily: "iranSans-r" }}
+                >
+                  در حال بارگذاری دوره‌ها...
+                </p>
               </motion.div>
             ) : courses.length === 0 ? (
               <motion.div
@@ -183,11 +209,24 @@ export default function CoursesPage() {
                 className="text-center py-16"
               >
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="w-10 h-10" style={{ color: '#94A3B8' }} />
+                  <BookOpen
+                    className="w-10 h-10"
+                    style={{ color: "#94A3B8" }}
+                  />
                 </div>
-                <h3 className="text-lg font-bold mb-1" style={{ color: '#1F3A5F', fontFamily: 'iranBold' }}>دوره‌ای یافت نشد</h3>
-                <p className="text-sm" style={{ color: '#475569', fontFamily: 'iranSans-r' }}>
-                  {selectedCategory ? "در این گروه دوره‌ای وجود ندارد" : "هنوز دوره‌ای ثبت نشده است"}
+                <h3
+                  className="text-lg font-bold mb-1"
+                  style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
+                >
+                  دوره‌ای یافت نشد
+                </h3>
+                <p
+                  className="text-sm"
+                  style={{ color: "#475569", fontFamily: "iranSans-r" }}
+                >
+                  {selectedCategory
+                    ? "در این گروه دوره‌ای وجود ندارد"
+                    : "هنوز دوره‌ای ثبت نشده است"}
                 </p>
               </motion.div>
             ) : (
@@ -197,8 +236,11 @@ export default function CoursesPage() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
               >
                 {courses.map((course, idx) => {
-                  const isNew = new Date(course.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                  
+                  const isNew = clientTime
+                    ? new Date(course.createdAt).getTime() >
+                      clientTime - 7 * 24 * 60 * 60 * 1000
+                    : false;
+
                   return (
                     <motion.div
                       key={course._id}
@@ -210,103 +252,159 @@ export default function CoursesPage() {
                       onHoverEnd={() => setHoveredCard(null)}
                       className="group"
                     >
-                      <div 
-                        className="bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg"
-                        style={{ 
-                          backgroundColor: '#FFFFFF',
-                          border: '1px solid #E5E7EB'
+                      <div
+                        className="bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg relative"
+                        style={{
+                          backgroundColor: "#FFFFFF",
+                          border: "1px solid #E5E7EB",
                         }}
                       >
-                        {/* بخش بالایی کارت */}
-                        <div 
-                          className="relative h-24 overflow-hidden"
-                          style={{ backgroundColor: '#1F3A5F' }}
-                        >
-                          <div className="absolute inset-0 opacity-10" style={{ background: 'linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)' }}></div>
-                          <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
-                          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full blur-xl"></div>
-                          
-                          {/* آیکون */}
-                          <div className="absolute bottom-3 right-3">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-1.5">
-                              <GraduationCap className="w-4 h-4 text-white" />
-                            </div>
+                        {/* 🎬 بخش بالایی کارت: نمایش هوشمند ویدیو یا پس‌زمینه ساده */}
+                        {course.videoUrl ? (
+                          <div className="relative h-48 w-full bg-black">
+                            <video
+                              src={course.videoUrl}
+                              controls
+                              className="w-full h-full object-cover"
+                              preload="metadata"
+                            />
+                            {/* برچسب جدید روی ویدیو */}
+                            {isNew && (
+                              <div className="absolute top-3 left-3 z-10 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-md text-xs font-semibold flex items-center gap-1 shadow-lg">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                جدید
+                              </div>
+                            )}
                           </div>
-                          
-                          {/* برچسب جدید */}
-                          {isNew && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="absolute top-3 left-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-md text-xs font-semibold flex items-center gap-1 shadow-lg"
-                            >
-                              <Sparkles className="w-2.5 h-2.5" />
-                              جدید
-                            </motion.div>
-                          )}
-                        </div>
-                        
+                        ) : (
+                          /* اگر ویدیو وجود نداشت، طرح گرافیکی قبلی نمایش داده می‌شود */
+                          <div
+                            className="relative h-24 overflow-hidden"
+                            style={{ backgroundColor: "#1F3A5F" }}
+                          >
+                            <div
+                              className="absolute inset-0 opacity-10"
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)",
+                              }}
+                            ></div>
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+                            <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full blur-xl"></div>
+
+                            {/* آیکون مدرک */}
+                            <div className="absolute bottom-3 right-3">
+                              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-1.5">
+                                <GraduationCap className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+
+                            {/* برچسب جدید */}
+                            {isNew && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="absolute top-3 left-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-md text-xs font-semibold flex items-center gap-1 shadow-lg"
+                              >
+                                <Sparkles className="w-2.5 h-2.5" />
+                                جدید
+                              </motion.div>
+                            )}
+                          </div>
+                        )}
+
                         {/* محتوای کارت */}
                         <div className="p-4">
                           {/* گروه */}
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: '#EFF6FF' }}>
-                              <BookOpen className="w-2.5 h-2.5" style={{ color: '#2563EB' }} />
+                            <div
+                              className="w-5 h-5 rounded-md flex items-center justify-center"
+                              style={{ backgroundColor: "#EFF6FF" }}
+                            >
+                              <BookOpen
+                                className="w-2.5 h-2.5"
+                                style={{ color: "#2563EB" }}
+                              />
                             </div>
-                            <span 
+                            <span
                               className="text-xs font-medium px-2 py-0.5 rounded-md"
-                              style={{ 
-                                backgroundColor: '#EFF6FF',
-                                color: '#2563EB',
-                                fontFamily: 'iranSans-r'
+                              style={{
+                                backgroundColor: "#EFF6FF",
+                                color: "#2563EB",
+                                fontFamily: "iranSans-r",
                               }}
                             >
-                              {course.category?.name || "بدون گروه"}
+                              {course.category &&
+                              typeof course.category === "object"
+                                ? course.category.name || "بدون گروه"
+                                : "بدون گروه"}
                             </span>
                           </div>
-                          
+
                           {/* عنوان */}
-                          <h3 
+                          <h3
                             className="text-base font-bold mb-2 line-clamp-2 transition-colors group-hover:text-blue-600"
-                            style={{ color: '#1F3A5F', fontFamily: 'iranBold' }}
+                            style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
                           >
                             {course.name}
                           </h3>
-                          
-                          {/* توضیحات کوتاه */}
-                          <p 
-                            className="text-xs mb-3 line-clamp-2"
-                            style={{ color: '#475569', fontFamily: 'iranSans-r' }}
+
+                          {/* توضیحات واقعی دوره از دیتابیس */}
+                          <p
+                            className="text-xs mb-3 line-clamp-2 h-8"
+                            style={{
+                              color: "#475569",
+                              fontFamily: "iranSans-r",
+                            }}
                           >
-                            لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ
+                            {course.description || "توضیحاتی برای این دوره ثبت نشده است."}
                           </p>
-                          
+
                           {/* اطلاعات و دکمه */}
-                          <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: '#E5E7EB' }}>
+                          <div
+                            className="flex items-center justify-between pt-3 border-t"
+                            style={{ borderColor: "#E5E7EB" }}
+                          >
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" style={{ color: '#94A3B8' }} />
-                                <span className="text-xs" style={{ color: '#94A3B8', fontFamily: 'iranSans-r' }}>
-                                  {new Date(course.createdAt).toLocaleDateString("fa-IR")}
+                                <span
+                                  className="text-xs"
+                                  style={{
+                                    color: "#94A3B8",
+                                    fontFamily: "iranSans-r",
+                                  }}
+                                >
+                                  {new Date(
+                                    course.createdAt,
+                                  ).toLocaleDateString("fa-IR")}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Users className="w-3 h-3" style={{ color: '#94A3B8' }} />
-                                <span className="text-xs" style={{ color: '#94A3B8', fontFamily: 'iranSans-r' }}>
+                                <Users
+                                  className="w-3 h-3"
+                                  style={{ color: "#94A3B8" }}
+                                />
+                                <span
+                                  className="text-xs"
+                                  style={{
+                                    color: "#94A3B8",
+                                    fontFamily: "iranSans-r",
+                                  }}
+                                >
                                   ۱۲۴
                                 </span>
                               </div>
                             </div>
-                            
+
                             {/* دکمه مشاهده */}
                             <motion.button
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               className="px-3 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1"
-                              style={{ 
-                                backgroundColor: '#2563EB',
-                                color: '#FFFFFF',
-                                fontFamily: 'iranSans-r'
+                              style={{
+                                backgroundColor: "#2563EB",
+                                color: "#FFFFFF",
+                                fontFamily: "iranSans-r",
                               }}
                             >
                               مشاهده
@@ -314,13 +412,15 @@ export default function CoursesPage() {
                             </motion.button>
                           </div>
                         </div>
-                        
+
                         {/* نوار پایین هاور */}
                         <motion.div
                           initial={{ scaleX: 0 }}
-                          animate={{ scaleX: hoveredCard === course._id ? 1 : 0 }}
+                          animate={{
+                            scaleX: hoveredCard === course._id ? 1 : 0,
+                          }}
                           className="absolute bottom-0 left-0 right-0 h-0.5 origin-left"
-                          style={{ backgroundColor: '#38BDF8' }}
+                          style={{ backgroundColor: "#38BDF8" }}
                         />
                       </div>
                     </motion.div>
@@ -329,39 +429,81 @@ export default function CoursesPage() {
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           {/* آمار پایین */}
           {courses.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-10 p-5 rounded-xl"
-              style={{ 
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E5E7EB'
+              style={{
+                backgroundColor: "#FFFFFF",
+                border: "1px solid #E5E7EB",
               }}
             >
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: '#EFF6FF' }}>
-                    <BookOpen className="w-4 h-4" style={{ color: '#2563EB' }} />
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2"
+                    style={{ backgroundColor: "#EFF6FF" }}
+                  >
+                    <BookOpen
+                      className="w-4 h-4"
+                      style={{ color: "#2563EB" }}
+                    />
                   </div>
-                  <p className="text-lg font-bold" style={{ color: '#1F3A5F', fontFamily: 'iranBold' }}>{courses.length}</p>
-                  <p className="text-xs" style={{ color: '#475569', fontFamily: 'iranSans-r' }}>دوره</p>
+                  <p
+                    className="text-lg font-bold"
+                    style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
+                  >
+                    {courses.length}
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: "#475569", fontFamily: "iranSans-r" }}
+                  >
+                    دوره
+                  </p>
                 </div>
                 <div className="text-center">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: '#F0FDF4' }}>
-                    <Users className="w-4 h-4" style={{ color: '#22C55E' }} />
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2"
+                    style={{ backgroundColor: "#F0FDF4" }}
+                  >
+                    <Users className="w-4 h-4" style={{ color: "#22C55E" }} />
                   </div>
-                  <p className="text-lg font-bold" style={{ color: '#1F3A5F', fontFamily: 'iranBold' }}>{categories.length}</p>
-                  <p className="text-xs" style={{ color: '#475569', fontFamily: 'iranSans-r' }}>گروه</p>
+                  <p
+                    className="text-lg font-bold"
+                    style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
+                  >
+                    {categories.length}
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: "#475569", fontFamily: "iranSans-r" }}
+                  >
+                    گروه
+                  </p>
                 </div>
                 <div className="text-center">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: '#FEF3C7' }}>
-                    <Star className="w-4 h-4" style={{ color: '#F59E0B' }} />
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2"
+                    style={{ backgroundColor: "#FEF3C7" }}
+                  >
+                    <Star className="w-4 h-4" style={{ color: "#F59E0B" }} />
                   </div>
-                  <p className="text-lg font-bold" style={{ color: '#1F3A5F', fontFamily: 'iranBold' }}>۴.۸</p>
-                  <p className="text-xs" style={{ color: '#475569', fontFamily: 'iranSans-r' }}>امتیاز</p>
+                  <p
+                    className="text-lg font-bold"
+                    style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
+                  >
+                    ۴.۸
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: "#475569", fontFamily: "iranSans-r" }}
+                  >
+                    امتیاز
+                  </p>
                 </div>
               </div>
             </motion.div>
