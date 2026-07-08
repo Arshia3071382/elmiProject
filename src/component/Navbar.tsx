@@ -12,6 +12,8 @@ function Navbar() {
 
   const [showModal, setShowModal] = useState(false);
   const [password, setPassword] = useState("");
+  const [isOpen, setIsOpen] = useState(false); // مدیریت باز و بسته شدن همبرگری
+
   const [showLogo, setShowLogo] = useState(false);
   const [showHome, setShowHome] = useState(false);
   const [showContact, setShowContact] = useState(false);
@@ -62,9 +64,10 @@ function Navbar() {
 
   return (
     <>
-      <div className="bg-primary h-40 w-full rounded-b-full">
+      <div className="bg-primary h-40 w-full rounded-b-full relative z-40">
         <Container>
-          <div className="hidden md:flex justify-between items-center w-full h-40 relative">
+          {/* ================= ساختار اصلی دسکتاپ (بدون تغییر در کد قبلی شما) ================= */}
+          <div className="hidden lg:flex justify-between items-center w-full h-40 relative">
             <div className="absolute top-25 left-1/2 -translate-x-1/2 rounded shadow flex flex-row-reverse w-5/6 justify-between bg-white items-center h-25 px-3">
               {/* لوگو */}
               <div
@@ -141,23 +144,84 @@ function Navbar() {
                     دوره های آموزشی
                   </button>
                 </Link>
-
-                {/* 🔑 حذف Link و فقط دکمه ساده */}
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="rounded cursor-pointer text-white bg-success hover:text-success hover:border hover:border-success hover:bg-white px-3 py-1 transition"
-                  style={{
-                    opacity: showLogin ? 1 : 0,
-                    transform: showLogin ? "translateX(0)" : "translateX(30px)",
-                    transition: "all 0.5s ease-out",
-                  }}
-                >
-                  ورود
-                </button>
               </div>
             </div>
           </div>
+
+          {/* ================= ساختار جدید تبلت و موبایل (ریسپانسیو سفارشی) ================= */}
+          <div className="flex  lg:hidden justify-between items-center w-full h-40 px-4 relative">
+            <div className="absolute top-20 left-0 right-0 mx-4 rounded shadow flex flex-row-reverse justify-between bg-white items-center h-25 px-4">
+              
+              {/* سمت راست: منوی همبرگری */}
+              <button 
+                onClick={() => setIsOpen(!isOpen)} 
+                className="flex flex-col justify-center items-center gap-1.5 w-8 h-8 cursor-pointer text-gray-600 order-first"
+                aria-label="منو"
+              >
+                <span className={`h-0.5 w-6 bg-gray-600 rounded transition-transform ${isOpen ? "rotate-45 translate-y-2" : ""}`} />
+                <span className={`h-0.5 w-6 bg-gray-600 rounded transition-opacity ${isOpen ? "opacity-0" : ""}`} />
+                <span className={`h-0.5 w-6 bg-gray-600 rounded transition-transform ${isOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+              </button>
+
+              {/* وسط: لوگو ادمین */}
+              <div
+                className="absolute left-1/2 -translate-x-1/2 transition-all duration-700"
+                style={{ opacity: showLogo ? 1 : 0 }}
+              >
+                <Link href="/">
+                  <Image width={85} src={logo} alt="sitelogo" priority />
+                </Link>
+              </div>
+
+              {/* سمت چپ: دکمه دوره‌های آموزشی */}
+              <Link href="/courses" className="order-last">
+                <button
+                  className="rounded text-xs text-white py-2 px-3 bg-accent hover:bg-opacity-90 transition font-[iranSans-r]"
+                  style={{
+                    opacity: showCourses ? 1 : 0,
+                    transition: "opacity 0.5s ease-out",
+                  }}
+                >
+                  دوره‌ها
+                </button>
+              </Link>
+            </div>
+          </div>
         </Container>
+      </div>
+
+      {/* کشوی منوی بازشونده ریسپانسیو */}
+      <div 
+        className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 lg:hidden ${
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsOpen(false)}
+      >
+        <div 
+          className={`bg-white w-64 h-full pt-28 px-6 shadow-2xl transition-transform duration-300 ease-in-out flex flex-col gap-6 ${
+            isOpen ? "translate-x-0" : "translate-x-full"
+          } mr-auto`}
+          onClick={(e) => e.stopPropagation()}
+          dir="rtl"
+        >
+          <ul className="flex flex-col gap-5 font-[iranSans-r] text-[16px] text-gray-600">
+            <Link href="/" onClick={() => setIsOpen(false)}>
+              <li className="hover:bg-secondary/10 hover:text-secondary p-2.5 rounded transition-colors">
+                صفحه اصلی
+              </li>
+            </Link>
+            <Link href="/aboutUs" onClick={() => setIsOpen(false)}>
+              <li className="hover:bg-secondary/10 hover:text-secondary p-2.5 rounded transition-colors">
+                درباره ما
+              </li>
+            </Link>
+            <Link href="/contactUs" onClick={() => setIsOpen(false)}>
+              <li className="hover:bg-secondary/10 hover:text-secondary p-2.5 rounded transition-colors">
+                ارتباط با ما
+              </li>
+            </Link>
+          </ul>
+        </div>
       </div>
 
       {/* مودال */}

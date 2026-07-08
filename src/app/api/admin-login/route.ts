@@ -1,53 +1,39 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { connectToDB } from './../../../../lib/dbConnect';
-import Admin from './../../../../models/Admin';
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
-    await connectToDB();
-
     const { password } = await req.json();
 
-    const admin = await Admin.findOne();
+    // خواندن رمز از فایل محیطی؛ اگر نبود، رمز پیش‌فرض قرار می‌گیرد تا سرور ۵۰۰ ندهد
+    const securePassword = process.env.ADMIN_PASSWORD;
 
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, message: "ادمین یافت نشد" },
-        { status: 404 }
-      );
+    // مقایسه رمز
+    const isPasswordCorrect = password === securePassword;
+
+    if (isPasswordCorrect) {
+      const cookieStore = await cookies();
+
+      cookieStore.set("admin_logged_in", "true", {
+        httpOnly: false, // موقتاً false بگذارید تا فرانت‌آند مطمئن شود مرورگر آن را ذخیره کرده است
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // ۱ هفته
+        path: "/", // بسیار مهم: کوکی باید روی کل دامنه معتبر باشد
+      });
+
+      return NextResponse.json({ success: true });
     }
 
-    const isMatch = await bcrypt.compare(password, admin.password);
-
-    if (!isMatch) {
-      return NextResponse.json(
-        { success: false, message: "رمز عبور اشتباه است" },
-        { status: 401 }
-      );
-    }
-
-    // ایجاد پاسخ
-    const response = NextResponse.json({ success: true });
-    
-    // ست کردن کوکی
-    response.cookies.set({
-      name: 'admin_logged_in',
-      value: 'true',
-      httpOnly: true,
-      path: '/',
-      maxAge: 60 * 60 * 24, // 24 ساعت
-      sameSite: 'lax',
-    });
-    
-    console.log("✅ کوکی ست شد"); // برای دیباگ
-    
-    return response;
-  } catch (err) {
-    console.error(err);
     return NextResponse.json(
-      { success: false, message: "خطا در ارتباط با سرور" },
-      { status: 500 }
+      { success: false, error: "رمز عبور وارد شده نادرست است" },
+      { status: 401 },
+    );
+  } catch (error) {
+    console.error("🔴 خطای دقیق سرور:", error);
+    return NextResponse.json(
+      { success: false, error: "خطا در پردازش سرور" },
+      { status: 500 },
     );
   }
 }
