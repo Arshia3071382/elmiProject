@@ -7,13 +7,14 @@ import HeroSec from "@/component/HeroSec";
 import Navbar from "@/component/Navbar";
 import Questions from "@/component/Questions";
 import ScrollAnimation from "./../component/ScrollAnimation";
+import CounterStats from "@/component/CounterStats"; // Import the new component
 import { motion } from "framer-motion";
 import Image from "next/image";
 
 export default function Home() {
   return (
     <>
-      {/* هیرو سکشن با انیمیشن fade-in */}
+      {/* Hero section with fade-in animation */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -22,14 +23,21 @@ export default function Home() {
         <HeroSec />
       </motion.div>
 
-      {/* بخش دوره‌های محبوب با انیمیشن اسکرول */}
+      {/* Dynamic Persian counter statistics section */}
+      <ScrollAnimation direction="up" delay={0.1}>
+        <Container>
+          <CounterStats />
+        </Container>
+      </ScrollAnimation>
+
+      {/* Popular courses section with scroll animation */}
       <ScrollAnimation direction="up" delay={0.2}>
         <div>
           <PopularClasses />
         </div>
       </ScrollAnimation>
 
-      {/* بخش سوالات متداول با انیمیشن اسکرول */}
+      {/* FAQ section with scroll animation */}
       <ScrollAnimation direction="up" delay={0.4}>
         <Questions />
       </ScrollAnimation>

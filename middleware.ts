@@ -5,13 +5,13 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // بررسی اینکه آیا کاربر می‌خواهد وارد صفحات ادمین شود
+  // Check if user is accessing admin routes
   if (pathname.startsWith('/admin')) {
     const isLoggedIn = request.cookies.get('admin_logged_in')?.value === 'true';
 
-    // اگر لاگین نکرده بود، بلافاصله هدایت شود به صفحه اصلی
+    // Redirect to home if unauthorized
     if (!isLoggedIn) {
-      // استفاده از absolute URL برای ریدایرکت ایمن
+      // Use absolute URL for secure redirection
       const loginUrl = new URL('/', request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// تنظیم متچر به طوری که تمام زیرمسیرهای admin را هم پوشش دهد
+// Match all admin sub-routes
 export const config = {
   matcher: ['/admin/:path*'],
 };

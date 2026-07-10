@@ -21,7 +21,7 @@ const CourseSchema = new mongoose.Schema({
   },
   videoUrl: {
     type: String,
-    default: "", // ذخیره آدرس نسبی ویدیو آپلود شده (مثلا: /uploads/17181023-video.mp4)
+    default: "", 
   },
   createdAt: {
     type: Date,
@@ -29,7 +29,7 @@ const CourseSchema = new mongoose.Schema({
   },
 });
 
-// ایندکس‌گذاری برای بهینه‌سازی سرعت کوئری‌ها بر اساس دسته‌بندی و زمان خلق دوره
+
 CourseSchema.index({ category: 1, createdAt: -1 });
 
 const Course = mongoose.models.Course || mongoose.model("Course", CourseSchema);

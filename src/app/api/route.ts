@@ -3,13 +3,11 @@ import { connectToDB } from "./../../../lib/dbConnect";
 import Course from "./../../../models/Course";
 import Category from "./../../../models/Category"; 
 
-// اطمینان از رجیستر شدن مدل‌ها در نمونه مونگوز جهت جلوگیری از خطای Populate
 const ensureModelsRegistered = () => {
   if (!Category) console.log("Initializing Category model...");
   if (!Course) console.log("Initializing Course model...");
 };
 
-// ۱. دریافت دوره‌ها بدون کرش
 export async function GET(req: Request) {
   try {
     await connectToDB();
@@ -40,7 +38,6 @@ export async function GET(req: Request) {
   }
 }
 
-// ۲. ایجاد دوره جدید
 export async function POST(req: Request) {
   try {
     await connectToDB();
@@ -53,7 +50,6 @@ export async function POST(req: Request) {
     const description = (formData.get("description") as string) || "";
     const duration = (formData.get("duration") as string) || "";
     
-    // فایل ویدیو جهت توسعه‌های آینده
     const videoFile = formData.get("video"); 
 
     if (!name || !categoryId) {
@@ -63,7 +59,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // بررسی معتبر بودن دسته‌بندی
     const categoryExists = await Category.findById(categoryId);
     if (!categoryExists) {
       return NextResponse.json(
@@ -72,7 +67,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ذخیره فیلدها در دیتابیس
     const course = await Course.create({
       name: name.trim(),
       category: categoryId,
@@ -92,7 +86,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ۳. ویرایش دوره
 export async function PUT(req: Request) {
   try {
     await connectToDB();
@@ -136,7 +129,6 @@ export async function PUT(req: Request) {
   }
 }
 
-// ۴. حذف دوره
 export async function DELETE(req: Request) {
   try {
     await connectToDB();

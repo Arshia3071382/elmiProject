@@ -22,8 +22,6 @@ const CategorySchema = new mongoose.Schema({
   },
 });
 
-// 🔴 تمام هوک‌های pre و next() را کاملاً پاک کردیم تا کشِ مانیگوز کلاً ریست شود.
-// منطق ساخت slug را مستقیماً و به صورت امن در خود فایل route.ts هندل می‌کنیم.
 
 const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
 

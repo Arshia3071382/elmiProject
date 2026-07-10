@@ -35,8 +35,8 @@ export default function ContactUs() {
   };
 
   return (
-    <div dir="rtl" className="max-w-xl mx-auto my-12 p-8 bg-white border border-gray-100 rounded-2xl shadow-xl transition hover:shadow-2xl">
-      <div className="text-center mb-8">
+    <div dir="rtl" className="max-w-xl mx-auto my-12  p-8 bg-white border border-gray-100 rounded-2xl shadow-xl transition hover:shadow-2xl">
+      <div className="text-center mb-8 mt-10">
         <h2 className="text-2xl font-black text-gray-800 flex items-center justify-center gap-2 mb-2">
           <MessageSquare className="w-6 h-6 text-blue-600" />
           ارتباط با ما

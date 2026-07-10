@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { connectToDB } from './../../../../lib/dbConnect';
 import Category from './../../../../models/Category';
 
-// تابع کمکی برای اطمینان از لود و کامپایل درست مدل در محیط بی‌لایه Next.js
 const getCategoryModel = async () => {
   await connectToDB();
   return Category;
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
       );
     }
     
-    // حل مشکل کاراکترهای خاص فارسی در تبدیل به slug برای جلوگیری از تداخل مسیرها
     const slug = encodeURIComponent(name.trim().replace(/\s+/g, '-').toLowerCase());
     
     const existingCategory = await CategoryModel.findOne({ slug });

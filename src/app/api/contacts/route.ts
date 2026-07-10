@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "./../../../../lib/dbConnect"; 
 import Contact from "./../../../../models/Contact";
 
-// ۱. دریافت ۱۰ پیام اخیر برای ادمین
 export async function GET() {
   try {
     await dbConnect();
@@ -16,7 +15,6 @@ export async function GET() {
   }
 }
 
-// ۲. ثبت پیام جدید توسط کاربر
 export async function POST(req: Request) {
   try {
     await dbConnect();
