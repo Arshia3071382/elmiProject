@@ -25,7 +25,6 @@ export default function DesktopNavbar({
     // Main desktop navbar wrapper
     <div className="hidden lg:flex justify-between items-center w-full h-40 relative">
       <div className="absolute top-25 left-1/2 -translate-x-1/2 rounded shadow flex flex-row-reverse w-5/6 justify-between bg-white items-center h-25 px-3">
-        
         {/* Animated logo container */}
         <div
           className="transition-all duration-700 ease-out"
@@ -74,6 +73,11 @@ export default function DesktopNavbar({
                 }}
               >
                 درباره ما
+              </li>
+            </Link>
+            <Link href="/notices">
+              <li className="hover:bg-secondary hover:text-white hover:rounded p-2 transition duration-200">
+                اخبار و اطلاعیه‌ها
               </li>
             </Link>
           </ul>
