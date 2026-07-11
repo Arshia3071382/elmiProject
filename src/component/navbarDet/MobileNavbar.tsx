@@ -37,7 +37,7 @@ export default function MobileNavbar({
 
         {/* Center-aligned brand logo */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 transition-all duration-700"
+          className="absolute left-1/2 -translate-x-1/2 transition-all duration-700 -mt-1"
           style={{ opacity: showLogo ? 1 : 0 }}
         >
           <Link href="/">
@@ -59,7 +59,7 @@ export default function MobileNavbar({
                 transition: "opacity 0.5s ease-out",
               }}
             >
-              دوره های آموزشی
+              دوره ها 
             </button>
           </Link>
         </div>
