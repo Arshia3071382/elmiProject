@@ -7,7 +7,7 @@ function ClassCart() {
     {
       id: 1,
       title: "کلاس ریاضی هشتم",
-      image : "/image/1.jpg"
+      image : "/image/r7.jpg"
     },
     {
       id: 2,
@@ -17,12 +17,12 @@ function ClassCart() {
     {
       id: 3,
       title: "کارگاه مشاوره کنکور",
-      image : "/image/1.jpg"
+      image : "/image/r9.jpg"
     },
     {
       id: 4,
       title: "آزمون جامع پایه هفتم",
-      image : "/image/1.jpg"
+      image : "/image/az.jpg"
     },
   ];
 
