@@ -40,6 +40,11 @@ export default function ResponsiveDrawer({ isOpen, setIsOpen }: ResponsiveDrawer
               ارتباط با ما
             </li>
           </Link>
+           <Link href="/notices">
+            <button className="rounded text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-2.5 transition font-[iranSans-r]">
+            اخبار و اطلاعیه ها
+            </button>
+          </Link>
         </ul>
       </div>
     </div>

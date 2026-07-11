@@ -48,11 +48,7 @@ export default function MobileNavbar({
         {/* Navigation action buttons group */}
         <div className="flex items-center gap-2 order-last">
           {/* News and announcements link */}
-          <Link href="/notices">
-            <button className="rounded text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-2.5 transition font-[iranSans-r]">
-            اخبار
-            </button>
-          </Link>
+         
 
           {/* Direct link button to courses */}
           <Link href="/courses">
