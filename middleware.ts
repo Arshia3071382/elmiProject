@@ -1,18 +1,21 @@
-// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if user is accessing admin routes
+  // اگر کاربر داشت صفحه لاگین ادمین را باز می‌کرد، کاری نداشته باش و اجازه بده صفحه باز شود
+  if (pathname === '/admin/login' || pathname === '/admin') {
+    return NextResponse.next();
+  }
+
+  // محافظت از بقیه مسیرهای داخل ادمین (مثل داشبورد، مدیریت دوره‌ها و...)
   if (pathname.startsWith('/admin')) {
     const isLoggedIn = request.cookies.get('admin_logged_in')?.value === 'true';
 
-    // Redirect to home if unauthorized
+    // اگر لاگین نکرده بود، بفرستش به صفحه لاگین ادمین
     if (!isLoggedIn) {
-      // Use absolute URL for secure redirection
-      const loginUrl = new URL('/', request.url);
+      const loginUrl = new URL('/admin/login', request.url); // یا آدرس دقیق صفحه لاگین شما
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -20,7 +23,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Match all admin sub-routes
+// اعمال روی تمام زیرمسیرهای ادمین
 export const config = {
   matcher: ['/admin/:path*'],
 };
