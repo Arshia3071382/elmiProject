@@ -27,7 +27,7 @@ export default function MobileNavbar({
         {/* Toggle button for sidebar drawer */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex flex-col justify-center items-center gap-1.5 w-8 h-8 cursor-pointer text-gray-600 order-first"
+          className="flex flex-col justify-center items-center gap-1.5 w-8 h-8 cursor-pointer text-gray-600 order-first flex-shrink-0"
           aria-label="منو"
         >
           <span className={`h-0.5 w-6 bg-gray-600 rounded transition-transform ${isOpen ? "rotate-45 translate-y-2" : ""}`} />
@@ -37,7 +37,7 @@ export default function MobileNavbar({
 
         {/* Center-aligned brand logo */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 transition-all duration-700 -mt-1"
+          className="absolute left-1/2 -translate-x-1/2 transition-all duration-700 -mt-1 flex-shrink-0"
           style={{ opacity: showLogo ? 1 : 0 }}
         >
           <Link href="/">
@@ -45,23 +45,35 @@ export default function MobileNavbar({
           </Link>
         </div>
 
-        {/* Navigation action buttons group */}
-        <div className="flex items-center gap-2 order-last">
-          {/* News and announcements link */}
-         
-
-          {/* Direct link button to courses */}
-          <Link href="/courses">
+        {/* بخش دکمه‌ها در حالت موبایل: کاملاً زیر هم، هم‌اندازه و بدون شکستن متن */}
+        <div className="flex flex-col items-stretch gap-1.5 py-1.5 order-last min-w-[90px] flex-shrink-0">
+          
+          {/* دکمه اول: لیگ نخبگان */}
+          <Link href="/elite-league" className="w-full">
             <button
-              className="rounded text-[11px] text-white py-2 px-2.5 bg-accent hover:bg-opacity-90 transition font-[iranSans-r]"
+              className="w-full group rounded cursor-pointer text-amber-600 border border-amber-500 py-1 px-2 bg-amber-50 hover:bg-amber-500 hover:text-white transition-all duration-300 text-center flex items-center justify-center gap-1 font-[iranSans-r] text-[11px] whitespace-nowrap"
               style={{
                 opacity: showCourses ? 1 : 0,
                 transition: "opacity 0.5s ease-out",
               }}
             >
-              دوره ها 
+              <span>لیگ نخبگان</span>
             </button>
           </Link>
+
+          {/* دکمه دوم: دوره‌ها */}
+          <Link href="/courses" className="w-full">
+            <button
+              className="w-full rounded cursor-pointer text-white py-1 px-2 bg-accent hover:bg-opacity-90 transition-all duration-300 text-center font-[iranSans-r] text-[11px] whitespace-nowrap"
+              style={{
+                opacity: showCourses ? 1 : 0,
+                transition: "opacity 0.5s ease-out",
+              }}
+            >
+              دوره‌ها
+            </button>
+          </Link>
+
         </div>
 
       </div>

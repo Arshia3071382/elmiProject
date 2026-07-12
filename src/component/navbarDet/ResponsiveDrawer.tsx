@@ -7,12 +7,17 @@ interface ResponsiveDrawerProps {
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function ResponsiveDrawer({ isOpen, setIsOpen }: ResponsiveDrawerProps) {
+export default function ResponsiveDrawer({
+  isOpen,
+  setIsOpen,
+}: ResponsiveDrawerProps) {
   return (
     // Backdrop overlay for mobile menu drawer
     <div
       className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 lg:hidden ${
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        isOpen
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
       }`}
       onClick={() => setIsOpen(false)}
     >
@@ -40,11 +45,12 @@ export default function ResponsiveDrawer({ isOpen, setIsOpen }: ResponsiveDrawer
               ارتباط با ما
             </li>
           </Link>
-           <Link href="/notices">
-            <button className="rounded text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-2.5 transition font-[iranSans-r]">
-            اخبار و اطلاعیه ها
+          <Link href="/notices">
+            <button className="rounded text-[16px]  hover:bg-slate-200 text-slate-700 py-2 px-2.5 transition font-[iranSans-r]">
+              اخبار و اطلاعیه ها
             </button>
           </Link>
+         
         </ul>
       </div>
     </div>

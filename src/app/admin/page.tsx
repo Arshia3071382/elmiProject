@@ -9,6 +9,7 @@ import CategoryManager from "./../../component/adminpaneldet/CategoryManager";
 import AdminSidebar from "./../../component/adminpaneldet/AdminSidebar";
 import AdminLoginModal from "./../../component/adminpaneldet/AdminLoginModal";
 import AddCategoryModal from "./../../component/adminpaneldet/AddCategoryModal";
+import AdminEliteLeaguePanel from "./../../component/adminpaneldet/AdminEliteLeaguePanel";
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -87,8 +88,8 @@ export default function AdminPage() {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pt-12 pb-12 shadow-sm px-6">
         <div className="max-w-7xl mx-auto flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-black mb-2">پنل مدیریت دوره‌ها</h1>
-            <p className="text-blue-100">مدیریت مستقیم گروه‌ها و دوره‌های آموزشی علمی منتظران</p>
+            <h1 className="text-3xl font-black mb-2">پنل مدیریت علمی منتظران</h1>
+            <p className="text-blue-100">مدیریت مستقیم دوره‌ها، گروه‌ها، اطلاعیه‌ها و لیگ نخبگان</p>
           </div>
           <button onClick={handleLogout} className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition shadow-lg">
             <LogOut className="w-5 h-5" /> خروج از پنل
@@ -116,7 +117,11 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Notices Form Section Added at the bottom */}
+      {/* این بخش فقط در پنل ادمین رندر می‌شود */}
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AdminEliteLeaguePanel onShowMessage={showMessage} />
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 pb-12">
         <AdminNoticePanel onShowMessage={showMessage} />
       </div>
@@ -127,7 +132,6 @@ export default function AdminPage() {
   );
 }
 
-// Notice management sub-component
 function AdminNoticePanel({ onShowMessage }: { onShowMessage: (type: "success" | "error", text: string) => void }) {
   const [type, setType] = useState("schedule");
   const [title, setTitle] = useState("");
@@ -138,7 +142,6 @@ function AdminNoticePanel({ onShowMessage }: { onShowMessage: (type: "success" |
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const instructors = ["آقای مختاری", "آقای داوودآبادی", "آقای فرهادی"];
     const randomInstructor = instructors[Math.floor(Math.random() * instructors.length)];
 
@@ -159,7 +162,7 @@ function AdminNoticePanel({ onShowMessage }: { onShowMessage: (type: "success" |
       }).then(r => r.json());
 
       if (res?.success) {
-        onShowMessage("success", "اطلاعیه با موفقیت ثبت شد و کنترل سقف تعداد انجام پذیرفت.");
+        onShowMessage("success", "اطلاعیه با موفقیت ثبت شد.");
         setTitle(""); setLocation(""); setInstructor(""); setStartTime(""); setContent("");
       } else {
         onShowMessage("error", "خطا در ذخیره‌سازی اطلاعیه");
@@ -172,7 +175,6 @@ function AdminNoticePanel({ onShowMessage }: { onShowMessage: (type: "success" |
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <h2 className="text-xl font-bold mb-4 text-gray-800">ایجاد اخبار و اطلاعیه جدید</h2>
-      
       <form onSubmit={handleSubmit} className="space-y-4 text-sm text-gray-700">
         <div>
           <label className="block text-gray-600 mb-1 font-medium">نوع اطلاعیه:</label>
@@ -182,14 +184,10 @@ function AdminNoticePanel({ onShowMessage }: { onShowMessage: (type: "success" |
             <option value="news">خبر عمومی و متنی آزمون‌ها</option>
           </select>
         </div>
-
         <div>
-          <label className="block text-gray-600 mb-1 font-medium">
-            {type === "news" ? "عنوان خبر / موضوع آزمون:" : "نام کلاس علمی:"}
-          </label>
+          <label className="block text-gray-600 mb-1 font-medium">{type === "news" ? "عنوان خبر / موضوع آزمون:" : "نام کلاس علمی:"}</label>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full border border-gray-200 p-2.5 rounded-lg focus:outline-none focus:border-blue-500" />
         </div>
-
         {type !== "news" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -197,29 +195,24 @@ function AdminNoticePanel({ onShowMessage }: { onShowMessage: (type: "success" |
               <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:outline-none focus:border-blue-500" placeholder="مثال: کلاس ۱۰۲ واحد مرکزی" />
             </div>
             <div>
-              <label className="block text-gray-600 mb-1 font-medium">نام استاد (خالی بماند رندوم انتخاب می‌شود):</label>
+              <label className="block text-gray-600 mb-1 font-medium">نام استاد:</label>
               <input type="text" value={instructor} onChange={(e) => setInstructor(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:outline-none focus:border-blue-500" placeholder="مثال: آقای مختاری" />
             </div>
           </div>
         )}
-
         {type === "schedule" && (
           <div>
-            <label className="block text-gray-600 mb-1 font-medium">زمان دقیق شروع کلاس پس‌فردا یا زمان مدنظر:</label>
+            <label className="block text-gray-600 mb-1 font-medium">زمان دقیق شروع کلاس:</label>
             <input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} required className="w-full border border-gray-200 p-2.5 rounded-lg focus:outline-none focus:border-blue-500" />
           </div>
         )}
-
         {type === "news" && (
           <div>
             <label className="block text-gray-600 mb-1 font-medium">متن کوتاه خبری:</label>
             <textarea value={content} onChange={(e) => setContent(e.target.value)} required className="w-full border border-gray-200 p-2.5 rounded-lg h-24 focus:outline-none focus:border-blue-500" />
           </div>
         )}
-
-        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-bold transition shadow-sm">
-          ثبت و انتشار در صفحه اخبار
-        </button>
+        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-bold transition shadow-sm">ثبت و انتشار در صفحه اخبار</button>
       </form>
     </div>
   );
