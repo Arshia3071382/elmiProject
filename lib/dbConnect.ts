@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = "mongodb://127.0.0.1:27017/elmi_courses";
+// ابتدا متغیر آنلاین ورسل را چک می‌کند، اگر نبود به آدرس لوکال سوئیچ می‌کند
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/elmi_courses";
 
 // کش کردن اتصال برای جلوگیری از اتصال مجدد در هر درخواست
 let isConnected = false;
@@ -18,9 +19,10 @@ export async function dbConnect() {
   }
 
   try {
+    // استفاده از آدرس داینامیک جدید
     await mongoose.connect(MONGODB_URI);
     isConnected = true;
-    console.log("✅ Connected to elmi_courses database successfully!");
+    console.log("✅ Connected to database successfully!");
   } catch (error) {
     console.error("❌ MongoDB connection error:", error);
     throw new Error("Failed to connect to database");
