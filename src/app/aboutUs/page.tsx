@@ -24,7 +24,7 @@ export default function AboutUs() {
   const scaleY = useSpring(scrollYProgress, { stiffness: 90, damping: 25, restDelta: 0.001 });
 
   return (
-    <div dir="rtl" ref={containerRef} className="min-h-screen bg-[#F8FAFC] text-[#0F172A] relative overflow-hidden font-sans">
+    <div dir="rtl" ref={containerRef} className="min-h-screen bg-[#F8FAFC] text-[#0F172A] relative overflow-hidden font-[iranBold]">
       <TimelineHeader />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative pb-32">

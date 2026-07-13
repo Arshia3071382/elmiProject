@@ -37,7 +37,7 @@ export default function MobileTimeline({ item }: TimelineItemProps) {
               <IconComponent className="w-4.5 h-4.5 flex-shrink-0" />
               <h3 className="text-base font-black text-[#1F3A5F]">{item.title}</h3>
             </div>
-            <p className="text-xs text-[#475569] leading-relaxed font-light">{item.description}</p>
+            <p className="text-xs text-[#b3b3b4] leading-relaxed font-light">{item.description}</p>
           </div>
         </motion.div>
       </div>

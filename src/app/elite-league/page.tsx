@@ -31,7 +31,7 @@ export default function EliteLeaguePublicPage() {
   }, [fetchStudents]);
 
   return (
-    <div dir="rtl" className="max-w-5xl mx-auto px-4 py-12 font-[iranSans-r]">
+    <div dir="rtl" className="max-w-5xl mx-auto px-4 py-12 font-[iranBold]">
      
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-500 mb-4 border border-amber-100">

@@ -22,7 +22,7 @@ export default function DesktopTimeline({ item }: TimelineItemProps) {
             <div className="p-2.5 bg-[#2563EB]/10 rounded-xl text-[#2563EB]"><IconComponent className="w-5 h-5" /></div>
             <h3 className="text-2xl font-black text-[#1F3A5F]">{item.title}</h3>
           </div>
-          <p className="text-base text-[#475569] leading-relaxed font-normal max-w-xl">{item.description}</p>
+          <p className="text-base text-[#717274] leading-relaxed font-normal max-w-xl">{item.description}</p>
         </motion.div>
       </div>
 
