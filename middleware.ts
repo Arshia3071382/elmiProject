@@ -12,7 +12,8 @@ export function middleware(request: NextRequest) {
     const adminToken = request.cookies.get('admin_token')?.value;
     const actualPassword = process.env.ADMIN_PASSWORD;
 
-    const isAuthorized = adminToken && adminToken === actualPassword;
+    // مقایسه توکن با رمز عبور
+    const isAuthorized = adminToken && actualPassword && adminToken.trim() === actualPassword.trim();
 
     if (!isAuthorized) {
       const loginUrl = new URL('/admin/login', request.url);

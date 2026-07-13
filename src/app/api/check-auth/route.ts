@@ -7,7 +7,7 @@ export async function GET() {
     const tokenValue = cookieStore.get('admin_token')?.value;
     const securePassword = process.env.ADMIN_PASSWORD;
     
-    const isLoggedIn = !!tokenValue && tokenValue === securePassword;
+    const isLoggedIn = !!tokenValue && !!securePassword && tokenValue.trim() === securePassword.trim();
     
     return NextResponse.json({ isLoggedIn });
   } catch (error) {

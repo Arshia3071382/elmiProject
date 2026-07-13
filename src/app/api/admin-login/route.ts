@@ -6,16 +6,24 @@ export async function POST(req: Request) {
     const { password } = await req.json();
     const securePassword = process.env.ADMIN_PASSWORD;
 
-    const isPasswordCorrect = password === securePassword;
+    if (!securePassword) {
+      return NextResponse.json(
+        { success: false, error: "تنظیمات رمز عبور در سرور یافت نشد" },
+        { status: 500 }
+      );
+    }
 
-    if (isPasswordCorrect && securePassword) {
+    // مقایسه دقیق بدون حساسیت به فاصله‌های مخفی محیط سرور
+    const isPasswordCorrect = password.trim() === securePassword.trim();
+
+    if (isPasswordCorrect) {
       const cookieStore = await cookies();
 
-      cookieStore.set("admin_token", securePassword, {
+      // تنظیم کوکی دائمی (بدون maxAge یا expires تا با بستن مرورگر یا گذشت زمان حذف نشود)
+      cookieStore.set("admin_token", securePassword.trim(), {
         httpOnly: true, 
         secure: process.env.NODE_ENV === "production", 
-        sameSite: "strict",
-        maxAge: 60 * 60, 
+        sameSite: "lax",
         path: "/", 
       });
 
@@ -24,13 +32,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { success: false, error: "رمز عبور وارد شده نادرست است" },
-      { status: 401 },
+      { status: 401 }
     );
   } catch (error) {
-    console.error("🔴 خطای دقیق سرور:", error);
     return NextResponse.json(
       { success: false, error: "خطا در پردازش سرور" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
