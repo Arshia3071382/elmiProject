@@ -11,17 +11,12 @@ export default function CourseHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-3">
+        <div className="inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-3 mt-3">
           <GraduationCap
-            className="w-4 h-4"
+            className="w-10 h-10"
             style={{ color: "#2563EB" }}
           />
-          <span
-            className="text-sm"
-            style={{ color: "#2563EB", fontFamily: "iranSans-r" }}
-          >
-            مجموعه علمی منتظران
-          </span>
+
         </div>
         <h1
           className="text-3xl font-bold mb-2"
