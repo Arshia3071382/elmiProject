@@ -105,7 +105,6 @@ export default function DesktopNavbar({
           </ul>
         </div>
 
-        {/* بخش دکمه‌ها: در بازه دسکتاپ تا حد زیر ۲۰۰۰ پیکسل به صورت ستونی (زیر هم) تغییر چیدمان می‌دهد */}
         <div className="flex flex-col @2xl:flex-col min-[2000px]:flex-row items-stretch min-[2000px]:items-center gap-1.5 py-1.5 flex-shrink-0">
           
           {/* 5. Elite League Link */}
@@ -144,7 +143,7 @@ export default function DesktopNavbar({
                 transitionDelay: "500ms",
               }}
             >
-              دوره‌ها
+              دوره های آموزشی
             </button>
           </Link>
 

@@ -4,20 +4,18 @@ import { cookies } from "next/headers";
 export async function POST(req: Request) {
   try {
     const { password } = await req.json();
-
-
     const securePassword = process.env.ADMIN_PASSWORD;
 
     const isPasswordCorrect = password === securePassword;
 
-    if (isPasswordCorrect) {
+    if (isPasswordCorrect && securePassword) {
       const cookieStore = await cookies();
 
-      cookieStore.set("admin_logged_in", "true", {
-        httpOnly: false, 
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
+      cookieStore.set("admin_token", securePassword, {
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: "strict",
+        maxAge: 60 * 60, 
         path: "/", 
       });
 

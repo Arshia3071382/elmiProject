@@ -4,9 +4,10 @@ import { cookies } from "next/headers";
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const cookieValue = cookieStore.get('admin_logged_in')?.value;
+    const tokenValue = cookieStore.get('admin_token')?.value;
+    const securePassword = process.env.ADMIN_PASSWORD;
     
-    const isLoggedIn = cookieValue === 'true';
+    const isLoggedIn = !!tokenValue && tokenValue === securePassword;
     
     return NextResponse.json({ isLoggedIn });
   } catch (error) {
