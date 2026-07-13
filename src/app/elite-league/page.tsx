@@ -28,7 +28,6 @@ export default function EliteLeaguePublicPage() {
 
   return (
     <div dir="rtl" className="max-w-5xl mx-auto px-4 py-12 font-sans">
-      {/* ۱. تایتل و هدر صفحه */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-500 mb-4 border border-amber-100">
           <Trophy className="w-8 h-8" />
@@ -37,7 +36,6 @@ export default function EliteLeaguePublicPage() {
         <p className="text-gray-500 text-sm md:text-base">رتبه‌بندی دانش‌آموزان برتر و فعال مجموعه‌های علمی منتظران</p>
       </div>
 
-      {/* ۲. تب‌های انتخاب مقطع */}
       <div className="flex justify-center mb-8">
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200/50 shadow-inner">
           <button
@@ -65,7 +63,6 @@ export default function EliteLeaguePublicPage() {
         </div>
       </div>
 
-      {/* ۳. جدول رتبه‌بندی */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right border-collapse text-sm md:text-base">

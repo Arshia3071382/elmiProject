@@ -2,12 +2,10 @@
 
 import PopularClasses from "@/component/classBox/PopularClasses";
 import Container from "@/component/Container";
-import Footer from "@/component/Footer";
 import HeroSec from "@/component/HeroSec";
-import Navbar from "@/component/Navbar";
 import Questions from "@/component/Questions";
 import ScrollAnimation from "./../component/ScrollAnimation";
-import CounterStats from "@/component/CounterStats"; // Import the new component
+import CounterStats from "@/component/CounterStats"; 
 import { motion } from "framer-motion";
 import Image from "next/image";
 
