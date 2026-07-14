@@ -1,4 +1,4 @@
-// کد نهایی و یکپارچه در مسیر: src/app/api/courses/route.ts
+// src/app/api/courses/route.ts
 
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
@@ -6,6 +6,7 @@ import path from "path";
 import { connectToDB } from "./../../../../lib/dbConnect"; 
 import Course from "./../../../../models/Course";
 import Category from "./../../../../models/Category"; 
+import { extractAparatEmbedUrl } from "./../../../../lib/aparatUtils"; // 👈 ایمپورت تابع هوشمند کمکی
 
 // تابع کمکی برای رجیستر شدن حتمی مدل‌ها در Mongoose
 const registerModels = () => {
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
   }
 }
 
-// ۲. ایجاد دوره جدید (پشتیبانی هوشمند از FormData برای آپلود فایل)
+// ۲. ایجاد دوره جدید (پشتیبانی از FormData برای آپلود و پردازش هوشمند لینک ویدیو)
 export async function POST(req: Request) {
   try {
     await connectToDB();
@@ -51,49 +52,40 @@ export async function POST(req: Request) {
     const description = (formData.get("description") as string) || "";
     const duration = (formData.get("duration") as string) || "";
     
-    // 🔍 گرفتن هوشمند فایل ویدیو با هر کلیدی که فرانت‌آند فرستاده باشد
-    let videoFile = formData.get("video") as File | null; 
-    if (!videoFile) videoFile = formData.get("file") as File | null;
-    if (!videoFile) videoFile = formData.get("videoUrl") as File | null;
-
+    // گرفتن مقدار فیلد ویدیو (فایل یا متن)
+    const videoInput = formData.get("video") || formData.get("file") || formData.get("videoUrl");
     let videoUrl = "";
 
     if (!name || !categoryId) {
       return NextResponse.json({ success: false, error: "نام دوره و گروه الزامی است" }, { status: 400 });
     }
 
-    // پردازش و ذخیره فایل ویدیو روی هارد سرور در صورت وجود
-    if (videoFile && videoFile.size > 0 && typeof videoFile.arrayBuffer === "function") {
-      const buffer = Buffer.from(await videoFile.arrayBuffer());
-      
-      // نام‌گذاری امن برای فایل (حذف فاصله‌ها و کاراکترهای غیرمجاز)
-      const safeFilename = `${Date.now()}-${videoFile.name.replace(/[^a-zA-Z0-9.]/g, "-")}`;
-      
-      // مسیر ذخیره در پوشه public/uploads
+    // بررسی اینکه ورودی ویدیو فایل است یا متن (لینک آپارات)
+    if (videoInput instanceof File && videoInput.size > 0) {
+      const buffer = Buffer.from(await videoInput.arrayBuffer());
+      const safeFilename = `${Date.now()}-${videoInput.name.replace(/[^a-zA-Z0-9.]/g, "-")}`;
       const uploadDir = path.join(process.cwd(), "public", "uploads");
       const filePath = path.join(uploadDir, safeFilename);
 
-      // مطمئن می‌شویم پوشه uploads وجود دارد، اگر نبود می‌سازیم
       await mkdir(uploadDir, { recursive: true });
-      
-      // نوشتن فایل روی هارد سرور
       await writeFile(filePath, buffer);
       
-      // آدرسی که در دیتابیس ذخیره می‌شود
       videoUrl = `/uploads/${safeFilename}`;
-      console.log("✅ ویدیو با موفقیت ذخیره شد:", videoUrl);
-    } else {
-      console.log("⚠️ فایلی در ریکوئست یافت نشد؛ دوره بدون ویدیو ساخته می‌شود.");
+      console.log("✅ ویدیو آپلود شده با موفقیت ذخیره شد:", videoUrl);
+    } else if (typeof videoInput === "string" && videoInput.trim() !== "") {
+      // ⚡️ اگر ورودی متن بود، آن را از فیلتر پردازشگر هوشمند آپارات عبور می‌دهیم
+      videoUrl = extractAparatEmbedUrl(videoInput);
+      console.log("✅ لینک آپارات پردازش و ذخیره شد:", videoUrl);
     }
 
- // مطمئن شوید در بخش پایانی متد POST ساختار ذخیره‌سازی به این شکل پایدار است:
-const course = await Course.create({
-  name: name.trim(),
-  category: categoryId,
-  description: description.trim(),
-  duration: duration.trim(),
-  videoUrl: videoUrl || "", // 👈 تضمین وجود فیلد در داکیومنت مونگو
-});
+    const course = await Course.create({
+      name: name.trim(),
+      category: categoryId,
+      description: description.trim(),
+      duration: duration.trim(),
+      videoUrl: videoUrl || "",
+    });
+
     const populatedCourse = await Course.findById(course._id).populate("category").lean();
     return NextResponse.json({ success: true, course: populatedCourse });
 
@@ -103,18 +95,21 @@ const course = await Course.create({
   }
 }
 
-// ۳. ویرایش دوره
+// ۳. ویرایش دوره (با پشتیبانی کامل و پردازش هوشمند لینک ویدیو)
 export async function PUT(req: Request) {
   try {
     await connectToDB();
     registerModels();
     
     const body = await req.json();
-    const { id, name, categoryId, description, duration } = body;
+    const { id, name, categoryId, description, duration, videoUrl } = body;
 
     if (!id || !name || !categoryId) {
       return NextResponse.json({ success: false, error: "تمامی فیلدها الزامی هستند" }, { status: 400 });
     }
+
+    // ⚡️ پردازش و تمیز کردن هوشمند لینک آپارات قبل از ذخیره در دیتابیس
+    const processedVideoUrl = videoUrl ? extractAparatEmbedUrl(videoUrl) : "";
 
     const updatedCourse = await Course.findByIdAndUpdate(
       id,
@@ -122,7 +117,8 @@ export async function PUT(req: Request) {
         name: name.trim(), 
         category: categoryId,
         description: description ? description.trim() : "",
-        duration: duration ? duration.trim() : ""
+        duration: duration ? duration.trim() : "",
+        videoUrl: processedVideoUrl // ذخیره لینک پردازش شده نهایی
       },
       { new: true, runValidators: true }
     ).populate("category").lean();
@@ -154,9 +150,10 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: false, error: "خطا در حذف دوره" }, { status: 500 });
   }
 }
+
 export const config = {
   api: {
-    bodyParser: false, // غیرفعال کردن بادی‌پارسر پیش‌فرض برای مدیریت دستی FormData
-    sizeLimit: "500mb", // افزایش سقف مجاز دریافت فایل تا ۵۰۰ مگابایت
+    bodyParser: false,
+    sizeLimit: "500mb",
   },
 };

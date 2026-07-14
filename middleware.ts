@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
     const adminToken = request.cookies.get('admin_token')?.value;
     const actualPassword = process.env.ADMIN_PASSWORD;
 
-    // مقایسه توکن با رمز عبور
+    // مقایسه توکن با رمز عبور جهت دسترسی به بخش مدیریت
     const isAuthorized = adminToken && actualPassword && adminToken.trim() === actualPassword.trim();
 
     if (!isAuthorized) {
@@ -24,6 +24,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// این قسمت فقط روی مسیرهای ادمین فعال است و به بخش ویدیوها کاری ندارد
 export const config = {
   matcher: ['/admin/:path*'],
 };

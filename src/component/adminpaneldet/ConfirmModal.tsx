@@ -1,14 +1,13 @@
+// ConfirmModal.tsx
 "use client";
 
-import { AlertCircle, X } from "lucide-react";
-
-interface ConfirmModalProps {
+export interface ConfirmModalProps {
   isOpen: boolean;
   title: string;
   message: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
-  loading?: boolean;
+  loading: boolean;
 }
 
 export default function ConfirmModal({
@@ -17,43 +16,30 @@ export default function ConfirmModal({
   message,
   onConfirm,
   onCancel,
-  loading = false,
+  loading,
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-100 p-2 rounded-full">
-              <AlertCircle className="w-6 h-6 text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800">{title}</h3>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-2 text-right">{title}</h3>
+        <p className="text-sm text-gray-500 mb-6 leading-relaxed text-right">{message}</p>
+        
+        <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition"
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
           >
-            <X className="w-5 h-5" />
+            انصراف
           </button>
-        </div>
-
-        <p className="text-gray-600 mb-6">{message}</p>
-
-        <div className="flex gap-3">
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-medium transition disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition flex items-center gap-2"
           >
-            {loading ? "در حال حذف..." : "بله، حذف شود"}
-          </button>
-          <button
-            onClick={onCancel}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-medium transition"
-          >
-            انصراف
+            {loading ? "در حال حذف..." : "تایید و حذف"}
           </button>
         </div>
       </div>
