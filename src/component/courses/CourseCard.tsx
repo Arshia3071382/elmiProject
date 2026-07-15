@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, Users, GraduationCap, ChevronLeft, Play } from "lucide-react";
-import Link from "next/link"; // ۱. اضافه شدن لینک برای ناوبری
+import { BookOpen, Sparkles, Users, GraduationCap, ChevronLeft, Play, User } from "lucide-react";
+import Link from "next/link";
 
 interface Category {
   _id: string;
@@ -13,6 +13,7 @@ interface Course {
   _id: string;
   name: string;
   category: Category;
+  teacher?: string; // اضافه شدن فیلد استاد
   description?: string;
   videoUrl?: string;
   createdAt: string;
@@ -49,7 +50,6 @@ export default function CourseCard({
       onHoverEnd={onHoverEnd}
       className="group"
     >
-      {/* ۲. کل کارت داخل لینک قرار می‌گیرد تا کاربر هرجا کلیک کرد وارد صفحه ویدیو شود */}
       <Link href={`/courses/${course._id}`} className="block">
         <div
           className="bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg relative"
@@ -58,25 +58,21 @@ export default function CourseCard({
             border: "1px solid #E5E7EB",
           }}
         >
-          {/* 🎬 بخش بالایی: نمایش کاور هوشمند بجای پلیر مستقیم */}
+          {/* 🎬 بخش بالایی: کاور هوشمند */}
           {course.videoUrl ? (
             <div className="relative h-48 w-full bg-slate-900 overflow-hidden flex items-center justify-center">
-              {/* پس‌زمینه کارت با تم مدرن */}
               <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 to-slate-800" />
               
-              {/* دکمه Play شناور برای ترغیب کاربر به کلیک */}
               <div className="relative z-10 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform duration-300">
                 <Play className="w-5 h-5 text-white fill-white mr-0.5" />
               </div>
 
-              {/* آیکون لایسنس علمی متمایز */}
               <div className="absolute bottom-3 right-3 z-10">
                 <div className="bg-black/40 backdrop-blur-sm rounded-lg p-1.5">
                   <GraduationCap className="w-4 h-4 text-white" />
                 </div>
               </div>
 
-              {/* برچسب دوره جدید */}
               {isNew && (
                 <div className="absolute top-3 left-3 z-10 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-md text-xs font-semibold flex items-center gap-1 shadow-lg">
                   <Sparkles className="w-2.5 h-2.5" />
@@ -85,7 +81,6 @@ export default function CourseCard({
               )}
             </div>
           ) : (
-            /* حالت آماده‌سازی در صورت عدم وجود ویدیو */
             <div
               className="relative h-48 overflow-hidden flex items-center justify-center"
               style={{ backgroundColor: "#1F3A5F" }}
@@ -114,29 +109,42 @@ export default function CourseCard({
 
           {/* محتوای کارت */}
           <div className="p-4">
-            {/* دسته‌بندی */}
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-5 h-5 rounded-md flex items-center justify-center"
-                style={{ backgroundColor: "#EFF6FF" }}
-              >
-                <BookOpen
-                  className="w-2.5 h-2.5"
-                  style={{ color: "#2563EB" }}
-                />
+            {/* دسته‌بندی و نام استاد */}
+            <div className="flex items-center justify-between mb-2.5">
+              {/* گروه */}
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-5 h-5 rounded-md flex items-center justify-center"
+                  style={{ backgroundColor: "#EFF6FF" }}
+                >
+                  <BookOpen
+                    className="w-2.5 h-2.5"
+                    style={{ color: "#2563EB" }}
+                  />
+                </div>
+                <span
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-md"
+                  style={{
+                    backgroundColor: "#EFF6FF",
+                    color: "#2563EB",
+                    fontFamily: "iranSans-r",
+                  }}
+                >
+                  {course.category && typeof course.category === "object"
+                    ? course.category.name || "بدون گروه"
+                    : "بدون گروه"}
+                </span>
               </div>
-              <span
-                className="text-xs font-medium px-2 py-0.5 rounded-md"
-                style={{
-                  backgroundColor: "#EFF6FF",
-                  color: "#2563EB",
-                  fontFamily: "iranSans-r",
-                }}
-              >
-                {course.category && typeof course.category === "object"
-                  ? course.category.name || "بدون گروه"
-                  : "بدون گروه"}
-              </span>
+
+              {/* نام استاد */}
+              {course.teacher && (
+                <div className="flex items-center gap-1 text-gray-500">
+                  <User className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-[11px] font-medium" style={{ fontFamily: "iranSans-r" }}>
+                    {course.teacher}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* عنوان */}
@@ -187,7 +195,6 @@ export default function CourseCard({
                 </div>
               </div>
 
-              {/* دکمه مشاهده دوره (جهت حرکت به سمت راست یا چپ آیکون به ChevronLeft تغییر یافت) */}
               <div
                 className="px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 hover:bg-blue-700"
                 style={{

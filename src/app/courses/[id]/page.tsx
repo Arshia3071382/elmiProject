@@ -1,7 +1,7 @@
 import React from "react";
 import mongoose from "mongoose";
 import Course from "./../../../../models/Course";
-import { Clock, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight, User, Calendar } from "lucide-react"; // اضافه شدن Calendar
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connectToDB } from "./../../../../lib/dbConnect";
@@ -33,12 +33,21 @@ export default async function CoursePlayerPage({ params }: PageProps) {
 
   const finalVideoUrl = course.videoUrl || "";
 
+  // تبدیل تاریخ ساخت مستند به فرمت شمسی (در صورت وجود createdAt)
+  const formattedPublishDate = course.createdAt
+    ? new Date(course.createdAt).toLocaleDateString("fa-IR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
   return (
     <div className="min-h-screen bg-gray-50/50 py-10" dir="rtl">
       <div className="max-w-5xl mx-auto px-4">
         
         {/* دکمه بازگشت شیک با تراز چپ و هاور معکوس رنگ‌ها */}
-        <div className="mb-8 flex justify-end ">
+        <div className="mb-8 flex justify-end">
           <Link
             href="/courses"
             className="group inline-flex flex-row-reverse items-center gap-2.5 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-white hover:text-red-600 rounded-xl border border-red-600 hover:border-red-600 shadow-sm hover:shadow-md hover:shadow-red-100 transition-all duration-200 ease-in-out"
@@ -86,12 +95,34 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                 {course.name}
               </h1>
 
-              {course.duration && (
-                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg w-fit">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>مدت زمان: {course.duration}</span>
-                </div>
-              )}
+              {/* متادیتا: مدرس، تاریخ انتشار و مدت زمان */}
+              <div className="flex flex-wrap items-center gap-3">
+                
+                {/* استاد دوره */}
+                {course.teacher && (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg w-fit">
+                    <User className="w-3.5 h-3.5 text-gray-500" />
+                    <span>مدرس: {course.teacher}</span>
+                  </div>
+                )}
+
+                {/* تاریخ انتشار */}
+                {formattedPublishDate && (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg w-fit">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>منتشر شده در: {formattedPublishDate}</span>
+                  </div>
+                )}
+
+                {/* مدت زمان */}
+                {course.duration && (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg w-fit">
+                    <Clock className="w-3.5 h-3.5 text-blue-500" />
+                    <span>مدت زمان: {course.duration}</span>
+                  </div>
+                )}
+                
+              </div>
             </div>
 
             {/* توضیحات مربوط به ویدیو */}
