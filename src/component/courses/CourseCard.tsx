@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, Users, GraduationCap, ChevronLeft, Play, User } from "lucide-react";
+import { BookOpen, Sparkles, GraduationCap, ChevronLeft, Play, User } from "lucide-react";
 import Link from "next/link";
 
 interface Category {
@@ -13,7 +13,7 @@ interface Course {
   _id: string;
   name: string;
   category: Category;
-  teacher?: string; // اضافه شدن فیلد استاد
+  teacher?: string; 
   description?: string;
   videoUrl?: string;
   createdAt: string;
@@ -109,42 +109,29 @@ export default function CourseCard({
 
           {/* محتوای کارت */}
           <div className="p-4">
-            {/* دسته‌بندی و نام استاد */}
-            <div className="flex items-center justify-between mb-2.5">
-              {/* گروه */}
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="w-5 h-5 rounded-md flex items-center justify-center"
-                  style={{ backgroundColor: "#EFF6FF" }}
-                >
-                  <BookOpen
-                    className="w-2.5 h-2.5"
-                    style={{ color: "#2563EB" }}
-                  />
-                </div>
-                <span
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-md"
-                  style={{
-                    backgroundColor: "#EFF6FF",
-                    color: "#2563EB",
-                    fontFamily: "iranSans-r",
-                  }}
-                >
-                  {course.category && typeof course.category === "object"
-                    ? course.category.name || "بدون گروه"
-                    : "بدون گروه"}
-                </span>
+            {/* دسته‌بندی */}
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <div
+                className="w-5 h-5 rounded-md flex items-center justify-center"
+                style={{ backgroundColor: "#EFF6FF" }}
+              >
+                <BookOpen
+                  className="w-2.5 h-2.5"
+                  style={{ color: "#2563EB" }}
+                />
               </div>
-
-              {/* نام استاد */}
-              {course.teacher && (
-                <div className="flex items-center gap-1 text-gray-500">
-                  <User className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-[11px] font-medium" style={{ fontFamily: "iranSans-r" }}>
-                    {course.teacher}
-                  </span>
-                </div>
-              )}
+              <span
+                className="text-[11px] font-medium px-2 py-0.5 rounded-md"
+                style={{
+                  backgroundColor: "#EFF6FF",
+                  color: "#2563EB",
+                  fontFamily: "iranSans-r",
+                }}
+              >
+                {course.category && typeof course.category === "object"
+                  ? course.category.name || "بدون گروه"
+                  : "بدون گروه"}
+              </span>
             </div>
 
             {/* عنوان */}
@@ -166,33 +153,32 @@ export default function CourseCard({
               {course.description || "توضیحاتی برای این دوره ثبت نشده است."}
             </p>
 
-            {/* بخش پایانی کارت */}
+            {/* بخش پایانی کارت: جایگزینی بازدید استاتیک با نام استاد */}
             <div
               className="flex items-center justify-between pt-3 border-t"
               style={{ borderColor: "#E5E7EB" }}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                {/* تاریخ انتشار شمسی */}
                 <span
-                  className="text-xs"
-                  style={{
-                    color: "#94A3B8",
-                    fontFamily: "iranSans-r",
-                  }}
+                  className="text-xs text-gray-400"
+                  style={{ fontFamily: "iranSans-r" }}
                 >
                   {new Date(course.createdAt).toLocaleDateString("fa-IR")}
                 </span>
-                <div className="flex items-center gap-1">
-                  <Users className="w-3 h-3" style={{ color: "#94A3B8" }} />
-                  <span
-                    className="text-xs"
-                    style={{
-                      color: "#94A3B8",
-                      fontFamily: "iranSans-r",
-                    }}
-                  >
-                    ۱۲۴
-                  </span>
-                </div>
+
+                {/* استاد دوره (جایگزین آمار فیک) */}
+                {course.teacher && (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <User className="w-3.5 h-3.5 text-gray-400" />
+                    <span 
+                      className="text-xs font-semibold" 
+                      style={{ fontFamily: "iranSans-r" }}
+                    >
+                      {course.teacher}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div

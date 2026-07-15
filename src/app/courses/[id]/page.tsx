@@ -1,7 +1,7 @@
 import React from "react";
 import mongoose from "mongoose";
 import Course from "./../../../../models/Course";
-import { Clock, ArrowRight, User, Calendar } from "lucide-react"; // اضافه شدن Calendar
+import { Clock, ArrowRight, User, Calendar } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connectToDB } from "./../../../../lib/dbConnect";
@@ -33,7 +33,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
 
   const finalVideoUrl = course.videoUrl || "";
 
-  // تبدیل تاریخ ساخت مستند به فرمت شمسی (در صورت وجود createdAt)
+  // تبدیل تاریخ ساخت به شمسی خوانا
   const formattedPublishDate = course.createdAt
     ? new Date(course.createdAt).toLocaleDateString("fa-IR", {
         year: "numeric",
@@ -46,7 +46,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
     <div className="min-h-screen bg-gray-50/50 py-10" dir="rtl">
       <div className="max-w-5xl mx-auto px-4">
         
-        {/* دکمه بازگشت شیک با تراز چپ و هاور معکوس رنگ‌ها */}
+        {/* دکمه بازگشت */}
         <div className="mb-8 flex justify-end">
           <Link
             href="/courses"
@@ -57,10 +57,10 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           </Link>
         </div>
 
-        {/* ساختار تک‌ستونه متمرکز بر ویدیو */}
+        {/* ساختار محتوا */}
         <div className="space-y-6">
           
-          {/* بخش اول: ویدیو پلیر عریض و سراسری */}
+          {/* ویدیو پلیر */}
           {finalVideoUrl ? (
             <div className="relative w-full rounded-2xl overflow-hidden shadow-md border border-gray-200/60 bg-black z-10 isolate">
               <div className="relative w-full" style={{ paddingBottom: "56.25%", height: 0 }}>
@@ -86,19 +86,19 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* بخش دوم: اطلاعات و جزئیات زیر ویدیو */}
+          {/* اطلاعات زیر ویدیو */}
           <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
             
-            {/* عنوان ویدیو و متادیتا */}
+            {/* عنوان ویدیو و ردیف یکپارچه متادیتا */}
             <div className="border-b border-gray-100 pb-5">
               <h1 className="text-2xl md:text-3xl font-normal text-gray-900 mb-4 font-iranBold leading-tight">
                 {course.name}
               </h1>
 
-              {/* متادیتا: مدرس، تاریخ انتشار و مدت زمان */}
+              {/* متادیتای هماهنگ با سه بخش اصلی در یک ردیف */}
               <div className="flex flex-wrap items-center gap-3">
                 
-                {/* استاد دوره */}
+                {/* نام استاد */}
                 {course.teacher && (
                   <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg w-fit">
                     <User className="w-3.5 h-3.5 text-gray-500" />
@@ -125,7 +125,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* توضیحات مربوط به ویدیو */}
+            {/* توضیحات دوره */}
             <div>
               <h3 className="text-lg font-bold text-gray-800 mb-3 font-iranBold">
                 توضیحات و سرفصل‌ها
