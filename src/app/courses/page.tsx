@@ -1,3 +1,4 @@
+// مسیر فایل: داخل صفحه دوره‌ها یا فایل types/course.ts
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,28 +6,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen } from "lucide-react";
 import Container from "./../../component/Container";
 
-// Import custom page sub-components
 import CourseHero from "./../../component/courses/CourseHero";
 import CategoryFilters from "./../../component/courses/CategoryFilters";
 import CourseCard from "./../../component/courses/CourseCard";
 import StatsSummary from "./../../component/courses/StatsSummary";
 
-interface Category {
+export interface Category {
   _id: string;
   name: string;
 }
 
-interface Course {
+export interface ICourse {
   _id: string;
   name: string;
   category: Category;
+  teacher?: string;
+  duration?: string;
   description?: string;
   videoUrl?: string;
   createdAt: string;
 }
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<ICourse[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     fetchCategories();
-    setClientTime(Date.now()); // Set client time to prevent Hydration mismatch bugs
+    setClientTime(Date.now());
   }, []);
 
   useEffect(() => {
@@ -76,6 +78,9 @@ export default function CoursesPage() {
       setLoading(false);
     }
   };
+
+  // مرحله ۱۰ - لاگ کردن لیست کلی دوره‌ها قبل از بخش رندر (return)
+  console.log("Trace [CoursesPage Client Component] - Received Courses List state:", courses);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>

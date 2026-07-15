@@ -1,3 +1,4 @@
+// مسیر فایل: models/Course.ts
 import mongoose from "mongoose";
 
 const CourseSchema = new mongoose.Schema({
@@ -10,6 +11,11 @@ const CourseSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
     required: [true, "گروه دوره الزامی است"],
+  },
+  teacher: {
+    type: String,
+    default: "", // مقدار پیش‌فرض رشته خالی
+    trim: true,
   },
   description: {
     type: String,
@@ -28,7 +34,6 @@ const CourseSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
 
 CourseSchema.index({ category: 1, createdAt: -1 });
 

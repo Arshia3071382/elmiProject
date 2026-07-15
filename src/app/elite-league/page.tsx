@@ -56,7 +56,7 @@ export default function EliteLeaguePublicPage() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            مقطع ابتدایی (دوم تا ششم)
+            مقطع ابتدایی 
           </button>
           <button
             type="button"
@@ -67,7 +67,7 @@ export default function EliteLeaguePublicPage() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            مقطع متوسطه اول (هفتم تا نهم)
+            مقطع متوسطه اول
           </button>
         </div>
       </div>

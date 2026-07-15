@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, GraduationCap, ChevronLeft, Play, User } from "lucide-react";
+import { BookOpen, Sparkles, GraduationCap, ChevronLeft, Play, User, Clock } from "lucide-react";
 import Link from "next/link";
 
 interface Category {
@@ -14,6 +14,7 @@ interface Course {
   name: string;
   category: Category;
   teacher?: string; 
+  duration?: string;
   description?: string;
   videoUrl?: string;
   createdAt: string;
@@ -40,6 +41,11 @@ export default function CourseCard({
     ? new Date(course.createdAt).getTime() > clientTime - 7 * 24 * 60 * 60 * 1000
     : false;
 
+  // تفکیک اساتید به آرایه برای نمایش مجزا در کارت
+  const teachers = course.teacher && course.teacher !== "بدون استاد"
+    ? course.teacher.split(" - ")
+    : [];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -48,7 +54,7 @@ export default function CourseCard({
       whileHover={{ y: -4 }}
       onHoverStart={onHoverStart}
       onHoverEnd={onHoverEnd}
-      className="group"
+      className="group animate-none"
     >
       <Link href={`/courses/${course._id}`} className="block">
         <div
@@ -109,29 +115,41 @@ export default function CourseCard({
 
           {/* محتوای کارت */}
           <div className="p-4">
-            {/* دسته‌بندی */}
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <div
-                className="w-5 h-5 rounded-md flex items-center justify-center"
-                style={{ backgroundColor: "#EFF6FF" }}
-              >
-                <BookOpen
-                  className="w-2.5 h-2.5"
-                  style={{ color: "#2563EB" }}
-                />
+            {/* دسته‌بندی و مدت زمان دوره */}
+            <div className="flex items-center justify-between gap-1.5 mb-2.5">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-5 h-5 rounded-md flex items-center justify-center"
+                  style={{ backgroundColor: "#EFF6FF" }}
+                >
+                  <BookOpen
+                    className="w-2.5 h-2.5"
+                    style={{ color: "#2563EB" }}
+                  />
+                </div>
+                <span
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-md"
+                  style={{
+                    backgroundColor: "#EFF6FF",
+                    color: "#2563EB",
+                    fontFamily: "iranSans-r",
+                  }}
+                >
+                  {course.category && typeof course.category === "object"
+                    ? course.category.name || "بدون گروه"
+                    : "بدون گروه"}
+                </span>
               </div>
-              <span
-                className="text-[11px] font-medium px-2 py-0.5 rounded-md"
-                style={{
-                  backgroundColor: "#EFF6FF",
-                  color: "#2563EB",
-                  fontFamily: "iranSans-r",
-                }}
-              >
-                {course.category && typeof course.category === "object"
-                  ? course.category.name || "بدون گروه"
-                  : "بدون گروه"}
-              </span>
+
+              {/* نمایش مدت زمان دوره */}
+              {course.duration && (
+                <div className="flex items-center gap-1 text-gray-400">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span className="text-[11px]" style={{ fontFamily: "iranSans-r" }}>
+                    {course.duration}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* عنوان */}
@@ -153,33 +171,33 @@ export default function CourseCard({
               {course.description || "توضیحاتی برای این دوره ثبت نشده است."}
             </p>
 
-            {/* بخش پایانی کارت: جایگزینی بازدید استاتیک با نام استاد */}
+            {/* لیست اساتید (تفکیک شده به صورت بج‌های مجزا) */}
+            {teachers.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3 pt-2">
+                {teachers.map((teacher, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 text-[11px] text-gray-500 bg-gray-100/70 px-2 py-0.5 rounded-md"
+                    style={{ fontFamily: "iranSans-r" }}
+                  >
+                    <User className="w-3 h-3 text-gray-400" />
+                    {teacher}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* بخش پایانی کارت: تاریخ انتشار و دکمه مشاهده */}
             <div
               className="flex items-center justify-between pt-3 border-t"
               style={{ borderColor: "#E5E7EB" }}
             >
-              <div className="flex items-center gap-3">
-                {/* تاریخ انتشار شمسی */}
-                <span
-                  className="text-xs text-gray-400"
-                  style={{ fontFamily: "iranSans-r" }}
-                >
-                  {new Date(course.createdAt).toLocaleDateString("fa-IR")}
-                </span>
-
-                {/* استاد دوره (جایگزین آمار فیک) */}
-                {course.teacher && (
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <User className="w-3.5 h-3.5 text-gray-400" />
-                    <span 
-                      className="text-xs font-semibold" 
-                      style={{ fontFamily: "iranSans-r" }}
-                    >
-                      {course.teacher}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <span
+                className="text-xs text-gray-400"
+                style={{ fontFamily: "iranSans-r" }}
+              >
+                {new Date(course.createdAt).toLocaleDateString("fa-IR")}
+              </span>
 
               <div
                 className="px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 hover:bg-blue-700"

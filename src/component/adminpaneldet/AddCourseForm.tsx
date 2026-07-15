@@ -1,7 +1,8 @@
+// مسیر فایل: داخل کامپوننت‌های مدیریت یا ادمین
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Clock, Video, User, X, Check } from "lucide-react";
+import { Plus, Clock, Video, X, Check } from "lucide-react";
 
 interface Category {
   _id: string;
@@ -84,6 +85,7 @@ export default function AddCourseForm({
 
     const formData = new FormData();
     formData.append("name", name.trim());
+    formData.append("categoryId", selectedCategory); // ثبت فیلد دسته‌بندی
     formData.append("teacher", finalTeachers || "بدون استاد"); 
     formData.append("description", description.trim());
     formData.append("duration", duration.trim());
@@ -271,22 +273,19 @@ export default function AddCourseForm({
           <textarea 
             value={description} 
             onChange={(e) => setDescription(e.target.value)} 
-            rows={3} 
-            placeholder="سرفصل‌ها و توضیحات مربوط به این دوره علمی..." 
+            placeholder="توضیحات کلی در مورد سرفصل‌ها و محتوای دوره..." 
+            rows={4}
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50" 
           />
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl text-sm shadow-md transition disabled:opacity-50"
-          >
-            {loading ? "در حال ذخیره..." : "ایجاد و انتشار دوره"}
-          </button>
-        </div>
+        <button 
+          type="submit" 
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition disabled:opacity-50"
+        >
+          {loading ? "در حال ثبت..." : "ثبت و ایجاد دوره جدید"}
+        </button>
       </form>
     </div>
   );
