@@ -1,38 +1,54 @@
 import mongoose from "mongoose";
 
-// ابتدا متغیر آنلاین ورسل را چک می‌کند، اگر نبود به آدرس لوکال سوئیچ می‌کند
+// استفاده از دیتابیس مدنظر شما
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/elmi_courses";
 
-// کش کردن اتصال برای جلوگیری از اتصال مجدد در هر درخواست
-let isConnected = false;
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
 
-export async function dbConnect() {
-  if (isConnected) {
-    console.log("✅ Using existing database connection");
-    return;
+declare global {
+  var mongooseGlobalCache: MongooseCache | undefined;
+}
+
+let cached = global.mongooseGlobalCache;
+
+if (!cached) {
+  cached = global.mongooseGlobalCache = { conn: null, promise: null };
+}
+
+export async function dbConnect(): Promise<typeof mongoose> {
+  if (cached!.conn) {
+    console.log("✅ Using existing database connection (cached)");
+    return cached!.conn;
   }
 
-  if (mongoose.connection.readyState >= 1) {
-    isConnected = true;
-    console.log("✅ Using existing mongoose connection");
-    return;
+  if (!cached!.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    console.log("⏳ Initializing new MongoDB connection...");
+    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+      console.log("✅ Connected to database successfully!");
+      return m;
+    });
   }
 
   try {
-    // استفاده از آدرس داینامیک جدید
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
-    console.log("✅ Connected to database successfully!");
+    cached!.conn = await cached!.promise;
   } catch (error) {
+    cached!.promise = null;
     console.error("❌ MongoDB connection error:", error);
     throw new Error("Failed to connect to database");
   }
+
+  return cached!.conn;
 }
 
-// برای استفاده در فایل‌های دیگر
 export async function connectToDB() {
   return dbConnect();
 }
 
-// اکسپورت دیفالت برای استفاده ساده‌تر
 export default dbConnect;

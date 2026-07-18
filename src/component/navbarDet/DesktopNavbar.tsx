@@ -21,15 +21,13 @@ export default function DesktopNavbar({
   showAbout,
   showCourses,
 }: DesktopNavbarProps) {
-  // Combined condition to orchestrate the global menu animation trigger
   const animateMenu = showHome && showAbout && showContact;
 
   return (
-    // Main desktop navbar wrapper
     <div className="hidden lg:flex justify-between items-center w-full h-40 relative">
       <div className="absolute top-25 left-1/2 -translate-x-1/2 rounded shadow flex flex-row-reverse w-5/6 justify-between bg-white items-center h-25 px-3">
         
-        {/* Animated logo container */}
+        {/* لوگوی سایت */}
         <div
           className="transition-all duration-700 ease-out flex-shrink-0"
           style={{
@@ -40,74 +38,86 @@ export default function DesktopNavbar({
           <Image width={119} src={logo} alt="sitelogo" />
         </div>
 
-        {/* Menu navigation links */}
+        {/* منوی اصلی ناوبری */}
         <div className="flex flex-row-reverse items-center gap-10">
-          <ul className="hidden md:flex flex-row-reverse gap-10 font-[iranSans-r] text-[16px] text-gray-500 cursor-pointer">
-            {/* 1. Home Link */}
-            <Link href="/">
-              <li
-                className="hover:bg-secondary hover:text-white hover:rounded p-2 transition duration-200 whitespace-nowrap"
-                style={{
-                  opacity: animateMenu ? 1 : 0,
-                  transform: animateMenu ? "translateX(0)" : "translateX(30px)",
-                  transition: "all 0.5s ease-out",
-                  transitionDelay: "0ms",
-                }}
-              >
+          <ul className="hidden md:flex flex-row-reverse gap-8 font-[iranSans-r] text-[16px] text-gray-500 cursor-pointer">
+            <li
+              className="hover:bg-secondary hover:text-white hover:rounded transition duration-200 whitespace-nowrap"
+              style={{
+                opacity: animateMenu ? 1 : 0,
+                transform: animateMenu ? "translateX(0)" : "translateX(30px)",
+                transition: "all 0.5s ease-out",
+                transitionDelay: "0ms",
+              }}
+            >
+              <Link href="/" className="block p-2">
                 صفحه اصلی
-              </li>
-            </Link>
+              </Link>
+            </li>
 
-            {/* 2. Contact Us Link */}
-            <Link href="/contactUs">
-              <li
-                className="hover:bg-secondary hover:text-white hover:rounded p-2 transition duration-200 whitespace-nowrap"
-                style={{
-                  opacity: animateMenu ? 1 : 0,
-                  transform: animateMenu ? "translateX(0)" : "translateX(30px)",
-                  transition: "all 0.5s ease-out",
-                  transitionDelay: "100ms",
-                }}
-              >
+            <li
+              className="hover:bg-secondary hover:text-white hover:rounded transition duration-200 whitespace-nowrap"
+              style={{
+                opacity: animateMenu ? 1 : 0,
+                transform: animateMenu ? "translateX(0)" : "translateX(30px)",
+                transition: "all 0.5s ease-out",
+                transitionDelay: "150ms",
+              }}
+            >
+              <Link href="/contactUs" className="block p-2">
                 ارتباط با ما
-              </li>
-            </Link>
+              </Link>
+            </li>
 
-            {/* 3. About Us Link */}
-            <Link href="/aboutUs">
-              <li
-                className="hover:bg-secondary hover:text-white hover:rounded p-2 transition duration-200 whitespace-nowrap"
-                style={{
-                  opacity: animateMenu ? 1 : 0,
-                  transform: animateMenu ? "translateX(0)" : "translateX(30px)",
-                  transition: "all 0.5s ease-out",
-                  transitionDelay: "200ms",
-                }}
-              >
+            <li
+              className="hover:bg-secondary hover:text-white hover:rounded transition duration-200 whitespace-nowrap"
+              style={{
+                opacity: animateMenu ? 1 : 0,
+                transform: animateMenu ? "translateX(0)" : "translateX(30px)",
+                transition: "all 0.5s ease-out",
+                transitionDelay: "225ms",
+              }}
+            >
+              <Link href="/aboutUs" className="block p-2">
                 درباره ما
-              </li>
-            </Link>
+              </Link>
+            </li>
 
-            {/* 4. Notices Link */}
-            <Link href="/notices">
-              <li
-                className="hover:bg-secondary hover:text-white hover:rounded p-2 transition duration-200 whitespace-nowrap"
-                style={{
-                  opacity: animateMenu ? 1 : 0,
-                  transform: animateMenu ? "translateX(0)" : "translateX(30px)",
-                  transition: "all 0.5s ease-out",
-                  transitionDelay: "300ms",
-                }}
-              >
+            <li
+              className="hover:bg-secondary hover:text-white hover:rounded transition duration-200 whitespace-nowrap"
+              style={{
+                opacity: animateMenu ? 1 : 0,
+                transform: animateMenu ? "translateX(0)" : "translateX(30px)",
+                transition: "all 0.5s ease-out",
+                transitionDelay: "300ms",
+              }}
+            >
+              <Link href="/notices" className="block p-2">
                 اخبار و اطلاعیه‌ها
-              </li>
-            </Link>
+              </Link>
+            </li>
           </ul>
         </div>
 
+        {/* بخش دکمه‌های عملیاتی (CTA) */}
         <div className="flex flex-col @2xl:flex-col min-[2000px]:flex-row items-stretch min-[2000px]:items-center gap-1.5 py-1.5 flex-shrink-0">
           
-          {/* 5. Elite League Link */}
+          {/* دکمه گفتینو */}
+          <Link href="/chat-guidance" className="w-full">
+            <button
+              className="w-full rounded cursor-pointer text-white py-1 px-2.5 bg-accent hover:bg-opacity-90 border border-transparent transition-all duration-300 text-center flex items-center justify-center gap-1 font-[iranSans-r] text-[12px] min-[2000px]:text-[14px] whitespace-nowrap"
+              style={{
+                opacity: showCourses ? 1 : 0,
+                transform: showCourses ? "translateX(0)" : "translateX(30px)",
+                transition: "all 0.5s ease-out",
+                transitionDelay: "350ms",
+              }}
+            >
+              <span>گفتینو 💬</span>
+            </button>
+          </Link>
+
+          {/* دکمه لیگ نخبگان */}
           <Link href="/elite-league" className="w-full">
             <button
               className="w-full group rounded cursor-pointer text-amber-600 border border-amber-500 py-1 px-2.5 bg-amber-50 hover:bg-amber-500 hover:text-white transition-all duration-300 text-center flex items-center justify-center gap-1 font-[iranSans-r] text-[12px] min-[2000px]:text-[14px] whitespace-nowrap"
@@ -115,7 +125,7 @@ export default function DesktopNavbar({
                 opacity: showCourses ? 1 : 0,
                 transform: showCourses ? "translateX(0)" : "translateX(30px)",
                 transition: "all 0.5s ease-out",
-                transitionDelay: "400ms",
+                transitionDelay: "425ms",
               }}
             >
               <svg
@@ -132,10 +142,10 @@ export default function DesktopNavbar({
             </button>
           </Link>
 
-          {/* 6. Educational Courses Button */}
+          {/* دکمه دوره‌های آموزشی */}
           <Link href="/courses" className="w-full">
             <button
-              className="w-full rounded cursor-pointer text-white py-1 px-2.5 bg-accent hover:bg-white hover:text-accent hover:border border-accent transition-all duration-300 text-center font-[iranSans-r] text-[12px] min-[2000px]:text-[14px] whitespace-nowrap"
+              className="w-full rounded cursor-pointer text-gray-700 border border-gray-300 py-1 px-2.5 bg-gray-50 hover:bg-gray-100 transition-all duration-300 text-center font-[iranSans-r] text-[12px] min-[2000px]:text-[14px] whitespace-nowrap"
               style={{
                 opacity: showCourses ? 1 : 0,
                 transform: showCourses ? "translateX(0)" : "translateX(30px)",
@@ -143,7 +153,7 @@ export default function DesktopNavbar({
                 transitionDelay: "500ms",
               }}
             >
-              دوره های آموزشی
+              دوره‌های آموزشی
             </button>
           </Link>
 
