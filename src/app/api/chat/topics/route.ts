@@ -1,46 +1,46 @@
 // src/app/api/chat/topics/route.ts
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import dbConnect from "../../../../../lib/dbConnect";
-import Topic from "./../../../../../models/Topic";
+import mongoose from "mongoose";
+
+// تعریف مستقیم یا بازخوانی اسکیما برای تضمین ثبت در سیستم کانتینرهای Serverless
+const TopicSchema = new mongoose.Schema({
+  slug: { type: String, required: true, unique: true },
+  title: { type: String, required: true },
+  image: { type: String, default: "default-topic.png" },
+  description: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    // ۱. ابتدا اتصال به دیتابیس برقرار می‌شود
+    // ۱. اتصال به دیتابیس
     await dbConnect();
 
-    // ۲. بررسی وضعیت اتصال دیتابیس برای محیط‌های Serverless
+    // ۲. بررسی لایه پایداری اتصال
     if (mongoose.connection.readyState !== 1) {
       console.log("⏳ [API Topics] Database not ready yet, waiting...");
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
+    console.log("📡 [API Topics] Confirming model registration...");
+    
+    // ۳. ثبت یا فراخوانی ایمن مدل بدون وابستگی به ایمپورت‌های خارجی لرزان (Tree-shaken)
+    const TargetModel = mongoose.models.Topic || mongoose.model("Topic", TopicSchema);
+    
     console.log("📡 [API Topics] Executing find() query on MongoDB...");
-    
-    // فراخوانی مستقیم از مدل‌های ثبت شده در Mongoose برای جلوگیری از تداخل نام با متغیر پایین
-    const TargetModel = mongoose.models.Topic || mongoose.model("Topic");
-    
-    // ۳. فچ کردن داده‌ها (نام متغیر را تغییر دادیم تا با نام مدل تداخل تایپ‌اسکریپتی نداشته باشد)
     const allTopicsData = await TargetModel.find({}).sort({ createdAt: 1 }).lean().exec();
 
     console.log(`✅ [API Topics] Successfully fetched ${allTopicsData?.length || 0} topics`);
 
-    if (!allTopicsData || allTopicsData.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        message: "Database connected, but collection 'topics' is empty."
-      }, { status: 200 });
-    }
-
-    // ۴. بازگرداندن پاسخ با هدرهای ضد کش (Anti-Cache)
+    // ۴. ارسال پاسخ به کلاینت همراه هدر ضد کش
     return new NextResponse(
       JSON.stringify({
         success: true,
-        data: allTopicsData,
+        data: allTopicsData || [],
       }),
       {
         status: 200,
