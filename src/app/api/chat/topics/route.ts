@@ -1,8 +1,8 @@
 // src/app/api/chat/topics/route.ts
 import { NextResponse } from "next/server";
-import Conversation from "../../../../../models/Conversation";
-import dbConnect from "../../../../../lib/dbConnect";
 import mongoose from "mongoose";
+import dbConnect from "../../../../../lib/dbConnect";
+import Topic from "./../../../../../models/Topic";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -12,7 +12,7 @@ export async function GET() {
     // ۱. ابتدا اتصال به دیتابیس برقرار می‌شود
     await dbConnect();
 
-    // ۲. بررسی خط دفاعی: اگر دیتابیس به هر دلیلی هنوز کامل وصل نشده، منتظر می‌مانیم
+    // ۲. بررسی وضعیت اتصال دیتابیس برای محیط‌های Serverless
     if (mongoose.connection.readyState !== 1) {
       console.log("⏳ [API Topics] Database not ready yet, waiting...");
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -20,17 +20,19 @@ export async function GET() {
 
     console.log("📡 [API Topics] Executing find() query on MongoDB...");
     
-    // ۳. فچ کردن مستقیم داده‌ها به صورت آرایه‌ای از آبجکت‌های خام JSON
-    const topics = await Topic.find({}).sort({ createdAt: 1 }).lean().exec();
+    // فراخوانی مستقیم از مدل‌های ثبت شده در Mongoose برای جلوگیری از تداخل نام با متغیر پایین
+    const TargetModel = mongoose.models.Topic || mongoose.model("Topic");
+    
+    // ۳. فچ کردن داده‌ها (نام متغیر را تغییر دادیم تا با نام مدل تداخل تایپ‌اسکریپتی نداشته باشد)
+    const allTopicsData = await TargetModel.find({}).sort({ createdAt: 1 }).lean().exec();
 
-    console.log(`✅ [API Topics] Successfully fetched ${topics?.length || 0} topics from Vercel Production`);
+    console.log(`✅ [API Topics] Successfully fetched ${allTopicsData?.length || 0} topics`);
 
-    if (!topics || topics.length === 0) {
-      // اگر دیتابیس خالی است یا کالکشن اشتباه انتخاب شده
+    if (!allTopicsData || allTopicsData.length === 0) {
       return NextResponse.json({
         success: true,
         data: [],
-        message: "Database connected, but collection 'topics' is empty or name mismatched."
+        message: "Database connected, but collection 'topics' is empty."
       }, { status: 200 });
     }
 
@@ -38,7 +40,7 @@ export async function GET() {
     return new NextResponse(
       JSON.stringify({
         success: true,
-        data: topics,
+        data: allTopicsData,
       }),
       {
         status: 200,
