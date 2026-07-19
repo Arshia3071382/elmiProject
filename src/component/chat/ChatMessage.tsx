@@ -20,20 +20,30 @@ export default function ChatMessage({ message, isStudent }: MessageProps) {
   const [showFirstTick, setShowFirstTick] = useState(false);
   const [showSecondTick, setShowSecondTick] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 100);
 
     if (message.showTicks && !isStudent) {
       const tick1Timer = setTimeout(() => {
-        setShowFirstTick(true);
+        if (isMounted) setShowFirstTick(true);
       }, 300);
 
       const tick2Timer = setTimeout(() => {
-        setShowSecondTick(true);
-      }, 500); // از 600 به 500 کاهش دادم
+        if (isMounted) setShowSecondTick(true);
+      }, 500);
 
       return () => {
         clearTimeout(tick1Timer);
@@ -42,7 +52,9 @@ export default function ChatMessage({ message, isStudent }: MessageProps) {
     }
 
     return () => clearTimeout(timer);
-  }, [isStudent, message.showTicks]);
+  }, [isMounted, isStudent, message.showTicks]);
+
+  if (!isMounted) return null;
 
   const getTime = () => {
     const now = new Date();
@@ -84,7 +96,6 @@ export default function ChatMessage({ message, isStudent }: MessageProps) {
         </div>
 
         <div className="flex items-center gap-0.5 mt-1 text-xs text-gray-400 justify-end">
-          {/* فاصله تیک‌ها رو خیلی کم کردم */}
           {!isStudent && message.showTicks && (
             <>
               <span

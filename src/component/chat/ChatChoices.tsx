@@ -7,7 +7,6 @@ interface Choice {
   id: string;
   text: string;
   next: string;
-  icon?: string;
 }
 
 interface ChatChoicesProps {
@@ -17,13 +16,22 @@ interface ChatChoicesProps {
 
 export default function ChatChoices({ choices, onSelect }: ChatChoicesProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isMounted]);
+
+  if (!isMounted) return null;
 
   return (
     <div
@@ -40,7 +48,6 @@ export default function ChatChoices({ choices, onSelect }: ChatChoicesProps) {
           onClick={() => onSelect(choice.next)}
           className="w-full text-right px-5 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:border-accent hover:bg-accent hover:text-white transition-all duration-300 group flex items-center gap-3 shadow-sm hover:shadow-md"
         >
-          {choice.icon && <span className="text-xl">{choice.icon}</span>}
           <span className="font-medium text-sm md:text-base">{choice.text}</span>
           <span className="mr-auto text-gray-400 group-hover:text-white transition-colors">
             ←
