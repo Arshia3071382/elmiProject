@@ -3,15 +3,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "../../../../../lib/dbConnect";
 import mongoose from "mongoose";
 
-// تعریف مستقیم یا بازخوانی اسکیما برای تضمین ثبت در سیستم کانتینرهای Serverless
-const TopicSchema = new mongoose.Schema({
-  slug: { type: String, required: true, unique: true },
-  title: { type: String, required: true },
-  image: { type: String, default: "default-topic.png" },
-  description: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -20,27 +11,40 @@ export async function GET() {
     // ۱. اتصال به دیتابیس
     await dbConnect();
 
-    // ۲. بررسی لایه پایداری اتصال
+    // ۲. اطمینان از آمادگی کامل کانکشن
     if (mongoose.connection.readyState !== 1) {
-      console.log("⏳ [API Topics] Database not ready yet, waiting...");
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
-    console.log("📡 [API Topics] Confirming model registration...");
-    
-    // ۳. ثبت یا فراخوانی ایمن مدل بدون وابستگی به ایمپورت‌های خارجی لرزان (Tree-shaken)
-    const TargetModel = mongoose.models.Topic || mongoose.model("Topic", TopicSchema);
-    
-    console.log("📡 [API Topics] Executing find() query on MongoDB...");
-    const allTopicsData = await TargetModel.find({}).sort({ createdAt: 1 }).lean().exec();
+    // بررسی وجود دیتابیس برای رفع خطای تایپ‌اسکریپت
+    const activeDb = mongoose.connection.db;
+    if (!activeDb) {
+      console.error("❌ [API Topics] Database connection established but 'db' object is undefined.");
+      return NextResponse.json({ success: false, error: "Database context is unavailable" }, { status: 500 });
+    }
 
-    console.log(`✅ [API Topics] Successfully fetched ${allTopicsData?.length || 0} topics`);
+    // 🔍 لایه عیب‌یابی: لیست کردن تمام کالکشن‌های موجود در دیتابیسی که Vercel به آن وصل شده
+    const collections = await activeDb.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+    console.log("🔍 [Debug DB] Available collections in live DB:", collectionNames);
 
-    // ۴. ارسال پاسخ به کلاینت همراه هدر ضد کش
+    // ۳. فچ کردن مستقیم از درایور بومی دیتابیس بدون واسطه سفت و سخت Mongoose
+    console.log("📡 [API Topics] Executing native driver query on 'topics'...");
+    const nativeData = await activeDb.collection("topics").find({}).sort({ createdAt: 1 }).toArray();
+    
+    // تبدیل تمیز ObjectId به string برای جلوگیری از خطای رندر کلاینت
+    const allTopicsData = nativeData.map(doc => ({
+      ...doc,
+      _id: doc._id.toString()
+    }));
+
+    console.log(`✅ [API Topics] Native fetch found ${allTopicsData?.length || 0} topics`);
+
+    // ۴. ارسال ریسپانس نهایی
     return new NextResponse(
       JSON.stringify({
         success: true,
-        data: allTopicsData || [],
+        data: allTopicsData,
       }),
       {
         status: 200,
