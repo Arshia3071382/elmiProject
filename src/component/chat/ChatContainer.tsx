@@ -60,20 +60,27 @@ export default function ChatContainer() {
   useEffect(() => {
     setIsMounted(true);
     return () => {
-      // Clear all timers on unmount
       timersRef.current.forEach(timer => clearTimeout(timer));
       timersRef.current = [];
     };
   }, []);
 
-  // ✅ 2. Fetch topics با error handling بهتر
+  // ✅ 2. Fetch topics با cache: 'no-store' برای Vercel
   useEffect(() => {
     if (!isMounted) return;
 
     const fetchTopics = async () => {
       try {
         setLoadingTopics(true);
-        const response = await fetch("/api/chat/topics");
+        
+        // ✅ مهم: اضافه کردن cache: 'no-store' برای جلوگیری از Cache در Vercel
+        const response = await fetch("/api/chat/topics", {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -81,10 +88,10 @@ export default function ChatContainer() {
         
         const result = await response.json();
         
-        if (result.success && Array.isArray(result.data)) {
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
           setTopics(result.data);
         } else {
-          console.error("Invalid topics data:", result);
+          console.warn("No topics found or invalid data:", result);
           setTopics([]);
         }
       } catch (error) {
@@ -99,7 +106,7 @@ export default function ChatContainer() {
     fetchTopics();
   }, [isMounted]);
 
-  // ✅ 3. دریافت شروع گفتگو با error handling بهتر
+  // ✅ 3. دریافت شروع گفتگو با cache: 'no-store'
   const fetchStartConversation = useCallback(async (topicSlug: string) => {
     if (!isMounted) return;
 
@@ -109,7 +116,13 @@ export default function ChatContainer() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/chat/start?topic=${topicSlug}`);
+      const response = await fetch(`/api/chat/start?topic=${topicSlug}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -131,7 +144,7 @@ export default function ChatContainer() {
     }
   }, [isMounted]);
 
-  // ✅ 4. دریافت ادامه گفتگو
+  // ✅ 4. دریافت ادامه گفتگو با cache: 'no-store'
   const fetchNextConversation = useCallback(async (slug: string) => {
     if (!isMounted) return;
 
@@ -141,7 +154,13 @@ export default function ChatContainer() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/chat/conversation?slug=${slug}`);
+      const response = await fetch(`/api/chat/conversation?slug=${slug}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -166,7 +185,7 @@ export default function ChatContainer() {
     }
   }, [isMounted]);
 
-  // ✅ 5. نمایش پیام‌ها با تاخیر (با مدیریت Timer)
+  // ✅ 5. نمایش پیام‌ها با تاخیر
   const startDisplayingMessages = useCallback((newMessages: Message[]) => {
     if (!isMounted || !newMessages || newMessages.length === 0) return;
 
@@ -204,11 +223,10 @@ export default function ChatContainer() {
     });
   }, [isMounted]);
 
-  // ✅ 6. اسکرول به پایین (با بررسی وجود element)
+  // ✅ 6. اسکرول به پایین
   const scrollToBottom = useCallback(() => {
     if (!isMounted) return;
     
-    // استفاده از requestAnimationFrame برای اطمینان از DOM update
     requestAnimationFrame(() => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ 
@@ -239,7 +257,6 @@ export default function ChatContainer() {
 
   // ✅ 10. بازگشت
   const handleBack = useCallback(() => {
-    // Clear all timers
     timersRef.current.forEach(timer => clearTimeout(timer));
     timersRef.current = [];
     
@@ -251,7 +268,7 @@ export default function ChatContainer() {
     setError(null);
   }, []);
 
-  // ✅ 11. کامپوننت TopicSelector با حالت نمایش
+  // ✅ 11. کامپوننت TopicSelector
   const TopicSelector = useCallback(() => {
     if (!isMounted) return null;
 
@@ -269,9 +286,19 @@ export default function ChatContainer() {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
           </div>
         ) : topics.length === 0 ? (
-          <div className="text-center p-8 bg-white rounded-2xl shadow-lg">
-            <p className="text-gray-600">هیچ موضوعی یافت نشد</p>
-            <p className="text-sm text-gray-400 mt-2">لطفاً دوباره تلاش کنید</p>
+          <div className="text-center p-8 bg-white rounded-2xl shadow-lg max-w-md">
+            <div className="text-6xl mb-4">📭</div>
+            <p className="text-gray-600 mb-2">هیچ موضوعی یافت نشد</p>
+            <p className="text-sm text-gray-400 mb-4">لطفاً دوباره تلاش کنید</p>
+            <button
+              onClick={() => {
+                setLoadingTopics(true);
+                fetchTopicsAgain();
+              }}
+              className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/80 transition-colors"
+            >
+              تلاش مجدد
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
@@ -296,7 +323,41 @@ export default function ChatContainer() {
     );
   }, [isMounted, loadingTopics, topics, handleTopicSelect]);
 
-  // ✅ 12. اگر در Server-side یا قبل از mount، یک placeholder نمایش بده
+  // ✅ 12. تابع تلاش مجدد
+  const fetchTopicsAgain = useCallback(async () => {
+    if (!isMounted) return;
+    
+    try {
+      const response = await fetch("/api/chat/topics", {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        setTopics(result.data);
+        setError(null);
+      } else {
+        setTopics([]);
+      }
+    } catch (error) {
+      console.error("Error refetching topics:", error);
+      setTopics([]);
+      setError("خطا در دریافت موضوعات");
+    } finally {
+      setLoadingTopics(false);
+    }
+  }, [isMounted]);
+
+  // ✅ 13. اگر در Server-side یا قبل از mount
   if (!isMounted) {
     return (
       <div className="flex flex-col h-screen bg-gray-50">
