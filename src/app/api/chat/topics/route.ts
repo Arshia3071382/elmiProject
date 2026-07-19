@@ -1,68 +1,27 @@
-// src/app/api/chat/topics/route.ts
 import { NextResponse } from "next/server";
-import dbConnect from "../../../../../lib/dbConnect";
-import mongoose from "mongoose";
+import fs from "fs/promises";
+import path from "path";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+const TOPICS_INDEX_PATH = path.join(process.cwd(), "src", "data", "topics-index.json");
 
 export async function GET() {
   try {
-    // ۱. اتصال به دیتابیس
-    await dbConnect();
-
-    // ۲. اطمینان از آمادگی کامل کانکشن
-    if (mongoose.connection.readyState !== 1) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
-
-    // بررسی وجود دیتابیس برای رفع خطای تایپ‌اسکریپت
-    const activeDb = mongoose.connection.db;
-    if (!activeDb) {
-      console.error("❌ [API Topics] Database connection established but 'db' object is undefined.");
-      return NextResponse.json({ success: false, error: "Database context is unavailable" }, { status: 500 });
-    }
-
-    // 🔍 لایه عیب‌یابی: لیست کردن تمام کالکشن‌های موجود در دیتابیسی که Vercel به آن وصل شده
-    const collections = await activeDb.listCollections().toArray();
-    const collectionNames = collections.map(c => c.name);
-    console.log("🔍 [Debug DB] Available collections in live DB:", collectionNames);
-
-    // ۳. فچ کردن مستقیم از درایور بومی دیتابیس بدون واسطه سفت و سخت Mongoose
-    console.log("📡 [API Topics] Executing native driver query on 'topics'...");
-    const nativeData = await activeDb.collection("topics").find({}).sort({ createdAt: 1 }).toArray();
+    console.log("📡 [API] دریافت لیست تاپیک‌ها");
     
-    // تبدیل تمیز ObjectId به string برای جلوگیری از خطای رندر کلاینت
-    const allTopicsData = nativeData.map(doc => ({
-      ...doc,
-      _id: doc._id.toString()
-    }));
-
-    console.log(`✅ [API Topics] Native fetch found ${allTopicsData?.length || 0} topics`);
-
-    // ۴. ارسال ریسپانس نهایی
-    return new NextResponse(
-      JSON.stringify({
-        success: true,
-        data: allTopicsData,
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-        },
-      }
-    );
-  } catch (error) {
-    console.error("❌ [API Topics] Critical Error:", error);
+    // خواندن فایل index
+    const indexContent = await fs.readFile(TOPICS_INDEX_PATH, "utf-8");
+    const topics = JSON.parse(indexContent);
+    
+    console.log(`✅ [API] ${topics.length} تاپیک یافت شد`);
+    
+    return NextResponse.json({ 
+      success: true, 
+      data: topics 
+    });
+  } catch (error: any) {
+    console.error("❌ [API] خطا در دریافت تاپیک‌ها:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to fetch topics",
-        details: error instanceof Error ? error.message : String(error)
-      },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

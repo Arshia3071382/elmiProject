@@ -1,0 +1,11 @@
+[
+  {
+    "id": "humanities",
+    "slug": "humanities",
+    "title": "مشاوره رشته انسانی",
+    "description": "راهنمایی تخصصی برای انتخاب رشته علوم انسانی",
+    "icon": "Scale",
+    "color": "amber",
+    "file": "humanities.json"
+  }
+]
