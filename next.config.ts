@@ -12,4 +12,4 @@ const nextConfig = {
 
 module.exports = nextConfig
 
-// build trigger
+// build triggergghgh
