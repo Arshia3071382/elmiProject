@@ -25,4 +25,6 @@ const TopicSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.models.Topic || mongoose.model("Topic", TopicSchema);
+// برای جلوگیری از Overwrite شدن مدل در دفعات اجرای Serverless Function
+export const Topic = mongoose.models.Topic || mongoose.model("Topic", TopicSchema);
+export default Topic;
