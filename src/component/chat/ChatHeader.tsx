@@ -30,7 +30,7 @@ export default function ChatHeader({ title, onBack }: ChatHeaderProps) {
       </button>
       <div className="flex items-center gap-3 flex-1">
         <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">
-          گ
+          
         </div>
         <div className="flex-1">
           <h2 className="font-semibold text-gray-800 text-sm md:text-base">

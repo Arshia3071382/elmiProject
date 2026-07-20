@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Check, CheckCheck, Loader2, GraduationCap, Atom, Scale, Award, ChevronLeft, MessageSquare, AlertCircle } from "lucide-react";
-
-interface Message {
-  id: string;
-  sender: "student" | "advisor";
-  text: string;
-  typing?: number;
-  time?: string;
-  status?: "sending" | "sent" | "read";
-  isVisible?: boolean;
-}
+import { Loader2, GraduationCap, Atom, Scale, Award, MessageSquare, AlertCircle } from "lucide-react";
+import ChatMessage, { Message } from "./ChatMessage";
+import TypingIndicator from "./TypingIndicator";
+import ChatChoices from "./ChatChoices";
 
 interface Choice {
   text: string;
@@ -28,6 +21,8 @@ interface Topic {
   color: string;
   file: string;
 }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getTopicStyling = (slug: string) => {
   switch (slug) {
@@ -61,35 +56,23 @@ const getTopicStyling = (slug: string) => {
 export default function ChatContainer() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const topicSlug = searchParams.get("t");
   const [pageTitle, setPageTitle] = useState("اتاق مشاوره تخصصی");
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [choices, setChoices] = useState<Choice[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [loadingInitial, setLoadingInitial] = useState(true); // فقط برای لود اول بار صفحه چت
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [isNotReady, setIsNotReady] = useState(false);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
-  
+
+  const activeStepRef = useRef<number>(0);
   const chatScrollContainerRef = useRef<HTMLDivElement>(null);
+  const initialLoadedRef = useRef<string | null>(null);
 
-  // ============================================
-  // 1. Mount
-  // ============================================
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
-
-  // ============================================
-  // 2. فچ کردن لیست موضوعات
-  // ============================================
-  useEffect(() => {
-    if (!isMounted) return;
-    
     fetch("/api/chat/topics")
       .then((r) => r.json())
       .then((res) => {
@@ -101,13 +84,10 @@ export default function ChatContainer() {
           }
         }
       })
-      .catch(console.error)
+      .catch((err) => console.error(" Error fetching topics:", err))
       .finally(() => setLoadingTopics(false));
-  }, [isMounted, topicSlug]);
+  }, [topicSlug]);
 
-  // ============================================
-  // 3. اسکرول فوری و روان به پایین
-  // ============================================
   const scrollToBottom = () => {
     if (chatScrollContainerRef.current) {
       chatScrollContainerRef.current.scrollTo({
@@ -119,26 +99,26 @@ export default function ChatContainer() {
 
   useEffect(() => {
     if (messages.length > 0 || isTyping) {
-      // استفاده از requestAnimationFrame یا تایمر بسیار کم برای تضمین رندر شدن DOM
-      const timer = setTimeout(scrollToBottom, 30);
+      const timer = setTimeout(scrollToBottom, 40);
       return () => clearTimeout(timer);
     }
   }, [messages.length, isTyping]);
 
-  // ============================================
-  // 4. لود کردن گام‌های چت با نمایش دونه‌دونه (تلگرامی)
-  // ============================================
-  const loadConversationNode = async (slug: string, isFirstLoad = false) => {
+  const loadConversationNode = useCallback(async (slug: string, isFirstLoad = false) => {
     if (!topicSlug) return;
-    
+
+    const currentStepId = ++activeStepRef.current;
+
     try {
       if (isFirstLoad) setLoadingInitial(true);
       setChoices([]);
-      setIsTyping(true); // بلافاصله انیمیشن تایپینگ مشاور فعال شود
-      
-      const response = await fetch(`/api/chat/conversation?topic=${topicSlug}&slug=${slug}`);
+      setIsTyping(false);
+
+      const apiUrl = `/api/chat/conversation?topic=${topicSlug}&slug=${slug}`;
+      const response = await fetch(apiUrl);
       const result = await response.json();
-      
+
+      if (activeStepRef.current !== currentStepId) return;
       if (isFirstLoad) setLoadingInitial(false);
 
       if (!result.success || !result.data) {
@@ -151,106 +131,82 @@ export default function ChatContainer() {
       const node = result.data;
       const rawMessages = node.messages || [];
 
-      // نمایش پیام‌ها دونه‌دونه با افکت زمان‌بندی شده
       for (let i = 0; i < rawMessages.length; i++) {
+        if (activeStepRef.current !== currentStepId) return;
+
         const msg = rawMessages[i];
-        
+
         if (msg.sender === "advisor") {
           setIsTyping(true);
-          // زمان تایپ طبیعی یا حداقل 800 میلی‌ثانیه برای حس طبیعی بودن
-          const typingDuration = msg.typing || 800;
-          await new Promise(resolve => setTimeout(resolve, typingDuration));
+          const typingDuration = msg.typing || 1000;
+          await sleep(typingDuration);
+          if (activeStepRef.current !== currentStepId) return;
           setIsTyping(false);
+        } else if (i > 0) {
+          await sleep(500);
+          if (activeStepRef.current !== currentStepId) return;
         }
 
         const now = new Date();
         const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-        const generatedId = msg.id || `msg-${Date.now()}-${i}`;
 
-        const newMessage: Message = { 
-          ...msg, 
-          id: generatedId,
-          time: timeStr, 
-          status: "sending",
-          isVisible: false
+        const newMessage: Message = {
+          ...msg,
+          id: `${slug}-${i}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          time: timeStr,
+          status: "read",
+          isVisible: true
         };
-        
-        // اضافه کردن پیام به لیست
-        setMessages(prev => [...prev, newMessage]);
 
-        // فعال کردن کلاس انیمیشن بلافاصله در فریم بعدی
-        setTimeout(() => {
-          setMessages(prev => 
-            prev.map(m => m.id === generatedId ? { ...m, isVisible: true, status: "sent" } : m)
-          );
-        }, 30);
-
-        // شبیه‌سازی تیک دوم (خوانده شده) تلگرام بعد از مکث کوتاه
-        if (msg.sender === "advisor") {
-          setTimeout(() => {
-            setMessages(prev => 
-              prev.map(m => m.id === generatedId ? { ...m, status: "read" } : m)
-            );
-          }, 400);
-        }
-
-        // فاصله بین دو پیام متوالی مشاور
-        if (i < rawMessages.length - 1) {
-          setIsTyping(true);
-          await new Promise(resolve => setTimeout(resolve, 400));
-        }
+        setMessages((prev) => [...prev, newMessage]);
+        await sleep(350);
       }
 
-      // نمایش گزینه‌های انتخاب پس از اتمام کامل پیام‌ها
-      setChoices(node.choices || []);
-      setIsTyping(false);
-      
+      if (activeStepRef.current === currentStepId) {
+        setChoices(node.choices || []);
+        setIsTyping(false);
+      }
     } catch (error) {
-      console.error(error);
-      setIsNotReady(true);
-      setIsTyping(false);
-      if (isFirstLoad) setLoadingInitial(false);
+      console.error(`Exception in loadConversationNode:`, error);
+      if (activeStepRef.current === currentStepId) {
+        setIsNotReady(true);
+        setIsTyping(false);
+        if (isFirstLoad) setLoadingInitial(false);
+      }
     }
-  };
+  }, [topicSlug]);
 
-  // ============================================
-  // 5. بارگذاری گام شروع
-  // ============================================
   useEffect(() => {
-    if (topicSlug && isMounted) {
+    if (topicSlug && initialLoadedRef.current !== topicSlug) {
+      initialLoadedRef.current = topicSlug;
       setMessages([]);
       const startSlug = `${topicSlug}-start`;
       loadConversationNode(startSlug, true);
     }
-  }, [topicSlug, isMounted]);
+  }, [topicSlug, loadConversationNode]);
 
-  // ============================================
-  // 6. انتخاب گزینه توسط کاربر
-  // ============================================
-  const handleChoiceClick = (choice: Choice) => {
+  const handleChoiceClick = (nextSlug: string) => {
     if (!topicSlug) return;
-    
+
+    const selectedChoice = choices.find((c) => c.next === nextSlug);
+    if (!selectedChoice) return;
+
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-    
-    const studentMsg: Message = { 
-      id: `choice-${Date.now()}`, 
-      sender: "student", 
-      text: choice.text, 
-      time: timeStr, 
+
+    const studentMsg: Message = {
+      id: `choice-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      sender: "student",
+      text: selectedChoice.text,
+      time: timeStr,
       status: "read",
       isVisible: true
     };
-    
-    setMessages(prev => [...prev, studentMsg]);
-    
-    // انتقال سریع به گام بعدی بدون غیب کردن چت‌باکس
-    loadConversationNode(choice.next, false);
+
+    setMessages((prev) => [...prev, studentMsg]);
+    loadConversationNode(nextSlug, false);
   };
 
-  // ============================================
-  // 7. حالت لیست تاپیک‌ها
-  // ============================================
   if (!topicSlug) {
     if (loadingTopics) {
       return (
@@ -275,11 +231,11 @@ export default function ChatContainer() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {topics.map((t) => {
+          {topics.map((t, idx) => {
             const style = getTopicStyling(t.slug);
             return (
               <button
-                key={t.id}
+                key={t.id || `${t.slug}-${idx}`}
                 onClick={() => router.push(`/chat-guidance?t=${t.slug}`)}
                 className={`group flex flex-col justify-between p-6 bg-gradient-to-br border rounded-2xl aspect-square transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg text-right cursor-pointer relative overflow-hidden ${style.gradient}`}
               >
@@ -292,12 +248,7 @@ export default function ChatContainer() {
                     {t.title}
                   </h3>
                   <p className="text-xs text-text-secondary">{t.description}</p>
-                  <div className="flex items-center gap-1 text-xs font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
-                    <span>شروع مشاوره تخصصی</span>
-                    <ChevronLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
-                  </div>
                 </div>
-                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-current opacity-[0.02] rounded-full group-hover:scale-150 transition-transform duration-500" />
               </button>
             );
           })}
@@ -306,9 +257,6 @@ export default function ChatContainer() {
     );
   }
 
-  // ============================================
-  // 8. حالت ارور
-  // ============================================
   if (isNotReady) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] w-full max-w-md bg-surface border border-border rounded-3xl p-8 shadow-xl text-center font-['iranSans-r']" dir="rtl">
@@ -329,9 +277,6 @@ export default function ChatContainer() {
     );
   }
 
-  // ============================================
-  // 9. حالت لودینگ اولیه اتاق
-  // ============================================
   if (loadingInitial) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] w-full max-w-2xl bg-surface border border-border rounded-3xl p-8 shadow-xl" dir="rtl">
@@ -341,16 +286,12 @@ export default function ChatContainer() {
     );
   }
 
-  // ============================================
-  // 10. ساختار چت فعال (بسیار سریع و انیمیشنی)
-  // ============================================
   return (
     <div className="flex flex-col h-[85vh] w-full max-w-2xl bg-surface border border-border rounded-3xl overflow-hidden shadow-xl font-['iranSans-r']" dir="rtl">
-      
-      {/* هدر */}
+      {/* هدر چت */}
       <div className="bg-surface p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm relative text-lg">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm relative text-lg select-none">
             👨‍🏫
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success border-2 border-surface rounded-full"></span>
           </div>
@@ -367,94 +308,24 @@ export default function ChatContainer() {
         </button>
       </div>
 
-      {/* باکس پیام‌ها */}
+      {/* لیست پیام‌ها */}
       <div ref={chatScrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-bg scroll-smooth">
-        {messages.map((msg) => {
-          const isAdvisor = msg.sender === "advisor";
-          return (
-            <div 
-              key={msg.id} 
-              className={`flex items-end gap-2 transition-all duration-300 ease-out transform ${
-                isAdvisor ? "justify-start" : "justify-end"
-              } ${
-                msg.isVisible !== false 
-                  ? "translate-y-0 opacity-100 scale-100" 
-                  : "translate-y-4 opacity-0 scale-95"
-              }`}
-            >
-              {isAdvisor && (
-                <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-sm shadow-sm shrink-0 select-none">
-                  👨‍🏫
-                </div>
-              )}
-
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm relative leading-relaxed pb-6 transition-all ${
-                isAdvisor 
-                  ? "bg-surface text-text-primary rounded-bl-none border border-border" 
-                  : "bg-secondary text-white rounded-br-none"
-              }`}>
-                <p className="whitespace-pre-line">{msg.text}</p>
-                
-                <div className="absolute bottom-1 left-3 flex items-center gap-1 text-[9px] opacity-60 select-none">
-                  <span>{msg.time}</span>
-                  {!isAdvisor && (
-                    <CheckCheck className="w-2.5 h-2.5 opacity-70" />
-                  )}
-                  {isAdvisor && (
-                    <span>
-                      {msg.status === "sending" && <span className="animate-pulse">...</span>}
-                      {msg.status === "sent" && <Check className="w-2.5 h-2.5 text-gray-400" />}
-                      {msg.status === "read" && <CheckCheck className="w-2.5 h-2.5 text-blue-500" />}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {!isAdvisor && (
-                <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-sm shadow-sm shrink-0 select-none">
-                  👨‍🎓
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* لودینگ تایپینگ زیبا به سبک تلگرام */}
-        {isTyping && (
-          <div className="flex items-end gap-2 justify-start transition-opacity duration-200">
-            <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-sm shadow-sm shrink-0">
-              👨‍🏫
-            </div>
-            <div className="bg-surface rounded-2xl rounded-bl-none px-4 py-3 shadow-sm border border-border flex items-center gap-1.5 real-typing-effect">
-              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-            </div>
-          </div>
-        )}
+        {messages.map((msg) => (
+          <ChatMessage key={msg.id} message={msg} />
+        ))}
+        {isTyping && <TypingIndicator />}
       </div>
 
-      {/* دکمه‌های گزینه‌ها */}
-      <div className="p-4 bg-surface border-t border-border min-h-[85px] flex items-center justify-center transition-all duration-300">
+      {/* بخش گزینه‌ها */}
+      <div className="p-4 bg-surface border-t border-border min-h-[85px] flex items-center justify-center">
         {choices.length > 0 ? (
-          <div className="flex flex-wrap gap-2 justify-center w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {choices.map((choice, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleChoiceClick(choice)}
-                className="bg-blue-50/70 hover:bg-blue-100 text-secondary font-['iranBold'] border border-blue-100 px-4 py-2.5 rounded-xl text-xs transition-all duration-150 active:scale-95 shadow-sm"
-              >
-                {choice.text}
-              </button>
-            ))}
-          </div>
+          <ChatChoices choices={choices} onSelect={handleChoiceClick} />
         ) : (
           !isTyping && messages.length > 0 && (
             <p className="text-xs text-text-secondary animate-pulse">پایان گفتگو ✅</p>
           )
         )}
       </div>
-
     </div>
   );
 }

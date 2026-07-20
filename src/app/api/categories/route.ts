@@ -1,17 +1,12 @@
 import { NextResponse } from 'next/server';
-import { connectToDB } from './../../../../lib/dbConnect';
+import dbConnect from './../../../../lib/dbConnect';
 import Category from './../../../../models/Category';
-
-const getCategoryModel = async () => {
-  await connectToDB();
-  return Category;
-};
 
 export async function GET() {
   try {
-    const CategoryModel = await getCategoryModel();
+    await dbConnect();
     
-    const categories = await CategoryModel.find({}).sort({ createdAt: -1 }).lean();
+    const categories = await Category.find({}).sort({ createdAt: -1 }).lean();
     const categoriesArray = Array.isArray(categories) ? categories : [];
     
     return NextResponse.json({ success: true, categories: categoriesArray });
@@ -27,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const CategoryModel = await getCategoryModel();
+    await dbConnect();
     const body = await request.json();
     
     const { name, description } = body;
@@ -41,7 +36,7 @@ export async function POST(request: Request) {
     
     const slug = encodeURIComponent(name.trim().replace(/\s+/g, '-').toLowerCase());
     
-    const existingCategory = await CategoryModel.findOne({ slug });
+    const existingCategory = await Category.findOne({ slug });
     if (existingCategory) {
       return NextResponse.json(
         { success: false, error: 'گروهی با این نام قبلاً ثبت شده است' },
@@ -49,7 +44,7 @@ export async function POST(request: Request) {
       );
     }
     
-    const category = await CategoryModel.create({
+    const category = await Category.create({
       name: name.trim(),
       slug,
       description: description || '',
@@ -71,7 +66,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const CategoryModel = await getCategoryModel();
+    await dbConnect();
     const body = await request.json();
     const { id, name } = body;
     
@@ -91,7 +86,7 @@ export async function PUT(request: Request) {
     
     const slug = encodeURIComponent(name.trim().replace(/\s+/g, '-').toLowerCase());
     
-    const category = await CategoryModel.findByIdAndUpdate(
+    const category = await Category.findByIdAndUpdate(
       id,
       { name: name.trim(), slug },
       { new: true, runValidators: true }
@@ -117,7 +112,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const CategoryModel = await getCategoryModel();
+    await dbConnect();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
@@ -128,7 +123,7 @@ export async function DELETE(request: Request) {
       );
     }
     
-    const category = await CategoryModel.findByIdAndDelete(id);
+    const category = await Category.findByIdAndDelete(id);
     
     if (!category) {
       return NextResponse.json(

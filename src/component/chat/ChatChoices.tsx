@@ -1,10 +1,9 @@
-// src/component/chat/ChatChoices.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 
 interface Choice {
-  id: string;
+  id?: string;
   text: string;
   next: string;
 }
@@ -16,44 +15,33 @@ interface ChatChoicesProps {
 
 export default function ChatChoices({ choices, onSelect }: ChatChoicesProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 500);
+    const timer = setTimeout(() => setIsVisible(true), 150);
     return () => clearTimeout(timer);
-  }, [isMounted]);
-
-  if (!isMounted) return null;
+  }, []);
 
   return (
     <div
-      className={`flex flex-col gap-3 mt-6 transition-all duration-700 transform ${
-        isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+      className={`flex flex-col gap-2.5 mt-4 w-full transition-all duration-500 transform ${
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
       }`}
     >
-      <div className="text-xs text-gray-400 text-center mb-2">
-        —————— گزینه‌های پیش رو ——————
+      <div className="text-[11px] text-gray-400 text-center mb-1 select-none">
+        — گزینه‌های انتخاب —
       </div>
-      {choices.map((choice) => (
-        <button
-          key={choice.id}
-          onClick={() => onSelect(choice.next)}
-          className="w-full text-right px-5 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:border-accent hover:bg-accent hover:text-white transition-all duration-300 group flex items-center gap-3 shadow-sm hover:shadow-md"
-        >
-          <span className="font-medium text-sm md:text-base">{choice.text}</span>
-          <span className="mr-auto text-gray-400 group-hover:text-white transition-colors">
-            ←
-          </span>
-        </button>
-      ))}
+      <div className="flex flex-wrap gap-2 justify-center w-full">
+        {choices.map((choice, index) => (
+          <button
+            key={choice.id || index}
+            onClick={() => onSelect(choice.next)}
+            className="w-full sm:w-auto text-right px-4 py-2.5 bg-blue-50/80 hover:bg-blue-100/80 text-secondary font-['iranBold'] border border-blue-100 rounded-xl text-xs sm:text-sm transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-between gap-3"
+          >
+            <span>{choice.text}</span>
+            <span className="text-gray-400 group-hover:text-secondary transition-colors">←</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

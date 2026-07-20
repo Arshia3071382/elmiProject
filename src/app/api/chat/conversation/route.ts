@@ -1,102 +1,96 @@
-import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { NextRequest, NextResponse } from "next/server";
+import dbConnect from "./../../../../../lib/dbConnect";
+import { Topic } from "./../../../../../models/Topic";
 
-const DATA_DIR = path.join(process.cwd(), "src", "data");
-
-// خواندن فایل index برای پیدا کردن نام فایل
-async function getTopicFile(slug: string): Promise<string | null> {
+export async function GET(req: NextRequest) {
   try {
-    const indexPath = path.join(DATA_DIR, "topics-index.json");
-    const indexContent = await fs.readFile(indexPath, "utf-8");
-    const topics = JSON.parse(indexContent);
-    
-    const topic = topics.find((t: any) => t.slug === slug);
-    return topic ? topic.file : null;
-  } catch (error) {
-    console.error("❌ خطا در خواندن index:", error);
-    return null;
-  }
-}
+    await dbConnect();
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const slug = searchParams.get("topic");
+    const { searchParams } = new URL(req.url);
+    const topicSlug = searchParams.get("topic");
     const nodeSlug = searchParams.get("slug");
 
-    console.log(`📡 [API] دریافت گام: topic=${slug}, node=${nodeSlug}`);
-
-    if (!slug || !nodeSlug) {
+    if (!topicSlug) {
       return NextResponse.json(
-        { success: false, error: "پارامترهای topic و slug الزامی هستند" },
+        { success: false, message: "پارامتر topic الزامی است." },
         { status: 400 }
       );
     }
 
-    // پیدا کردن نام فایل از index
-    const fileName = await getTopicFile(slug);
-    if (!fileName) {
-      console.log(`❌ [API] تاپیک "${slug}" یافت نشد`);
+    const topic = await Topic.findOne({ slug: topicSlug }).lean();
+
+    if (!topic || !topic.nodes) {
       return NextResponse.json(
-        { success: false, error: `تاپیک "${slug}" یافت نشد` },
+        { success: false, message: "تاپیک یا گره‌ها یافت نشدند." },
         { status: 404 }
       );
     }
 
-    // خواندن فایل سناریو
-    const filePath = path.join(DATA_DIR, fileName);
-    console.log(`📂 [API] مسیر فایل: ${filePath}`);
+    const nodesObj = topic.nodes as Record<string, any>;
 
-    try {
-      const fileContent = await fs.readFile(filePath, "utf-8");
-      const scenarioData = JSON.parse(fileContent);
-      
-      console.log(`✅ [API] فایل خوانده شد، گام‌ها:`, Object.keys(scenarioData));
-      
-      // پیدا کردن گام
-      const nodeData = scenarioData[nodeSlug];
-      
-      if (!nodeData) {
-        console.log(`❌ [API] گام "${nodeSlug}" یافت نشد`);
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: `گام "${nodeSlug}" در سناریو یافت نشد` 
-          },
-          { status: 404 }
-        );
+    // ۱. تعیین کلید گره هدف
+    let targetNodeKey: string = nodeSlug || "";
+
+    // اگر بار اول است یا گره دریافتی نامشخص/استارت است
+    if (!targetNodeKey || targetNodeKey === `${topicSlug}-start`) {
+      if (nodesObj[`${topicSlug}-start`]) {
+        targetNodeKey = `${topicSlug}-start`;
+      } else if (topic.startNodeId && nodesObj[topic.startNodeId]) {
+        targetNodeKey = topic.startNodeId;
+      } else if (nodesObj["start"]) {
+        targetNodeKey = "start";
+      } else {
+        // اولین کلید موجود در nodes را به عنوان شروع انتخاب کن
+        targetNodeKey = Object.keys(nodesObj)[0] || "";
       }
-
-      console.log(`✅ [API] گام "${nodeSlug}" با ${nodeData.messages?.length || 0} پیام و ${nodeData.choices?.length || 0} انتخاب`);
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          messages: nodeData.messages || [],
-          choices: nodeData.choices || [],
-          title: nodeData.title || nodeSlug,
-        }
-      });
-      
-    } catch (fileError: any) {
-      console.error(`❌ [API] خطا در خواندن فایل:`, fileError);
-      
-      if (fileError.code === 'ENOENT') {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: `فایل سناریو "${fileName}" یافت نشد` 
-          },
-          { status: 404 }
-        );
-      }
-      throw fileError;
     }
+
+    // دسترسی به گره
+    const currentNode = nodesObj[targetNodeKey];
+
+    if (!currentNode) {
+      return NextResponse.json(
+        { success: false, message: `گره '${targetNodeKey}' یافت نشد.` },
+        { status: 404 }
+      );
+    }
+
+    // ۲. فرمت‌دهی هوشمند پیام‌ها (پشتیبانی همزمان از messages و advisorMessage)
+    let formattedMessages: any[] = [];
+
+    if (Array.isArray(currentNode.messages) && currentNode.messages.length > 0) {
+      formattedMessages = currentNode.messages;
+    } else if (currentNode.advisorMessage) {
+      formattedMessages = [
+        {
+          id: `msg-${targetNodeKey}`,
+          sender: "advisor",
+          text: currentNode.advisorMessage,
+          typing: 800,
+        },
+      ];
+    }
+
+    // ۳. فرمت‌دهی هوشمند گزینه‌ها (پشتیبانی همزمان از choices و options)
+    const rawChoices = currentNode.choices || currentNode.options || [];
+    const formattedChoices = rawChoices.map((opt: any, index: number) => ({
+      id: opt.id || `opt-${index}`,
+      text: opt.text,
+      next: opt.next || opt.nextNodeId || opt.nextNode || "start",
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        title: currentNode.title || "",
+        messages: formattedMessages,
+        choices: formattedChoices,
+      },
+    });
   } catch (error: any) {
-    console.error("❌ [API] خطا:", error);
+    console.error("Conversation API Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, message: error.message },
       { status: 500 }
     );
   }

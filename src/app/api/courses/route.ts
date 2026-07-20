@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { connectToDB } from "./../../../../lib/dbConnect"; 
+import dbConnect from "./../../../../lib/dbConnect"; // ✅ تغییر از connectToDB به dbConnect
 import Course from "./../../../../models/Course";
 import Category from "./../../../../models/Category"; 
 import { extractAparatEmbedUrl } from "./../../../../lib/aparatUtils";
@@ -16,7 +16,7 @@ const registerModels = () => {
 // ۱. دریافت دوره‌ها (مرحله ۸ - ارسال فیلد teacher همراه سایر فیلدها)
 export async function GET(req: Request) {
   try {
-    await connectToDB();
+    await dbConnect(); // ✅ تغییر از connectToDB به dbConnect
     registerModels();
 
     const { searchParams } = new URL(req.url);
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 // ۲. ایجاد دوره جدید (مرحله ۴ - دریافت و ذخیره فیلد teacher در پایگاه‌داده)
 export async function POST(req: Request) {
   try {
-    await connectToDB();
+    await dbConnect(); // ✅ تغییر از connectToDB به dbConnect
     registerModels();
     
     const formData = await req.formData();
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
 // ۳. ویرایش دوره (مرحله ۵ - دریافت و ویرایش فیلد teacher)
 export async function PUT(req: Request) {
   try {
-    await connectToDB();
+    await dbConnect(); // ✅ تغییر از connectToDB به dbConnect
     registerModels();
     
     const formData = await req.formData();
@@ -172,7 +172,7 @@ export async function PUT(req: Request) {
 // ۴. حذف دوره
 export async function DELETE(req: Request) {
   try {
-    await connectToDB();
+    await dbConnect(); // ✅ تغییر از connectToDB به dbConnect
     registerModels();
 
     const { searchParams } = new URL(req.url);

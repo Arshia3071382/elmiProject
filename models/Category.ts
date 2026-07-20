@@ -1,28 +1,26 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, model, models } from 'mongoose';
 
-const CategorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'نام گروه الزامی است'],
-    unique: true,
-    trim: true,
+const CategorySchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'نام گروه الزامی است'],
+      unique: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      unique: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: '',
+    },
   },
-  slug: {
-    type: String,
-    unique: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    default: '',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
-
-const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
+const Category = models.Category || model('Category', CategorySchema);
 
 export default Category;

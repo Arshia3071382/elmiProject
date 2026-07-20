@@ -1,122 +1,70 @@
-// src/component/chat/ChatMessage.tsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { Check, CheckCheck } from "lucide-react";
 
-interface MessageProps {
-  message: {
-    id: string;
-    sender: "student" | "advisor";
-    type: string;
-    text?: string;
-    delay?: number;
-    typing?: number;
-    showTicks?: boolean;
-  };
-  isStudent: boolean;
+export interface Message {
+  id: string;
+  sender: "student" | "advisor";
+  text: string;
+  typing?: number;
+  time?: string;
+  status?: "sending" | "sent" | "read";
+  isVisible?: boolean;
 }
 
-export default function ChatMessage({ message, isStudent }: MessageProps) {
-  const [showFirstTick, setShowFirstTick] = useState(false);
-  const [showSecondTick, setShowSecondTick] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+interface ChatMessageProps {
+  message: Message;
+}
+
+export default function ChatMessage({ message }: ChatMessageProps) {
+  const [isVisible, setIsVisible] = useState(message.isVisible ?? false);
+  const isAdvisor = message.sender === "advisor";
 
   useEffect(() => {
-    setIsMounted(true);
-    return () => {
-      setIsMounted(false);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 100);
-
-    if (message.showTicks && !isStudent) {
-      const tick1Timer = setTimeout(() => {
-        if (isMounted) setShowFirstTick(true);
-      }, 300);
-
-      const tick2Timer = setTimeout(() => {
-        if (isMounted) setShowSecondTick(true);
-      }, 500);
-
-      return () => {
-        clearTimeout(tick1Timer);
-        clearTimeout(tick2Timer);
-      };
-    }
-
+    const timer = setTimeout(() => setIsVisible(true), 30);
     return () => clearTimeout(timer);
-  }, [isMounted, isStudent, message.showTicks]);
-
-  if (!isMounted) return null;
-
-  const getTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString("fa-IR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  }, []);
 
   return (
     <div
-      className={`flex items-start gap-3 mb-4 transition-all duration-500 transform ${
-        isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-      } ${isStudent ? "flex-row" : "flex-row-reverse"}`}
+      className={`flex items-end gap-2 transition-all duration-300 ease-out transform ${
+        isAdvisor ? "justify-start" : "justify-end"
+      } ${isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95"}`}
     >
-      <div className="flex-shrink-0">
-        <div className={`w-10 h-10 rounded-full overflow-hidden ${
-          isStudent ? "bg-blue-100" : "bg-accent/10"
-        } flex items-center justify-center`}>
-          {isStudent ? (
-            <span className="text-xl">👨‍🎓</span>
-          ) : (
-            <span className="text-xl">🧑‍🏫</span>
+      {isAdvisor && (
+        <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-sm shadow-sm shrink-0 select-none">
+          👨‍🏫
+        </div>
+      )}
+
+      <div
+        className={`max-w-[78%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm shadow-sm relative leading-relaxed pb-6 transition-all ${
+          isAdvisor
+            ? "bg-surface text-text-primary rounded-bl-none border border-border"
+            : "bg-secondary text-white rounded-br-none"
+        }`}
+      >
+        <p className="whitespace-pre-line text-xs sm:text-sm">{message.text}</p>
+
+        <div className="absolute bottom-1 left-3 flex items-center gap-1 text-[9px] opacity-60 select-none dir-ltr">
+          <span>{message.time}</span>
+          {!isAdvisor && <CheckCheck className="w-2.5 h-2.5 opacity-70" />}
+          {isAdvisor && (
+            <span>
+              {message.status === "sending" && <span className="animate-pulse">...</span>}
+              {message.status === "sent" && <Check className="w-2.5 h-2.5 text-gray-400" />}
+              {message.status === "read" && <CheckCheck className="w-2.5 h-2.5 text-blue-500" />}
+            </span>
           )}
         </div>
       </div>
 
-      <div className={`max-w-[70%] ${isStudent ? "items-start" : "items-end"}`}>
-        <div
-          className={`rounded-2xl px-4 py-3 ${
-            isStudent
-              ? "bg-white text-gray-800 shadow-sm"
-              : "bg-accent text-white"
-          }`}
-        >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.text}
-          </p>
+      {!isAdvisor && (
+        <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-sm shadow-sm shrink-0 select-none">
+          👨‍🎓
         </div>
-
-        <div className="flex items-center gap-0.5 mt-1 text-xs text-gray-400 justify-end">
-          {!isStudent && message.showTicks && (
-            <>
-              <span
-                className={`transition-opacity duration-300 ${
-                  showFirstTick ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                ✓
-              </span>
-              <span
-                className={`transition-opacity duration-300 ${
-                  showSecondTick ? "opacity-100 text-blue-500" : "opacity-0"
-                }`}
-              >
-                ✓
-              </span>
-            </>
-          )}
-          <span className="mr-1">{getTime()}</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

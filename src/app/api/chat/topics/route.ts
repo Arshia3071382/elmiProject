@@ -1,27 +1,43 @@
-import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-
-const TOPICS_INDEX_PATH = path.join(process.cwd(), "src", "data", "topics-index.json");
-
+import { NextRequest, NextResponse } from "next/server";
+import dbConnect from "./../../../../../lib/dbConnect";
+import { Topic } from "./../../../../../models/Topic";
 export async function GET() {
   try {
-    console.log("📡 [API] دریافت لیست تاپیک‌ها");
-    
-    // خواندن فایل index
-    const indexContent = await fs.readFile(TOPICS_INDEX_PATH, "utf-8");
-    const topics = JSON.parse(indexContent);
-    
-    console.log(`✅ [API] ${topics.length} تاپیک یافت شد`);
-    
-    return NextResponse.json({ 
-      success: true, 
-      data: topics 
-    });
+    await dbConnect();
+    const topics = await Topic.find({}).sort({ createdAt: -1 }).lean();
+    return NextResponse.json({ success: true, data: topics });
   } catch (error: any) {
-    console.error("❌ [API] خطا در دریافت تاپیک‌ها:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    await dbConnect();
+    const body = await req.json();
+
+    const { title, slug, description, startNodeId, nodes } = body;
+
+    if (!title || !slug) {
+      return NextResponse.json(
+        { success: false, message: "عنوان و اسلاگ الزامی هستند." },
+        { status: 400 }
+      );
+    }
+
+    const newTopic = await Topic.create({
+      title,
+      slug,
+      description,
+      startNodeId: startNodeId || "start",
+      nodes: nodes || {},
+    });
+
+    return NextResponse.json({ success: true, data: newTopic }, { status: 201 });
+  } catch (error: any) {
+    console.error("Mongoose POST Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, message: error.message || "خطا در ثبت دیتابیس" },
       { status: 500 }
     );
   }
