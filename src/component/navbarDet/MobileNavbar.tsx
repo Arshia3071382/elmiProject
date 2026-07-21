@@ -45,12 +45,12 @@ export default function MobileNavbar({
         </div>
 
         {/* بخش دکمه‌های عملیاتی موبایل */}
-        <div className="flex flex-col items-stretch gap-1 py-1 order-last min-w-[95px] flex-shrink-0">
+        <div className="flex flex-col justify-center items-stretch gap-1 py-1 order-last min-w-[95px] flex-shrink-0 mb-2">
           
           {/* دکمه گفتینو */}
           <Link href="/chat-guidance" className="w-full">
             <button
-              className="w-full rounded cursor-pointer text-white py-0.5 px-2 bg-accent hover:bg-opacity-90 transition-all duration-300 text-center font-[iranSans-r] text-[10px] whitespace-nowrap"
+              className="w-full rounded cursor-pointer text-white py-0.5 px-2 bg-accent hover:bg-opacity-90 transition-all duration-300 text-center font-[iranSans-r] text-[10px] whitespace-nowrap mb-1"
               style={{
                 opacity: showCourses ? 1 : 0,
                 transition: "opacity 0.5s ease-out",
@@ -82,7 +82,7 @@ export default function MobileNavbar({
                 transition: "opacity 0.5s ease-out",
               }}
             >
-              دوره‌ها
+             دوره های آموزشی
             </button>
           </Link>
 

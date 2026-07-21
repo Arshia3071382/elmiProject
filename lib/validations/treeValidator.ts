@@ -1,5 +1,5 @@
 // src/lib/validations/treeValidator.ts
-import { INode } from "./../..//models/Topic";
+import { INode } from "./../../models/Topic";
 
 export interface ValidationError {
   type: "BROKEN_LINK" | "ORPHAN_NODE" | "MISSING_START_NODE";
@@ -26,7 +26,7 @@ export function validateConversationTree(
 
   const nodeIds = new Set(Object.keys(plainNodes));
 
-  // اگر هیچ نودی وجود ندارد، خطایی بازگردانده نمی‌شود (فرم در حال ساخت اولیه است)
+  // اگر هیچ نودی وجود ندارد، خطایی بازگردانده نمی‌شود
   if (nodeIds.size === 0) return errors;
 
   // ۱. بررسی وجود داشتن نود شروع (Start Node)
@@ -51,25 +51,27 @@ export function validateConversationTree(
     const currentNode = plainNodes[currentId];
     if (!currentNode) continue;
 
+    // پیمایش گزینه‌های نود جاری
     if (Array.isArray(currentNode.options)) {
       for (const option of currentNode.options) {
-        if (option.nextNodeId) {
-          // ۲. بررسی مقصد گزینه‌ها (Broken Link)
-          if (!nodeIds.has(option.nextNodeId)) {
+        if (option.next) {
+          // بررسی مقصد گزینه‌ها (Broken Link)
+          if (!nodeIds.has(option.next)) {
             errors.push({
               type: "BROKEN_LINK",
-              message: `گزینه "${option.text}" در نود "${currentId}" به نود ناموجود "${option.nextNodeId}" اشاره می‌کند.`,
+              message: `نود مقصد "${option.next}" در گزینه‌های نود "${currentId}" وجود ندارد.`,
               nodeId: currentId,
             });
-          } else if (!visitedNodes.has(option.nextNodeId)) {
-            queue.push(option.nextNodeId);
+          } else {
+            // افزودن نود معتبر بعدی به صف پیمایش
+            queue.push(option.next);
           }
         }
       }
     }
   }
 
-  // ۳. بررسی نودهای یتیم (Orphan Nodes - نودهایی که در دیتابیس هستند اما از start به آن‌ها دسترسی نیست)
+  // ۲. بررسی نودهای یتیم (Orphan Nodes - نودهایی که در دیتابیس هستند اما از start به آن‌ها دسترسی نیست)
   nodeIds.forEach((id) => {
     if (!visitedNodes.has(id)) {
       errors.push({
