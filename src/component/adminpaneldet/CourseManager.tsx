@@ -173,13 +173,7 @@ export default function CourseManager({
 
   return (
     <>
-      {/* تگ ویدیوی پنهان و ایمن از خطای تایپ‌اسکریپت */}
-      <video
-        ref={videoRef}
-        src={activeVideoUrl}
-        className="hidden"
-        controls
-      />
+      
 
       <div className="space-y-3">
         <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">

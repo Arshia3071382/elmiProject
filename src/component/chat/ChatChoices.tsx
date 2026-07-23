@@ -33,7 +33,7 @@ export default function ChatChoices({ choices, onSelect }: ChatChoicesProps) {
       <div className="flex flex-wrap gap-2 justify-center w-full">
         {choices.map((choice, index) => (
           <button
-            key={choice.id || index}
+            key={choice.id || `choice-${choice.next}-${index}`}
             onClick={() => onSelect(choice.next)}
             className="w-full sm:w-auto text-right px-4 py-2.5 bg-blue-50/80 hover:bg-blue-100/80 text-secondary font-['iranBold'] border border-blue-100 rounded-xl text-xs sm:text-sm transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-between gap-3"
           >
