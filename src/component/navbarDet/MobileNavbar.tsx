@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { StaticImageData } from "next/image";
+import { MessageCircle, Trophy, BookOpen } from "lucide-react";
 
 interface MobileNavbarProps {
   logo: StaticImageData;
@@ -20,72 +21,78 @@ export default function MobileNavbar({
   setIsOpen,
 }: MobileNavbarProps) {
   return (
-    <div className="flex lg:hidden justify-between items-center w-full h-40 px-4 relative">
-      <div className="absolute top-20 left-0 right-0 mx-4 rounded shadow flex flex-row-reverse justify-between bg-white items-center h-25 px-4">
+    <div className="flex lg:hidden w-full px-4 fixed top-3 left-0 right-0 z-50 font-['iranSans-r']" dir="rtl">
+      {/* کارت اصلی نوار موبایل */}
+      <div className="w-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-2xl shadow-lg h-16 px-4 flex items-center justify-between relative transition-all duration-300">
         
-        {/* دکمه همبرگری منوی کشویی */}
+        {/* ۱. سمت راست: دکمه همبرگری */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex flex-col justify-center items-center gap-1.5 w-8 h-8 cursor-pointer text-gray-600 order-first flex-shrink-0"
+          className="flex flex-col justify-center items-center gap-1 w-9 h-9 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-primary)] shrink-0 transition-transform active:scale-95"
           aria-label="منو"
         >
-          <span className={`h-0.5 w-6 bg-gray-600 rounded transition-transform ${isOpen ? "rotate-45 translate-y-2" : ""}`} />
-          <span className={`h-0.5 w-6 bg-gray-600 rounded transition-opacity ${isOpen ? "opacity-0" : ""}`} />
-          <span className={`h-0.5 w-6 bg-gray-600 rounded transition-transform ${isOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          <span
+            className={`h-0.5 w-4 bg-[var(--color-text-primary)] rounded-full transition-all duration-300 ${
+              isOpen ? "rotate-45 translate-y-1.5" : ""
+            }`}
+          />
+          <span
+            className={`h-0.5 w-4 bg-[var(--color-text-primary)] rounded-full transition-all duration-300 ${
+              isOpen ? "opacity-0" : ""
+            }`}
+          />
+          <span
+            className={`h-0.5 w-4 bg-[var(--color-text-primary)] rounded-full transition-all duration-300 ${
+              isOpen ? "-rotate-45 -translate-y-1.5" : ""
+            }`}
+          />
         </button>
 
-        {/* لوگو در وسط */}
+        {/* ۲. وسط: لوگو (دقیقا در مرکز ریاضی با absolute) */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 transition-all duration-700 -mt-1 flex-shrink-0"
+          className="absolute left-1/2 -translate-x-1/2 transition-all duration-500 shrink-0"
           style={{ opacity: showLogo ? 1 : 0 }}
         >
-          <Link href="/">
-            <Image width={85} src={logo} alt="sitelogo" priority />
+          <Link href="/" className="block">
+            <Image
+              width={70}
+              height={35}
+              src={logo}
+              alt="sitelogo"
+              priority
+              className="object-contain"
+            />
           </Link>
         </div>
 
-        {/* بخش دکمه‌های عملیاتی موبایل */}
-        <div className="flex flex-col justify-center items-stretch gap-1 py-1 order-last min-w-[95px] flex-shrink-0 mb-2">
-          
-          {/* دکمه گفتینو */}
-          <Link href="/chat-guidance" className="w-full">
-            <button
-              className="w-full rounded cursor-pointer text-white py-0.5 px-2 bg-accent hover:bg-opacity-90 transition-all duration-300 text-center font-[iranSans-r] text-[10px] whitespace-nowrap mb-1"
-              style={{
-                opacity: showCourses ? 1 : 0,
-                transition: "opacity 0.5s ease-out",
-              }}
-            >
-              گفتینو 💬
+        {/* ۳. سمت چپ: دکمه‌های اکشن */}
+        <div
+          className="flex items-center gap-1.5 shrink-0 transition-opacity duration-500"
+          style={{ opacity: showCourses ? 1 : 0 }}
+        >
+          {/* گفتینو */}
+          <Link href="/chat-guidance" title="گفتینو">
+            <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--color-secondary)] text-[var(--color-text-invert)] text-[11px] font-['iranBold'] shadow-sm active:scale-95 transition-all">
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">گفتینو</span>
             </button>
           </Link>
 
-          {/* دکمه لیگ نخبگان */}
-          <Link href="/elite-league" className="w-full">
-            <button
-              className="w-full group rounded cursor-pointer text-amber-600 border border-amber-500 py-0.5 px-2 bg-amber-50 hover:bg-amber-500 hover:text-white transition-all duration-300 text-center flex items-center justify-center gap-1 font-[iranSans-r] text-[10px] whitespace-nowrap"
-              style={{
-                opacity: showCourses ? 1 : 0,
-                transition: "opacity 0.5s ease-out",
-              }}
-            >
-              <span>لیگ نخبگان</span>
+          {/* لیگ نخبگان */}
+          <Link href="/elite-league" title="لیگ نخبگان">
+            <button className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/30 text-[11px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
+              <Trophy className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">نخبگان</span>
             </button>
           </Link>
 
-          {/* دکمه دوره‌ها */}
-          <Link href="/courses" className="w-full">
-            <button
-              className="w-full rounded cursor-pointer text-gray-700 border border-gray-300 py-0.5 px-2 bg-gray-50 hover:bg-gray-100 transition-all duration-300 text-center font-[iranSans-r] text-[10px] whitespace-nowrap"
-              style={{
-                opacity: showCourses ? 1 : 0,
-                transition: "opacity 0.5s ease-out",
-              }}
-            >
-             دوره های آموزشی
+          {/* دوره‌ها */}
+          <Link href="/courses" title="دوره‌ها">
+            <button className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[var(--color-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] text-[11px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">دوره‌ها</span>
             </button>
           </Link>
-
         </div>
 
       </div>
