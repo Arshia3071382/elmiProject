@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "./../../../../lib/dbConnect";
-import { Topic } from "./../../../../models/Topic";
+import dbConnect from "../../../../lib/dbConnect";
+import ChatTopic from "../../../../models/ChatTopic";
 
 // GET - دریافت همه تاپیک‌ها
 export async function GET() {
   try {
     await dbConnect();
-    const topics = await Topic.find({}).sort({ createdAt: -1 });
+    const topics = await ChatTopic.find({}).sort({ createdAt: -1 });
     return NextResponse.json({
       success: true,
       data: topics,
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const existing = await Topic.findOne({ slug });
+    const existing = await ChatTopic.findOne({ slug });
     if (existing) {
       return NextResponse.json(
         { success: false, error: "این اسلاگ قبلاً استفاده شده است" },
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const topic = await Topic.create({
+    const topic = await ChatTopic.create({
       title,
       slug,
       description: description || "",
