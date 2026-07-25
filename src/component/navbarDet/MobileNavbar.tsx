@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { StaticImageData } from "next/image";
@@ -20,11 +21,40 @@ export default function MobileNavbar({
   isOpen,
   setIsOpen,
 }: MobileNavbarProps) {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // اگر کاربر بیشتر از ۲۰ پیکسل اسکرول کند، نوار به بالای صفحه می‌چسبد
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <div className="flex lg:hidden w-full px-4 fixed top-3 left-0 right-0 z-50 font-['iranSans-r']" dir="rtl">
+    <div
+      /* 
+        استفاده از fixed همراه با انیمیشن حرکت top:
+        در حالت اول (بالای صفحه): top-20 یا top-24 (زیر هلال و نیم‌دایره)
+        در حالت اسکرول: top-2 (بالای صفحه چسبیده و فیکس)
+      */
+      className={`lg:hidden w-full px-4 fixed left-0 right-0 z-50 font-['iranSans-r'] transition-all duration-300 ease-in-out ${
+        isScrolled ? "top-2" : "top-26"
+      }`}
+      dir="rtl"
+    >
       {/* کارت اصلی نوار موبایل */}
-      <div className="w-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-2xl shadow-lg h-16 px-4 flex items-center justify-between relative transition-all duration-300">
-        
+      <div
+        className={`w-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-2xl h-14 px-3 flex items-center justify-between relative transition-all duration-300 ${
+          isScrolled ? "shadow-lg" : "shadow-md"
+        }`}
+      >
         {/* ۱. سمت راست: دکمه همبرگری */}
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -48,15 +78,15 @@ export default function MobileNavbar({
           />
         </button>
 
-        {/* ۲. وسط: لوگو (دقیقا در مرکز ریاضی با absolute) */}
+        {/* ۲. وسط: لوگو سایت (سنتر شده با absolute) */}
         <div
           className="absolute left-1/2 -translate-x-1/2 transition-all duration-500 shrink-0"
           style={{ opacity: showLogo ? 1 : 0 }}
         >
           <Link href="/" className="block">
             <Image
-              width={70}
-              height={35}
+              width={65}
+              height={30}
               src={logo}
               alt="sitelogo"
               priority
@@ -65,14 +95,14 @@ export default function MobileNavbar({
           </Link>
         </div>
 
-        {/* ۳. سمت چپ: دکمه‌های اکشن */}
+        {/* ۳. سمت چپ: دکمه‌های شکیل و مینیمال */}
         <div
           className="flex items-center gap-1.5 shrink-0 transition-opacity duration-500"
           style={{ opacity: showCourses ? 1 : 0 }}
         >
           {/* گفتینو */}
           <Link href="/chat-guidance" title="گفتینو">
-            <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--color-secondary)] text-[var(--color-text-invert)] text-[11px] font-['iranBold'] shadow-sm active:scale-95 transition-all">
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-[var(--color-secondary)] text-[var(--color-text-invert)] text-[10px] font-['iranBold'] shadow-sm active:scale-95 transition-all">
               <MessageCircle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">گفتینو</span>
             </button>
@@ -80,7 +110,7 @@ export default function MobileNavbar({
 
           {/* لیگ نخبگان */}
           <Link href="/elite-league" title="لیگ نخبگان">
-            <button className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/30 text-[11px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
+            <button className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/30 text-[10px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
               <Trophy className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">نخبگان</span>
             </button>
@@ -88,13 +118,12 @@ export default function MobileNavbar({
 
           {/* دوره‌ها */}
           <Link href="/courses" title="دوره‌ها">
-            <button className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[var(--color-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] text-[11px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
+            <button className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-[var(--color-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] text-[10px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
               <BookOpen className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">دوره‌ها</span>
             </button>
           </Link>
         </div>
-
       </div>
     </div>
   );

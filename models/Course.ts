@@ -1,4 +1,3 @@
-// مسیر فایل: models/Course.ts
 import mongoose from "mongoose";
 
 const CourseSchema = new mongoose.Schema({
@@ -14,7 +13,7 @@ const CourseSchema = new mongoose.Schema({
   },
   teacher: {
     type: String,
-    default: "", // مقدار پیش‌فرض رشته خالی
+    default: "", 
     trim: true,
   },
   description: {
