@@ -30,16 +30,22 @@ export default function CuriosityPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setArticles(data.articles || []);
-          if (data.userLikedIds) {
+          // مطمئن می‌شویم داده حتماً آرایه است تا map ارور ندهد
+          setArticles(Array.isArray(data.articles) ? data.articles : []);
+          if (Array.isArray(data.userLikedIds)) {
             setLikedIds(data.userLikedIds);
           }
+        } else {
+          setArticles([]);
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error("Error fetching articles:", err);
+        setArticles([]);
+      })
       .finally(() => setLoading(false));
   }, []);
-
+  
   const handleLike = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     if (likedIds.includes(id)) return;
