@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Container from "./../../component/Container";
+import Container from "@/component/Container";
 import { motion } from "framer-motion";
 import { CalendarDays, ArrowRight, Filter, Clock } from "lucide-react";
 
@@ -78,7 +78,7 @@ export default function CalendarPage() {
       <section className="py-16 md:py-24 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 relative overflow-hidden dir-rtl font-[iranSans-r] min-h-screen">
         
         {/* دکمه بازگشت */}
-        <div className="w-full max-w-3xl mx-auto mb-8 relative z-10">
+        <div className="w-full max-w-6xl mx-auto mb-8 px-4 relative z-10">
           <Link 
             href="/" 
             className="inline-flex items-center gap-2 text-xs sm:text-sm font-[iranBold] text-teal-700 bg-teal-50 border border-teal-200 px-4 py-2 rounded-xl hover:bg-teal-100 transition shadow-sm"
@@ -91,7 +91,7 @@ export default function CalendarPage() {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-3xl mx-auto mb-10 text-center relative z-10"
+          className="w-full max-w-6xl mx-auto mb-10 text-center px-4 relative z-10"
         >
           <div className="inline-flex p-3 bg-teal-100 rounded-2xl border border-teal-200 text-teal-700 mb-4 shadow-sm">
             <CalendarDays className="w-8 h-8" />
@@ -104,7 +104,7 @@ export default function CalendarPage() {
 
         {/* انتخاب ماه */}
         {!loading && months.length > 0 && (
-          <div className="w-full max-w-3xl mx-auto mb-6 flex flex-wrap justify-center items-center gap-3 relative z-10">
+          <div className="w-full max-w-6xl mx-auto mb-6 px-4 flex flex-wrap justify-center items-center gap-3 relative z-10">
             {months.map((m) => (
               <button
                 key={m._id}
@@ -122,7 +122,7 @@ export default function CalendarPage() {
         )}
 
         {/* فیلترهای بالا */}
-        <div className="w-full max-w-3xl mx-auto mb-10 flex flex-wrap justify-center items-center gap-2 relative z-10 text-xs">
+        <div className="w-full max-w-6xl mx-auto mb-10 px-4 flex flex-wrap justify-center items-center gap-2 relative z-10 text-xs">
           <span className="flex items-center gap-1 text-slate-500 ml-2 font-[iranBold]">
             <Filter className="w-3.5 h-3.5" /> فیلتر:
           </span>
@@ -132,11 +132,11 @@ export default function CalendarPage() {
           <button onClick={() => setFilterType("workshop")} className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === 'workshop' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-amber-600 border-amber-200'}`}>کارگاه‌ها</button>
         </div>
 
-        {/* لیست کارت‌های تقویم */}
+        {/* لیست کارت‌های تقویم: موبایل تکی (grid-cols-1) و دسکتاپ سه تایی (lg:grid-cols-3) */}
         {loading ? (
           <div className="py-20 text-center text-slate-500 font-[iranSans-r]">در حال دریافت اطلاعات...</div>
         ) : (
-          <div className="w-full max-w-3xl mx-auto flex flex-col gap-3 relative z-10">
+          <div className="w-full max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
             {[...Array(totalDays)].map((_, index) => {
               const dayNum = index + 1;
               const eventData = currentMonth?.events?.find((e) => e.day === dayNum);
@@ -153,44 +153,50 @@ export default function CalendarPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: index * 0.01 }}
-                  className={`flex flex-row-reverse items-center justify-between p-4 sm:p-5 rounded-2xl border-2 shadow-sm ${getEventCardStyle(eventData?.type)}`}
+                  className={`flex flex-col justify-between p-4 sm:p-5 rounded-2xl border-2 shadow-sm ${getEventCardStyle(eventData?.type)}`}
                 >
-                  {/* تاریخ دقیق بدون کلمه ماه: مثل (دوشنبه | 6 مهر) */}
-                  <div className="w-40 text-left font-[iranBold] text-xs sm:text-sm border-r border-slate-200/60 pr-4 text-slate-700 flex items-center justify-end gap-1.5">
-                    <span>{dayNum} {currentMonth?.monthName}</span>
-                    <span className="text-slate-400">|</span>
-                    <span className="text-teal-700">{weekDayName}</span>
+                  {/* هدر کارت: تاریخ در چپ و نوع رویداد در راست */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 mb-3">
+                    {/* تاریخ با فرمت درخواستی: دوشنبه | مهر 6 */}
+                    <div className="text-left font-[iranBold] text-xs sm:text-sm text-slate-700 flex  items-center gap-1.5">
+                      <span className="text-teal-700">{weekDayName}</span>
+                      <span className="text-slate-400">|</span>
+                      <div className="flex flex-row-reverse gap-0.5">
+                        <span>{dayNum}</span>
+                        <span>{currentMonth?.monthName}</span>
+                      </div>
+                    </div>
+
+                    {/* تگ نوع رویداد */}
+                    <div>
+                      {eventData && (
+                        <span className={`text-[11px] px-2.5 py-1 rounded-lg font-medium inline-block ${
+                          eventData.type === 'exam' ? 'bg-emerald-100 text-emerald-800' :
+                          eventData.type === 'workshop' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {eventData.type === 'exam' ? 'آزمون' : eventData.type === 'workshop' ? 'کارگاه' : 'کلاس'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* نام رویداد و ساعت برگزاری در وسط */}
-                  <div className="flex-1 px-4 text-center">
+                  {/* بدنه کارت: نام رویداد و ساعت برگزاری */}
+                  <div className="text-center py-2">
                     {eventData ? (
-                      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                      <div className="flex flex-col items-center justify-center gap-2">
                         <span className="font-[iranBold] text-sm sm:text-base text-slate-900">{eventData.title}</span>
                         {eventData.hour && (
-                          <span className="text-xs bg-white/80 px-2.5 py-0.5 rounded-md border border-slate-200 flex items-center gap-1 text-slate-600 font-medium">
-                            <Clock className="w-3 h-3 text-teal-600" />
-                            ساعت {eventData.hour}:{eventData.minute || "00"}
+                          <span className="text-xs bg-white/90 px-3 py-1 rounded-lg border border-slate-200 flex items-center gap-1.5 text-slate-600 font-medium shadow-2xs">
+                            <Clock className="w-3.5 h-3.5 text-teal-600" />
+                            ساعت برگزاری: {eventData.hour}:{eventData.minute || "00"}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <div className="text-slate-400 text-xs sm:text-sm flex items-center justify-center gap-1.5 font-[iranSans-r]">
+                      <div className="text-slate-400 text-xs sm:text-sm flex items-center justify-center gap-1.5 font-[iranSans-r] py-2">
                         <span>بدون رویداد</span>
                         <span>😔</span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* تگ نوع رویداد در سمت راست */}
-                  <div className="w-24 text-right">
-                    {eventData && (
-                      <span className={`text-[11px] px-2.5 py-1 rounded-lg font-medium inline-block ${
-                        eventData.type === 'exam' ? 'bg-emerald-100 text-emerald-800' :
-                        eventData.type === 'workshop' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {eventData.type === 'exam' ? 'آزمون' : eventData.type === 'workshop' ? 'کارگاه' : 'کلاس'}
-                      </span>
                     )}
                   </div>
                 </motion.div>
