@@ -20,7 +20,13 @@ export default function CuriosityPage() {
   const [likedIds, setLikedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("/api/articles")
+    fetch("/api/articles", {
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
