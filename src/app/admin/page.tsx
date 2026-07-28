@@ -11,6 +11,7 @@ import AdminLoginModal from "./../../component/adminpaneldet/AdminLoginModal";
 import AddCategoryModal from "./../../component/adminpaneldet/AddCategoryModal";
 import AdminEliteLeaguePanel from "./../../component/adminpaneldet/AdminEliteLeaguePanel";
 import AdminTopicsPanel from "./../../component/adminpaneldet/AdminTopicsPanel";
+import AdminArticlesPanel from "./../../component/adminpaneldet/AdminArticlesPanel";
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -229,6 +230,10 @@ export default function AdminPage() {
         <AdminTopicsPanel onShowMessage={showMessage} />
       </div>
 
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AdminArticlesPanel onShowMessage={showMessage} />
+      </div>
+      
       {/* بخش پنل اطلاعیه‌ها */}
       <div className="max-w-7xl mx-auto px-6 pb-12">
         <AdminNoticePanel onShowMessage={showMessage} />

@@ -6,13 +6,13 @@ import HeroSec from "@/component/HeroSec";
 import Questions from "@/component/Questions";
 import ScrollAnimation from "./../component/ScrollAnimation";
 import CounterStats from "@/component/CounterStats"; 
+import CuriosityButton from "@/component/CuriosityButton";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 export default function Home() {
   return (
     <>
-      {/* Hero section with fade-in animation */}
+      {/* Hero section */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -28,14 +28,19 @@ export default function Home() {
         </Container>
       </ScrollAnimation>
 
-      {/* Popular courses section with scroll animation */}
+      {/* دکمه ایستگاه کنجکاوی (شامل کانتینر درونی) */}
       <ScrollAnimation direction="up" delay={0.2}>
+        <CuriosityButton />
+      </ScrollAnimation>
+
+      {/* Popular courses section */}
+      <ScrollAnimation direction="up" delay={0.3}>
         <div>
           <PopularClasses />
         </div>
       </ScrollAnimation>
 
-      {/* FAQ section with scroll animation */}
+      {/* FAQ section */}
       <ScrollAnimation direction="up" delay={0.4}>
         <Questions />
       </ScrollAnimation>
