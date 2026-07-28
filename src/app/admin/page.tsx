@@ -37,40 +37,77 @@ export default function AdminPage() {
   }, []);
 
   const fetchCategories = useCallback(async () => {
-    const res = await fetch("/api/categories")
-      .then((r) => r.json())
-      .catch(() => showMessage("error", "خطا در دریافت گروه‌ها"));
-    if (res?.success) {
-      setCategories(res.categories);
-      if (res.categories.length > 0 && !selectedCategory)
-        setSelectedCategory(res.categories[0]._id);
+    try {
+      const res = await fetch("/api/categories", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      if (res?.success && Array.isArray(res.categories)) {
+        setCategories(res.categories);
+        if (res.categories.length > 0 && !selectedCategory) {
+          setSelectedCategory(res.categories[0]._id);
+        }
+      } else {
+        setCategories([]);
+      }
+    } catch (err) {
+      console.error(err);
+      showMessage("error", "خطا در دریافت گروه‌ها");
     }
   }, [selectedCategory, showMessage]);
 
   const fetchCourses = useCallback(async () => {
-    const res = await fetch("/api/courses")
-      .then((r) => r.json())
-      .catch(() => showMessage("error", "خطا در دریافت دوره‌ها"));
-    if (res?.success) setCourses(res.courses);
+    try {
+      const res = await fetch("/api/courses", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      if (res?.success && Array.isArray(res.courses)) {
+        setCourses(res.courses);
+      } else {
+        setCourses([]);
+      }
+    } catch (err) {
+      console.error(err);
+      showMessage("error", "خطا در دریافت دوره‌ها");
+    }
   }, [showMessage]);
 
   const fetchContactMessages = useCallback(async () => {
-    const res = await fetch("/api/contacts")
-      .then((r) => r.json())
-      .catch(console.error);
-    if (res?.success) setContactMessages(res.messages);
+    try {
+      const res = await fetch("/api/contacts", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      if (res?.success && Array.isArray(res.messages)) {
+        setContactMessages(res.messages);
+      } else {
+        setContactMessages([]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
   const fetchChatTopics = useCallback(async () => {
-    const res = await fetch("/api/chat/topics")
-      .then((r) => r.json())
-      .catch(console.error);
-    if (res?.success) setChatTopics(res.data || []);
+    try {
+      const res = await fetch("/api/chat/topics", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      if (res?.success && Array.isArray(res.data)) {
+        setChatTopics(res.data);
+      } else {
+        setChatTopics([]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
   useEffect(() => {
-    fetch("/api/check-auth")
-      .then((r) => r.json())
+    fetch("/api/check-auth", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.isLoggedIn) {
           setIsLoggedIn(true);
@@ -78,9 +115,14 @@ export default function AdminPage() {
           fetchCourses();
           fetchContactMessages();
           fetchChatTopics();
+        } else {
+          setIsLoggedIn(false);
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        setIsLoggedIn(false);
+      })
       .finally(() => setIsCheckingAuth(false));
   }, [fetchCategories, fetchCourses, fetchContactMessages, fetchChatTopics]);
 
@@ -88,44 +130,59 @@ export default function AdminPage() {
     e.preventDefault();
     if (!newCategoryName.trim())
       return showMessage("error", "لطفاً نام گروه را وارد کنید");
-    const res = await fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newCategoryName.trim() }),
-    })
-      .then((r) => r.json())
-      .catch(() => showMessage("error", "خطا در ارتباط با سرور"));
-    if (res?.success) {
-      showMessage("success", `گروه "${newCategoryName}" با موفقیت اضافه شد`);
-      setCategories((prev) => [res.category, ...prev]);
-      setSelectedCategory(res.category._id);
-      setShowCategoryModal(false);
-      setNewCategoryName("");
+    
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      })
+        .then((r) => r.json())
+        .catch(() => null);
+
+      if (res?.success && res.category) {
+        showMessage("success", `گروه "${newCategoryName}" با موفقیت اضافه شد`);
+        setCategories((prev) => [res.category, ...prev]);
+        setSelectedCategory(res.category._id);
+        setShowCategoryModal(false);
+        setNewCategoryName("");
+      } else {
+        showMessage("error", res?.error || "خطا در ثبت گروه");
+      }
+    } catch {
+      showMessage("error", "خطا در ارتباط با سرور");
     }
   };
 
   const handleAddCourse = async (formData: FormData) => {
-    if (!selectedCategory)
-      return (showMessage("error", "لطفاً یک گروه انتخاب کنید"), false);
+    if (!selectedCategory) {
+      showMessage("error", "لطفاً یک گروه انتخاب کنید");
+      return false;
+    }
     formData.set("categoryId", selectedCategory);
-    const res = await fetch("/api/courses", { method: "POST", body: formData })
-      .then((r) => r.json())
-      .catch(() => showMessage("error", "خطا در ارتباط با سرور"));
-    if (res?.success)
-      return (
-        showMessage("success", `دوره با موفقیت اضافه شد`),
-        fetchCourses(),
-        true
-      );
+    try {
+      const res = await fetch("/api/courses", { method: "POST", body: formData })
+        .then((r) => r.json())
+        .catch(() => null);
+
+      if (res?.success) {
+        showMessage("success", `دوره با موفقیت اضافه شد`);
+        fetchCourses();
+        return true;
+      }
+    } catch {
+      showMessage("error", "خطا در ارتباط با سرور");
+    }
     return false;
   };
 
   const handleLogout = async () => {
-    await fetch("/api/admin-logout", { method: "POST" })
-      .then(() => {
-        setIsLoggedIn(false);
-      })
-      .catch(() => showMessage("error", "خطا در خروج از پنل"));
+    try {
+      await fetch("/api/admin-logout", { method: "POST" });
+      setIsLoggedIn(false);
+    } catch {
+      showMessage("error", "خطا در خروج از پنل");
+    }
   };
 
   if (isCheckingAuth) return <div className="min-h-screen bg-white"></div>;
@@ -177,26 +234,26 @@ export default function AdminPage() {
             {activeTab === "courses" ? (
               <>
                 <AddCourseForm
-                  categories={categories}
+                  categories={categories || []}
                   selectedCategory={selectedCategory}
                   onCategoryChange={setSelectedCategory}
                   onAddCourse={handleAddCourse}
                   coursesCount={(id) =>
-                    courses.filter((c) => c.category?._id === id).length
+                    (courses || []).filter((c) => c?.category?._id === id).length
                   }
                 />
                 <CourseManager
-                  courses={courses}
-                  categories={categories}
+                  courses={courses || []}
+                  categories={categories || []}
                   onCourseUpdate={fetchCourses}
                   onShowMessage={showMessage}
                 />
               </>
             ) : (
               <CategoryManager
-                categories={categories}
+                categories={categories || []}
                 coursesCount={(id) =>
-                  courses.filter((c) => c.category?._id === id).length
+                  (courses || []).filter((c) => c?.category?._id === id).length
                 }
                 onCategoryUpdate={() => {
                   fetchCategories();
@@ -210,15 +267,15 @@ export default function AdminPage() {
         </div>
         <div className="space-y-6">
           <StatsCards
-            categoriesCount={categories.length}
-            coursesCount={courses.length}
+            categoriesCount={(categories || []).length}
+            coursesCount={(courses || []).length}
             averageCourses={
-              categories.length
-                ? Number((courses.length / categories.length).toFixed(1))
+              (categories || []).length
+                ? Number(((courses || []).length / (categories || []).length).toFixed(1))
                 : 0
             }
           />
-          <AdminSidebar courses={courses} contactMessages={contactMessages} />
+          <AdminSidebar courses={courses || []} contactMessages={contactMessages || []} />
         </div>
       </div>
       {/* بخش پنل لیگ نخبگان */}
@@ -288,7 +345,9 @@ function AdminNoticePanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }).then((r) => r.json());
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
 
       if (res?.success) {
         onShowMessage("success", "اطلاعیه با موفقیت ثبت شد.");
@@ -298,7 +357,7 @@ function AdminNoticePanel({
         setStartTime("");
         setContent("");
       } else {
-        onShowMessage("error", "خطا در ذخیره‌سازی اطلاعیه");
+        onShowMessage("error", res?.error || "خطا در ذخیره‌سازی اطلاعیه");
       }
     } catch {
       onShowMessage("error", "خطا در ارتباط با سرور");
