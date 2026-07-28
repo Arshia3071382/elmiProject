@@ -8,7 +8,8 @@ const images: string[] = [
   "/image/hero.png",
   "/image/hero2.png",
   "/image/hero3.png",
-  "/image/hero4.png"
+  "/image/hero6.png",
+  "/image/hero5.png"
 ]
 
 function HeroSec() {
