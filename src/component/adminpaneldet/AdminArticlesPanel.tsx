@@ -37,17 +37,26 @@ export default function AdminArticlesPanel({ onShowMessage }: AdminArticlesPanel
   const [loading, setLoading] = useState(false);
   const [fetchingList, setFetchingList] = useState(true);
 
-  // دریافت لیست مقالات از سرور
+  // دریافت لیست مقالات از سرور (ایمن‌سازی شده)
   const fetchArticles = async () => {
     setFetchingList(true);
     try {
       const res = await fetch("/api/articles");
       if (res.ok) {
         const data = await res.json();
-        setArticles(data);
+        if (Array.isArray(data)) {
+          setArticles(data);
+        } else if (data && Array.isArray(data.articles)) {
+          setArticles(data.articles);
+        } else {
+          setArticles([]);
+        }
+      } else {
+        setArticles([]);
       }
     } catch (err) {
       console.error("خطا در دریافت لیست مقالات:", err);
+      setArticles([]);
     } finally {
       setFetchingList(false);
     }
@@ -229,7 +238,7 @@ export default function AdminArticlesPanel({ onShowMessage }: AdminArticlesPanel
             </label>
 
             <div className="space-y-3">
-              {blocks.map((block, index) => (
+              {Array.isArray(blocks) && blocks.map((block, index) => (
                 <div
                   key={index}
                   className="p-4 bg-bg border border-border rounded-2xl space-y-3 relative"
@@ -326,7 +335,7 @@ export default function AdminArticlesPanel({ onShowMessage }: AdminArticlesPanel
 
         {fetchingList ? (
           <p className="text-xs text-text-secondary text-center py-6">در حال دریافت مقالات...</p>
-        ) : articles.length === 0 ? (
+        ) : !Array.isArray(articles) || articles.length === 0 ? (
           <p className="text-xs text-text-secondary text-center py-6">هنوز مقاله‌ای ثبت نشده است.</p>
         ) : (
           <div className="space-y-3">
