@@ -6,7 +6,7 @@ import HeroSec from "@/component/HeroSec";
 import Questions from "@/component/Questions";
 import ScrollAnimation from "./../component/ScrollAnimation";
 import CounterStats from "@/component/CounterStats"; 
-import CuriosityButton from "@/component/CuriosityButton";
+import ScienceHub from "@/component/ScienceHub"; // جایگزین دکمه تکی قبلی
 import { motion } from "framer-motion";
 
 export default function Home() {
@@ -28,9 +28,9 @@ export default function Home() {
         </Container>
       </ScrollAnimation>
 
-      {/* دکمه ایستگاه کنجکاوی (شامل کانتینر درونی) */}
+      {/* قطب‌نمای علم (بخش جامع دسته‌بندی‌های سایت) */}
       <ScrollAnimation direction="up" delay={0.2}>
-        <CuriosityButton />
+        <ScienceHub />
       </ScrollAnimation>
 
       {/* Popular courses section */}
