@@ -12,6 +12,7 @@ import AddCategoryModal from "./../../component/adminpaneldet/AddCategoryModal";
 import AdminEliteLeaguePanel from "./../../component/adminpaneldet/AdminEliteLeaguePanel";
 import AdminTopicsPanel from "./../../component/adminpaneldet/AdminTopicsPanel";
 import AdminArticlesPanel from "./../../component/adminpaneldet/AdminArticlesPanel";
+import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -130,7 +131,7 @@ export default function AdminPage() {
     e.preventDefault();
     if (!newCategoryName.trim())
       return showMessage("error", "لطفاً نام گروه را وارد کنید");
-    
+
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
@@ -161,7 +162,10 @@ export default function AdminPage() {
     }
     formData.set("categoryId", selectedCategory);
     try {
-      const res = await fetch("/api/courses", { method: "POST", body: formData })
+      const res = await fetch("/api/courses", {
+        method: "POST",
+        body: formData,
+      })
         .then((r) => r.json())
         .catch(() => null);
 
@@ -239,7 +243,8 @@ export default function AdminPage() {
                   onCategoryChange={setSelectedCategory}
                   onAddCourse={handleAddCourse}
                   coursesCount={(id) =>
-                    (courses || []).filter((c) => c?.category?._id === id).length
+                    (courses || []).filter((c) => c?.category?._id === id)
+                      .length
                   }
                 />
                 <CourseManager
@@ -271,11 +276,18 @@ export default function AdminPage() {
             coursesCount={(courses || []).length}
             averageCourses={
               (categories || []).length
-                ? Number(((courses || []).length / (categories || []).length).toFixed(1))
+                ? Number(
+                    (
+                      (courses || []).length / (categories || []).length
+                    ).toFixed(1),
+                  )
                 : 0
             }
           />
-          <AdminSidebar courses={courses || []} contactMessages={contactMessages || []} />
+          <AdminSidebar
+            courses={courses || []}
+            contactMessages={contactMessages || []}
+          />
         </div>
       </div>
       {/* بخش پنل لیگ نخبگان */}
@@ -290,11 +302,17 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminArticlesPanel onShowMessage={showMessage} />
       </div>
-      
+
       {/* بخش پنل اطلاعیه‌ها */}
       <div className="max-w-7xl mx-auto px-6 pb-12">
         <AdminNoticePanel onShowMessage={showMessage} />
       </div>
+
+      {/* بخش پنل تقویم علمی */}
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AdminCalendarPanel onShowMessage={showMessage} />
+      </div>
+
       {message && (
         <div
           className={`fixed bottom-6 right-6 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg z-50 text-white font-bold text-sm ${message.type === "success" ? "bg-green-600" : "bg-red-600"}`}

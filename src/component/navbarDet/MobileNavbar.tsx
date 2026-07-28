@@ -39,11 +39,7 @@ export default function MobileNavbar({
 
   return (
     <div
-      /* 
-        استفاده از fixed همراه با انیمیشن حرکت top:
-        در حالت اول (بالای صفحه): top-20 یا top-24 (زیر هلال و نیم‌دایره)
-        در حالت اسکرول: top-2 (بالای صفحه چسبیده و فیکس)
-      */
+     
       className={`lg:hidden w-full px-4 fixed left-0 right-0 z-50 font-['iranSans-r'] transition-all duration-300 ease-in-out ${
         isScrolled ? "top-2" : "top-26"
       }`}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 import { Users, GraduationCap, Laptop, BookOpen } from "lucide-react";
+import Container from "./Container";
 
 // Convert numbers to Persian strings
 const toPersianNum = (num: number) => {
@@ -15,7 +16,7 @@ interface CounterItemProps {
   suffix?: string;
   icon: React.ReactNode;
   bgColor: string;
-  iconColor?: string; // Made optional to eliminate Type errors completely
+  iconColor?: string;
 }
 
 function CounterItem({ target, label, suffix = "", icon, bgColor }: CounterItemProps) {
@@ -26,7 +27,6 @@ function CounterItem({ target, label, suffix = "", icon, bgColor }: CounterItemP
 
   useEffect(() => {
     if (isInView) {
-      // Run animation when visible
       const controls = animate(count, target, {
         duration: 2,
         ease: "easeOut",
@@ -72,7 +72,6 @@ function CounterItem({ target, label, suffix = "", icon, bgColor }: CounterItemP
 }
 
 export default function CounterStats() {
-  // Static configuration data
   const stats = [
     {
       target: 1000,
@@ -105,20 +104,21 @@ export default function CounterStats() {
   ];
 
   return (
-    <div className="w-full my-6" dir="rtl">
-      {/* Grid container layout */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {stats.map((stat, idx) => (
-          <CounterItem 
-            key={idx} 
-            target={stat.target}
-            label={stat.label}
-            suffix={stat.suffix}
-            icon={stat.icon}
-            bgColor={stat.bgColor}
-          />
-        ))}
-      </div>
-    </div>
+    <Container>
+      
+        <div className="grid mt-10 grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
+          {stats.map((stat, idx) => (
+            <CounterItem 
+              key={idx} 
+              target={stat.target}
+              label={stat.label}
+              suffix={stat.suffix}
+              icon={stat.icon}
+              bgColor={stat.bgColor}
+            />
+          ))}
+        </div>
+      
+    </Container>
   );
 }

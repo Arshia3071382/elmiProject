@@ -3,17 +3,16 @@
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform, useInView } from "framer-motion";
-import { BookOpen, GraduationCap, Award, FileSpreadsheet } from "lucide-react";
 
 interface ClassItem {
   id: number;
   title: string;
   subtitle: string;
   image: string;
-  icon: React.ReactNode;
   gradient: string;
-  iconBg: string;
   borderColor: string;
+  textColor: string;
+  sessionsText: string;
 }
 
 export default function ClassCart() {
@@ -23,45 +22,45 @@ export default function ClassCart() {
       title: "کلاس ریاضی هشتم",
       subtitle: "تسلط بر مفاهیم پایه و پیشرفته",
       image: "/image/r7.jpg",
-      icon: <BookOpen className="w-6 h-6 text-blue-600" />,
       gradient: "from-blue-500 to-cyan-400",
-      iconBg: "bg-blue-100 group-hover:bg-blue-200",
-      borderColor: "border-blue-200 group-hover:border-blue-400"
+      borderColor: "border-blue-200 group-hover:border-blue-400",
+      textColor: "text-blue-600",
+      sessionsText: "۳۲ جلسه برگزار شده"
     },
     {
       id: 2,
       title: "کلاس علوم نهم",
       subtitle: "آزمایشگاه و تحلیل هوشمند",
       image: "/image/2.jpg",
-      icon: <GraduationCap className="w-6 h-6 text-emerald-600" />,
       gradient: "from-emerald-500 to-teal-400",
-      iconBg: "bg-emerald-100 group-hover:bg-emerald-200",
-      borderColor: "border-emerald-200 group-hover:border-emerald-400"
+      borderColor: "border-emerald-200 group-hover:border-emerald-400",
+      textColor: "text-emerald-600",
+      sessionsText: "۱۵ جلسه برگزار شده"
     },
     {
       id: 3,
       title: "کارگاه مشاوره کنکور",
       subtitle: "برنامه‌ریزی دقیق و انگیزشی",
       image: "/image/r9.jpg",
-      icon: <Award className="w-6 h-6 text-sky-600" />,
-      gradient: "from-sky-500 to-blue-400",
-      iconBg: "bg-sky-100 group-hover:bg-sky-200",
-      borderColor: "border-sky-200 group-hover:border-sky-400"
+      gradient: "from-emerald-500 to-teal-400",
+      borderColor: "border-emerald-200 group-hover:border-emerald-400",
+      textColor: "text-emerald-600",
+      sessionsText: "۵ جلسه برگزار شده"
     },
     {
       id: 4,
       title: "آزمون جامع پایه هفتم",
       subtitle: "سنجش سطح و آمادگی کامل",
       image: "/image/az.jpg",
-      icon: <FileSpreadsheet className="w-6 h-6 text-indigo-600" />,
       gradient: "from-indigo-500 to-sky-400",
-      iconBg: "bg-indigo-100 group-hover:bg-indigo-200",
-      borderColor: "border-indigo-200 group-hover:border-indigo-400"
+      borderColor: "border-indigo-200 group-hover:border-indigo-400",
+      textColor: "text-indigo-600",
+      sessionsText: "۱۰ جلسه برگزار شده"
     },
   ];
 
   return (
-    <div className="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
       {cartItem.map((item, index) => (
         <ClassCard key={item.id} item={item} index={index} />
       ))}
@@ -71,7 +70,6 @@ export default function ClassCart() {
 
 function ClassCard({ item, index }: { item: ClassItem; index: number }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, amount: 0.2 });
 
@@ -95,13 +93,14 @@ function ClassCard({ item, index }: { item: ClassItem; index: number }) {
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.95 }}
       transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      whileHover={{ 
+        y: -8,
+        transition: { duration: 0.3 }
+      }}
     >
-      <div 
-        onClick={() => setIsClicked(true)}
-        className="block h-full cursor-pointer"
-      >
+      <div className="block h-full cursor-pointer">
         <motion.div
+          ref={cardRef}
           onMouseMove={handleMouseMove}
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => {
@@ -114,62 +113,83 @@ function ClassCard({ item, index }: { item: ClassItem; index: number }) {
             rotateY: isHovered ? rotateY : 0,
             transformStyle: "preserve-3d",
           }}
-          className={`group relative flex flex-col items-center justify-between p-5 bg-white/80 backdrop-blur-sm border-2 ${item.borderColor} rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 text-center overflow-hidden h-full`}
+          className={`group relative flex flex-col items-center bg-white/90 backdrop-blur-sm border-2 ${item.borderColor} rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full`}
         >
-          {/* گرادیانت پشت کارت */}
+          {/* Gradient Background Effect - Dimmed */}
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ 
-              opacity: isHovered ? 0.15 : 0,
+              opacity: isHovered ? 0.08 : 0,
               scale: isHovered ? 1 : 0.5,
             }}
             transition={{ duration: 0.4 }}
             className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-2xl pointer-events-none`}
           />
 
-          <div className="w-full flex flex-col items-center">
-            {/* تصویر کارت با حالت مدرن و گوشه‌های گرد */}
-            <div className="overflow-hidden rounded-2xl w-full mb-4 relative aspect-[16/10]">
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                className="transition-transform duration-500 group-hover:scale-110 object-cover"
-              />
-            </div>
+          {/* Shine Effect */}
+          <motion.div
+            initial={{ x: "-100%", opacity: 0 }}
+            animate={isHovered ? { x: "200%", opacity: [0, 0.1, 0] } : { x: "-100%", opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
+          />
 
-            {/* کادر رنگی آیکون اختصاصی با انیمیشن چرخش هنگام کلیک */}
+          {/* Image Container */}
+          <div className="relative w-full aspect-[16/10] overflow-hidden">
+            <Image
+              src={item.image}
+              alt={item.title}
+              fill
+              className="transition-transform duration-700 group-hover:scale-110 object-cover"
+            />
+            
+            {/* Gradient Overlay */}
+            <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+          </div>
+
+          {/* Content - Centered */}
+          <div className="p-5 flex flex-col items-center flex-grow w-full">
             <motion.div
               style={{
-                transform: isHovered ? "translateZ(30px)" : "translateZ(0px)",
+                transform: isHovered ? "translateZ(20px)" : "translateZ(0px)",
               }}
-              animate={isClicked ? { rotate: 360 } : { rotate: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              onAnimationComplete={() => setIsClicked(false)}
-              className={`relative z-10 mb-3 p-3 ${item.iconBg} rounded-2xl border-2 ${item.borderColor} transition-all duration-300 flex items-center justify-center`}
+              className="flex-grow w-full text-center"
             >
-              {item.icon}
+              <h3 className="text-base font-[iranBold] text-primary mb-1 line-clamp-1">
+                {item.title}
+              </h3>
+              <p className="text-xs text-text-secondary/70 line-clamp-2">
+                {item.subtitle}
+              </p>
             </motion.div>
 
-            {/* عنوان و زیرعنوان */}
-            <h3 className="text-base font-[iranBold] text-primary mb-1">
-              {item.title}
-            </h3>
-            <p className="text-xs text-text-secondary/70 mb-5">
-              {item.subtitle}
-            </p>
+            {/* Footer with Stats and Button - Centered */}
+            <motion.div
+              style={{
+                transform: isHovered ? "translateZ(15px)" : "translateZ(0px)",
+              }}
+              className="mt-4 pt-4 border-t border-gray-100 w-full"
+            >
+              <div className="flex flex-col items-center gap-3">
+                {/* Stats - Centered with full text */}
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-text-secondary">📚</span>
+                  <span className="text-[10px] text-text-secondary font-medium">{item.sessionsText}</span>
+                </div>
+
+                {/* Bigger Button - Centered */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`w-full max-w-[160px] px-6 py-2.5 rounded-full text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-md hover:shadow-lg transition-all duration-300`}
+                >
+                  جزئیات
+                </motion.button>
+              </div>
+            </motion.div>
           </div>
 
-          {/* دکمه جزئیات */}
-          <div className="w-full mt-auto">
-            <div className="bg-accent w-full py-3 rounded-xl shadow opacity-90 group-hover:opacity-100 transition-all duration-300 text-center">
-              <span className="font-[iranBold] text-white text-sm">
-                جزئیات و ثبت‌نام
-              </span>
-            </div>
-          </div>
-
-          {/* خط تزئینی پایین کارت */}
+          {/* Bottom Decorative Line */}
           <motion.div
             initial={{ scaleX: 0 }}
             animate={isHovered ? { scaleX: 1 } : { scaleX: 0 }}

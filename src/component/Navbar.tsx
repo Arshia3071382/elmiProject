@@ -65,7 +65,7 @@ function Navbar() {
     <>
       <div className="bg-primary h-40 w-full rounded-b-full relative z-40">
         <Container>
-          {/* ۱. نمایش مخصوص دسکتاپ (کلاس داخل کامپوننت: hidden lg:flex) */}
+          
           <DesktopNavbar
             logo={logo}
             showLogo={showLogo}
@@ -77,7 +77,7 @@ function Navbar() {
 
          
 
-          {/* ۳. نمایش مخصوص موبایل (کلاس داخل کامپوننت: flex md:hidden) */}
+          
           <MobileNavbar
             logo={logo}
             showLogo={showLogo}
