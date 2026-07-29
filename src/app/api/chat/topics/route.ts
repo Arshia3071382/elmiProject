@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import dbConnect from "./../../../../../lib/dbConnect"; // مسیر اتصال به دیتابیس خود را چک کنید
+import dbConnect from "./../../../../../lib/dbConnect";
 import ChatTopic from "./../../../../../models/ChatTopic";
 
+// دریافت تمام تاپیک‌ها
 export async function GET() {
   try {
     await dbConnect();
@@ -15,11 +16,11 @@ export async function GET() {
   }
 }
 
+// ثبت تاپیک جدید
 export async function POST(req: Request) {
   try {
     await dbConnect();
     const body = await req.json();
-
     const { title, slug, description, questions } = body;
 
     if (!title || !slug) {

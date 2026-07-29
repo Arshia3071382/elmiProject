@@ -58,12 +58,14 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         {/* زمان و وضعیت ارسال */}
         <div
           className={`absolute bottom-1 flex items-center gap-1 text-[10px] opacity-70 select-none font-['iranBold'] ${
-            isAdvisor ? "left-3 text-[var(--color-text-secondary)]" : "left-3 text-[var(--color-text-invert)]"
+            isAdvisor
+              ? "left-3 text-[var(--color-text-secondary)]"
+              : "left-3 text-[var(--color-text-invert)]"
           }`}
           dir="ltr"
         >
           <span>{message.time}</span>
-          
+
           {!isAdvisor && (
             <CheckCheck className="w-3 h-3 text-[var(--color-text-invert)] opacity-80" />
           )}

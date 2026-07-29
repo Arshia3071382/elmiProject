@@ -1,8 +1,16 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IOption {
+  id: string;
+  label: string; // متنی که روی دکمه/گزینه قرار می‌گیرد
+  nextResponseText: string; // پاسخی که مشاور بعد از انتخاب این گزینه می‌دهد
+}
+
 export interface IMessage {
+  id?: string;
   sender: "advisor" | "student";
   text: string;
+  options?: IOption[]; // گزینه‌های انتخابی کاربر
 }
 
 export interface IQuestion {
@@ -20,9 +28,17 @@ export interface IChatTopic extends Document {
   updatedAt: Date;
 }
 
+const OptionSchema = new Schema<IOption>({
+  id: { type: String, required: true },
+  label: { type: String, required: true },
+  nextResponseText: { type: String, required: true },
+});
+
 const MessageSchema = new Schema<IMessage>({
+  id: { type: String },
   sender: { type: String, enum: ["advisor", "student"], required: true },
   text: { type: String, required: true },
+  options: [OptionSchema], // اضافه شدن اسکیما گزینه‌ها
 });
 
 const QuestionSchema = new Schema<IQuestion>({
