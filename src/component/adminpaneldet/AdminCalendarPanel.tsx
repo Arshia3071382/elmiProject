@@ -51,6 +51,22 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
     fetchMonths();
   }, []);
 
+  // تابع کمکی برای بارگذاری فرم بر اساس روز انتخابی
+  const loadDayData = (dayNum: number, currentEvents: IEvent[]) => {
+    const found = currentEvents.find(e => e.day === dayNum);
+    if (found) {
+      setEventTitle(found.title);
+      setEventType(found.type);
+      setEventHour(found.hour || "16");
+      setEventMinute(found.minute || "00");
+    } else {
+      setEventTitle("");
+      setEventType("class");
+      setEventHour("16");
+      setEventMinute("00");
+    }
+  };
+
   // بارگذاری اطلاعات ماه انتخابی برای ویرایش
   const handleSelectMonthToEdit = (monthId: string) => {
     setSelectedExistingMonthId(monthId);
@@ -60,58 +76,67 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
       setMonthNumber(found.monthNumber);
       setMonthName(found.monthName);
       setStartDayOfWeek(found.startDayOfWeek || 0);
-      setEventsList(found.events || []);
+      const loadedEvents = found.events || [];
+      setEventsList(loadedEvents);
+      setCurrentDay(1);
+      loadDayData(1, loadedEvents);
+      onShowMessage("success", `اطلاعات ماه ${found.monthName} بارگذاری شد.`);
     }
   };
 
-  const handleNextDay = () => {
+  // ذخیره یا به‌روزرسانی رویداد روز جاری در لیست موقت
+  const saveCurrentDayToMemory = (list: IEvent[]): IEvent[] => {
+    const existingIndex = list.findIndex(e => e.day === currentDay);
     if (eventTitle.trim()) {
-      const existingIndex = eventsList.findIndex(e => e.day === currentDay);
       const newEvent: IEvent = { 
         day: currentDay, 
-        title: eventTitle, 
+        title: eventTitle.trim(), 
         type: eventType, 
         hour: eventHour, 
         minute: eventMinute 
       };
 
       if (existingIndex > -1) {
-        const updated = [...eventsList];
+        const updated = [...list];
         updated[existingIndex] = newEvent;
-        setEventsList(updated);
+        return updated;
       } else {
-        setEventsList([...eventsList, newEvent]);
-      }
-    }
-
-    if (currentDay < 30) {
-      setCurrentDay(currentDay + 1);
-      // بررسی اینکه آیا برای روز بعد از قبل رویدادی هست یا خیر
-      const nextDayEvent = eventsList.find(e => e.day === currentDay + 1);
-      if (nextDayEvent) {
-        setEventTitle(nextDayEvent.title);
-        setEventType(nextDayEvent.type);
-        setEventHour(nextDayEvent.hour || "16");
-        setEventMinute(nextDayEvent.minute || "00");
-      } else {
-        setEventTitle("");
-        setEventHour("16");
-        setEventMinute("00");
+        return [...list, newEvent];
       }
     } else {
-      onShowMessage("success", "به روز پایانی ماه رسیدید. دکمه ذخیره را بزنید.");
+      // اگر عنوان خالی بود، یعنی رویداد این روز پاک شده است
+      if (existingIndex > -1) {
+        return list.filter(e => e.day !== currentDay);
+      }
+      return list;
     }
   };
 
-  // ثبت نهایی یا ویرایش ماه
-  const handleSaveMonth = async () => {
-    let finalEvents = [...eventsList];
-    if (eventTitle.trim()) {
-      const idx = finalEvents.findIndex(e => e.day === currentDay);
-      const newEvent: IEvent = { day: currentDay, title: eventTitle, type: eventType, hour: eventHour, minute: eventMinute };
-      if (idx > -1) finalEvents[idx] = newEvent;
-      else finalEvents.push(newEvent);
+  const handleNextDay = () => {
+    const updatedList = saveCurrentDayToMemory(eventsList);
+    setEventsList(updatedList);
+
+    if (currentDay < 30) {
+      const nextDay = currentDay + 1;
+      setCurrentDay(nextDay);
+      loadDayData(nextDay, updatedList);
+    } else {
+      onShowMessage("success", "به روز پایانی ماه رسیدید. اکنون دکمه ذخیره نهایی را بزنید.");
     }
+  };
+
+  // تغییر مستقیم روز از طریق منوی آبشاری
+  const handleDayChange = (newDay: number) => {
+    const updatedList = saveCurrentDayToMemory(eventsList);
+    setEventsList(updatedList);
+    setCurrentDay(newDay);
+    loadDayData(newDay, updatedList);
+  };
+
+  // ثبت نهایی یا ویرایش ماه در دیتابیس
+  const handleSaveMonth = async () => {
+    const finalEvents = saveCurrentDayToMemory(eventsList);
+    setEventsList(finalEvents);
 
     const payload = { year, monthNumber, monthName, startDayOfWeek, events: finalEvents };
 
@@ -133,7 +158,7 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
     }
   };
 
-  // حذف کامل یک ماه (مثلاً حذف ماه مهر)
+  // حذف کامل یک ماه
   const handleDeleteMonth = async (monthId: string, name: string) => {
     if (!confirm(`آیا از حذف کامل اطلاعات ماه ${name} اطمینان دارید؟`)) return;
 
@@ -148,6 +173,8 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
         if (selectedExistingMonthId === monthId) {
           setSelectedExistingMonthId("");
           setEventsList([]);
+          setCurrentDay(1);
+          loadDayData(1, []);
         }
       } else {
         onShowMessage("error", data.error || "خطا در حذف ماه");
@@ -168,12 +195,14 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
           {existingMonths.map((m) => (
             <div key={m._id} className="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 shadow-sm">
               <button 
+                type="button"
                 onClick={() => handleSelectMonthToEdit(m._id)} 
                 className="text-xs font-bold text-blue-700 hover:underline"
               >
                 {m.monthName} {m.year}
               </button>
               <button 
+                type="button"
                 onClick={() => handleDeleteMonth(m._id, m.monthName)} 
                 className="text-rose-600 hover:text-rose-800 p-1 mr-1"
                 title="حذف این ماه"
@@ -199,13 +228,13 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
           <label className="block text-gray-600 mb-1 text-sm">نام ماه:</label>
           <input type="text" value={monthName} onChange={(e) => setMonthName(e.target.value)} className="w-full border p-2 rounded-lg" />
         </div>
-        <div>
+       <div>
           <label className="block text-gray-600 mb-1 text-sm">روز اول ماه:</label>
           <select value={startDayOfWeek} onChange={(e) => setStartDayOfWeek(Number(e.target.value))} className="w-full border p-2 rounded-lg bg-white text-sm">
             <option value={0}>شنبه</option>
             <option value={1}>یکشنبه</option>
             <option value={2}>دوشنبه</option>
-            <option value={3}>سه‌شنبه</option>
+            <option  value={3}>سه‌شنبه</option>
             <option value={4}>چهارشنبه</option>
             <option value={5}>پنج‌شنبه</option>
             <option value={6}>جمعه</option>
@@ -220,21 +249,7 @@ export default function AdminCalendarPanel({ onShowMessage }: { onShowMessage: (
             <span className="text-xs text-gray-500">پرش به روز:</span>
             <select 
               value={currentDay} 
-              onChange={(e) => {
-                const day = Number(e.target.value);
-                setCurrentDay(day);
-                const found = eventsList.find(ev => ev.day === day);
-                if (found) {
-                  setEventTitle(found.title);
-                  setEventType(found.type);
-                  setEventHour(found.hour || "16");
-                  setEventMinute(found.minute || "00");
-                } else {
-                  setEventTitle("");
-                  setEventHour("16");
-                  setEventMinute("00");
-                }
-              }}
+              onChange={(e) => handleDayChange(Number(e.target.value))}
               className="border p-1 rounded text-xs bg-white"
             >
               {[...Array(30)].map((_, i) => (

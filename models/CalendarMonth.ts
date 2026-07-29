@@ -12,7 +12,8 @@ export interface IEvent {
 export interface ICalendarMonth extends Document {
   year: number;
   monthNumber: number;
-  monthName: string; // مثل مهر، آبان و...
+  monthName: string;
+  startDayOfWeek: number;
   events: IEvent[];
   createdAt: Date;
 }
@@ -29,8 +30,21 @@ const CalendarMonthSchema = new Schema<ICalendarMonth>({
   year: { type: Number, required: true },
   monthNumber: { type: Number, required: true, unique: true },
   monthName: { type: String, required: true },
+
+  startDayOfWeek: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+    max: 6,
+  },
+
   events: [EventSchema],
-  createdAt: { type: Date, default: Date.now },
+
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 export default mongoose.models.CalendarMonth || 
