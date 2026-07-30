@@ -3,17 +3,20 @@
 import React, { useState, useEffect } from "react";
 import { StaticImageData } from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Bell,
+  Bell, 
   X, 
   ChevronLeft, 
-  Sparkles,
-  Newspaper,
-  PhoneCall,
-  Info,
-  ShieldCheck
+  Sparkles, 
+  Newspaper, 
+  PhoneCall, 
+  Info, 
+  ShieldCheck,
+  User,
+  KeyRound,
+  Lock
 } from "lucide-react";
 
 import HeroLogo from "./HeroLogo";
@@ -32,6 +35,14 @@ export default function MobileNavbar({
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  // وضعیت‌های مربوط به مودال لاگین معین ارشد
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,6 +61,51 @@ export default function MobileNavbar({
     { label: "درباره ما", href: "/aboutUs", icon: Info },
     { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
   ];
+
+  // مدیریت درخواست احراز هویت معین ارشد
+  const handleSeniorAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usernameInput.trim() || !passwordInput.trim()) {
+      setLoginError("لطفاً نام کاربری و رمز عبور را وارد کنید.");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoginError("");
+
+    try {
+      const res = await fetch("/api/senior-admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: usernameInput.trim(),
+          password: passwordInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setIsLoginModalOpen(false);
+        setIsOpen(false);
+        setUsernameInput("");
+        setPasswordInput("");
+        router.push("/senior-admin");
+      } else {
+        setLoginError(data.error || "نام کاربری یا رمز عبور اشتباه است.");
+      }
+    } catch {
+      setLoginError("خطا در برقراری ارتباط با سرور.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenLoginModal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(false); // بستن دکمه همبرگری/دراور
+    setIsLoginModalOpen(true); // باز کردن مودال لاگین
+  };
 
   return (
     <>
@@ -194,17 +250,111 @@ export default function MobileNavbar({
                 </div>
               </div>
 
+              {/* باز کردن مودال ورود با کلیک روی دکمه ورود به پنل */}
               <div className="pt-4 border-t border-slate-100">
-                <Link href="/admin">
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
-                  >
-                    <ShieldCheck className="h-4 w-4 text-slate-500" />
-                    <span>ورود به پنل مدیریت</span>
-                  </motion.button>
-                </Link>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleOpenLoginModal}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                >
+                  <ShieldCheck className="h-4 w-4 text-slate-500" />
+                  <span>ورود به پنل مدیریت</span>
+                </motion.button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ۴. مودال ورود اختصاصی معین ارشد (تم روشن + مارجین تاپ ۲۰) */}
+      <AnimatePresence>
+        {isLoginModalOpen && (
+          <div dir="rtl" className="fixed inset-0 z-[120] flex items-start justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsLoginModalOpen(false)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              className="relative mt-20 w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-2xl z-10 text-slate-800 overflow-hidden"
+            >
+              <button
+                onClick={() => setIsLoginModalOpen(false)}
+                className="absolute top-5 left-5 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mb-3 border border-blue-100 shadow-sm">
+                  <Lock className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold font-['iranBold'] text-slate-900">
+                  احراز هویت معین ارشد
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  جهت دسترسی به پنل مدیریت، اطلاعات حساب خود را وارد کنید
+                </p>
+              </div>
+
+              <form onSubmit={handleSeniorAdminLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-2">
+                    نام کاربری
+                  </label>
+                  <div className="relative">
+                    <User className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={usernameInput}
+                      onChange={(e) => setUsernameInput(e.target.value)}
+                      placeholder="نام کاربری (مثلاً davood)"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-2">
+                    رمز عبور
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {loginError && (
+                  <p className="text-xs text-rose-500 font-bold text-center mt-1">
+                    {loginError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all mt-2 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "تأیید و ورود به پنل"
+                  )}
+                </button>
+              </form>
             </motion.div>
           </div>
         )}
