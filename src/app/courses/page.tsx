@@ -67,7 +67,7 @@ export default function CoursesPage() {
       : courses;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
+    <div className="min-h-screen mt-20" style={{ backgroundColor: "var(--color-bg)" }}>
       <Container>
         <main dir="rtl" className="py-8">
           {/* Header Section */}
@@ -101,9 +101,7 @@ export default function CoursesPage() {
                 </p>
               </motion.div>
             ) : !selectedCategory ? (
-              /* -------------------------------------------------------------
-                 مرحله اول: کارت‌های بزرگ دسته‌بندی (قبل از نمایش ویدیوها)
-                 ------------------------------------------------------------- */
+              
               <motion.div
                 key="category-cards"
                 initial={{ opacity: 0, y: 15 }}
@@ -118,9 +116,7 @@ export default function CoursesPage() {
                 />
               </motion.div>
             ) : (
-              /* -------------------------------------------------------------
-                 مرحله دوم: لیست ویدیوها/دوره‌های مربوط به دسته انتخابی
-                 ------------------------------------------------------------- */
+          
               <motion.div
                 key="course-list"
                 initial={{ opacity: 0, y: 15 }}

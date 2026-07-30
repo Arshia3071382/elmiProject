@@ -32,7 +32,7 @@ export default function CategoryCards({
   };
 
   return (
-    <div className="mt-6">
+    <div className="mt-10">
       {/* هدر بخش انتخاب دوره */}
       <div className="flex items-center justify-between mb-8">
         <div>
