@@ -12,7 +12,6 @@ const DOCK_ITEMS = [
     label: "گفتینو",
     href: "/chat-guidance",
     icon: MessageCircle,
-    // بک‌گراند اختصاصی گفتینو
     bgGradient: "from-blue-600 to-indigo-600",
     border: "border-blue-400/40",
     glow: "rgba(37, 99, 235, 0.4)",
@@ -23,7 +22,6 @@ const DOCK_ITEMS = [
     label: "لیگ نخبگان",
     href: "/elite-league",
     icon: Trophy,
-    // بک‌گراند اختصاصی لیگ
     bgGradient: "from-amber-500 to-amber-400",
     border: "border-amber-300/50",
     glow: "rgba(245, 158, 11, 0.4)",
@@ -34,7 +32,6 @@ const DOCK_ITEMS = [
     label: "دوره‌ها",
     href: "/courses",
     icon: BookOpen,
-    // بک‌گراند سفید طبق درخواست شما
     bgGradient: "from-white to-slate-50",
     border: "border-slate-200",
     glow: "rgba(148, 163, 184, 0.35)",
@@ -47,7 +44,7 @@ export default function FloatingActionDock() {
 
   return (
     <div className="relative z-30 mt-3.5 flex justify-center">
-      {/* جعبه فرورفته اصلی (Inset/Sunken Track) دقیقاً مثل سوییچر Dark/Light */}
+      {/* جعبه فرورفته اصلی */}
       <div className="relative flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-200/60 p-1.5 backdrop-blur-2xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.8)]">
         {DOCK_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -74,19 +71,6 @@ export default function FloatingActionDock() {
               >
                 <Icon className={`h-5 w-5 ${item.iconColor}`} />
               </motion.div>
-
-              {/* نشانگر نقطه متحرک تحتانی برای حالت فعال */}
-              {isActive && (
-                <motion.div
-                  layoutId="activeDockDot"
-                  transition={{
-                    type: "spring",
-                    stiffness: 450,
-                    damping: 30,
-                  }}
-                  className="absolute -bottom-1 left-1/2 h-1 w-3 -translate-x-1/2 rounded-full bg-slate-800 shadow-sm"
-                />
-              )}
             </Link>
           );
         })}
