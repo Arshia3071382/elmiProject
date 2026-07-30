@@ -1,126 +1,214 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import { StaticImageData } from "next/image";
-import { MessageCircle, Trophy, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Bell,
+  X, 
+  ChevronLeft, 
+  Sparkles,
+  Newspaper,
+  PhoneCall,
+  Info,
+  ShieldCheck
+} from "lucide-react";
+
+import HeroLogo from "./HeroLogo";
+import FloatingActionDock from "./FloatingActionDock";
+import Container from "../Container";
 
 interface MobileNavbarProps {
   logo: StaticImageData;
-  showLogo: boolean;
-  showCourses: boolean;
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  hasUnreadNotification?: boolean;
 }
 
-export default function MobileNavbar({
-  logo,
-  showLogo,
-  showCourses,
-  isOpen,
-  setIsOpen,
+export default function MobileNavbar({ 
+  logo, 
+  hasUnreadNotification = true 
 }: MobileNavbarProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
-      // اگر کاربر بیشتر از ۲۰ پیکسل اسکرول کند، نوار به بالای صفحه می‌چسبد
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 15);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  const secondaryLinks = [
+    { label: "اخبار و اطلاعیه‌ها", href: "/notices", icon: Newspaper },
+    { label: "درباره ما", href: "/aboutUs", icon: Info },
+    { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
+  ];
+
   return (
-    <div
-     
-      className={`lg:hidden w-full px-4 fixed left-0 right-0 z-50 font-['iranSans-r'] transition-all duration-300 ease-in-out ${
-        isScrolled ? "top-2" : "top-26"
-      }`}
-      dir="rtl"
-    >
-      {/* کارت اصلی نوار موبایل */}
-      <div
-        className={`w-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-2xl h-14 px-3 flex items-center justify-between relative transition-all duration-300 ${
-          isScrolled ? "shadow-lg" : "shadow-md"
+    <>
+      <header 
+        dir="rtl" 
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 lg:hidden ${
+          isScrolled ? "pt-2" : "pt-3"
         }`}
       >
-        {/* ۱. سمت راست: دکمه همبرگری */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex flex-col justify-center items-center gap-1 w-9 h-9 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-primary)] shrink-0 transition-transform active:scale-95"
-          aria-label="منو"
-        >
-          <span
-            className={`h-0.5 w-4 bg-[var(--color-text-primary)] rounded-full transition-all duration-300 ${
-              isOpen ? "rotate-45 translate-y-1.5" : ""
-            }`}
-          />
-          <span
-            className={`h-0.5 w-4 bg-[var(--color-text-primary)] rounded-full transition-all duration-300 ${
-              isOpen ? "opacity-0" : ""
-            }`}
-          />
-          <span
-            className={`h-0.5 w-4 bg-[var(--color-text-primary)] rounded-full transition-all duration-300 ${
-              isOpen ? "-rotate-45 -translate-y-1.5" : ""
-            }`}
-          />
-        </button>
+        <Container>
+          <div className="flex flex-col items-center">
+            
+            {/* ۱. شاسی اصلی Navbar با تقارن کامل بصری */}
+            <nav 
+              className="relative flex h-16 w-full items-center justify-between rounded-2xl border border-white/80 bg-white/75 px-3.5 backdrop-blur-2xl transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.8)]"
+            >
+              {/* سمت راست: منوی همبرگری */}
+              <div className="relative z-10 flex items-center">
+                <motion.button
+                  whileTap={{ scale: 0.90 }}
+                  onClick={() => setIsOpen(true)}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-100/70 text-slate-800 backdrop-blur-md active:bg-slate-200 shadow-sm"
+                  aria-label="باز کردن منو"
+                >
+                  <div className="flex flex-col gap-1 items-center justify-center">
+                    <span className="h-0.5 w-4.5 rounded-full bg-slate-800" />
+                    <span className="h-0.5 w-3 rounded-full bg-slate-600 self-start" />
+                    <span className="h-0.5 w-4.5 rounded-full bg-slate-800" />
+                  </div>
+                </motion.button>
+              </div>
 
-        {/* ۲. وسط: لوگو سایت (سنتر شده با absolute) */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 transition-all duration-500 shrink-0"
-          style={{ opacity: showLogo ? 1 : 0 }}
-        >
-          <Link href="/" className="block">
-            <Image
-              width={65}
-              height={30}
-              src={logo}
-              alt="sitelogo"
-              priority
-              className="object-contain"
+              {/* مرکز: لوگوی شناور زنده */}
+              <HeroLogo logo={logo} />
+
+              {/* سمت چپ: دکمه اعلانات (Notification Button) */}
+              <div className="relative z-10 flex items-center">
+                <Link href="/notices" aria-label="اعلانات">
+                  <motion.div
+                    whileTap={{ scale: 0.90 }}
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{
+                      duration: 1.2,
+                      repeat: Infinity,
+                      repeatDelay: 8,
+                      ease: "easeInOut",
+                    }}
+                    className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-100/70 text-slate-700 backdrop-blur-md active:bg-slate-200 shadow-sm"
+                  >
+                    <Bell className="h-4.5 w-4.5 text-slate-700" />
+                    
+                    {/* نقطه قرمز جلب توجه با Glow کوتاه */}
+                    {hasUnreadNotification && (
+                      <span className="absolute top-2 left-2 flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                      </span>
+                    )}
+                  </motion.div>
+                </Link>
+              </div>
+            </nav>
+
+            {/* ۲. اکشن دک شناور (Floating Action Dock) در زیر Navbar */}
+            <FloatingActionDock />
+
+          </div>
+        </Container>
+      </header>
+
+      {/* فاصله‌دهنده محتوای اصلی برای جلوگیری از اورلپ در صفحه */}
+      <div className="h-32 lg:hidden" />
+
+      {/* ۳. کشوی ناوبری RTL (Drawer) */}
+      <AnimatePresence>
+        {isOpen && (
+          <div dir="rtl" className="relative z-[100] lg:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-slate-950/35 backdrop-blur-md"
             />
-          </Link>
-        </div>
 
-        {/* ۳. سمت چپ: دکمه‌های شکیل و مینیمال */}
-        <div
-          className="flex items-center gap-1.5 shrink-0 transition-opacity duration-500"
-          style={{ opacity: showCourses ? 1 : 0 }}
-        >
-          {/* گفتینو */}
-          <Link href="/chat-guidance" title="گفتینو">
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-[var(--color-secondary)] text-[var(--color-text-invert)] text-[10px] font-['iranBold'] shadow-sm active:scale-95 transition-all">
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">گفتینو</span>
-            </button>
-          </Link>
+            <motion.div
+              initial={{ x: "100%", opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="fixed inset-y-0 right-0 w-[82%] max-w-sm border-l border-white/60 bg-white/92 p-6 shadow-2xl backdrop-blur-2xl flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between pb-5 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-100">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-['iranBold'] text-sm text-slate-900">علمی منتظران</h3>
+                      <p className="text-[10px] text-slate-400">پلتفرم آموزشی هوشمند</p>
+                    </div>
+                  </div>
 
-          {/* لیگ نخبگان */}
-          <Link href="/elite-league" title="لیگ نخبگان">
-            <button className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/30 text-[10px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
-              <Trophy className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">نخبگان</span>
-            </button>
-          </Link>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsOpen(false)}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-100/80 text-slate-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </motion.button>
+                </div>
 
-          {/* دوره‌ها */}
-          <Link href="/courses" title="دوره‌ها">
-            <button className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-[var(--color-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] text-[10px] font-['iranBold'] active:scale-95 transition-all flex items-center gap-1">
-              <BookOpen className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">دوره‌ها</span>
-            </button>
-          </Link>
-        </div>
-      </div>
-    </div>
+                <div className="mt-6 flex flex-col gap-2">
+                  <span className="text-[10px] font-bold text-slate-400 px-2 mb-1">
+                    صفحات اصلی
+                  </span>
+
+                  {secondaryLinks.map((link, idx) => {
+                    const Icon = link.icon;
+                    return (
+                      <motion.div
+                        key={link.href}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.06 * (idx + 1), type: "spring" }}
+                      >
+                        <Link
+                          href={link.href}
+                          className="flex items-center justify-between rounded-xl p-3 text-xs font-semibold text-slate-700 hover:bg-blue-50/80 hover:text-blue-600 transition-all active:scale-[0.98]"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className="h-4 w-4 text-slate-400" />
+                            <span>{link.label}</span>
+                          </div>
+                          <ChevronLeft className="h-3.5 w-3.5 text-slate-300" />
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <Link href="/admin">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                  >
+                    <ShieldCheck className="h-4 w-4 text-slate-500" />
+                    <span>ورود به پنل مدیریت</span>
+                  </motion.button>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
