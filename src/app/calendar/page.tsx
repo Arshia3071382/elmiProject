@@ -40,19 +40,19 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch("/api/calendar")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.months.length > 0) {
-          setMonths(data.months);
-          setSelectedMonthId(
-            data.months[Math.floor(data.months.length / 2)]._id,
-          );
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  fetch("/api/calendar", { cache: "no-store" })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success && data.months.length > 0) {
+        setMonths(data.months);
+        setSelectedMonthId(
+          data.months[Math.floor(data.months.length / 2)]._id,
+        );
+      }
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
+}, []);
 
   const currentMonth =
     months.find((m) => m._id === selectedMonthId) || months[0];
