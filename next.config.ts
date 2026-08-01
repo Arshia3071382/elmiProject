@@ -6,15 +6,17 @@ const nextConfig = {
     },
   },
   images: {
-   remotePatterns: [
+    remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
     ],
   },
 }
 
 module.exports = nextConfig
-
-// build triggergghgh

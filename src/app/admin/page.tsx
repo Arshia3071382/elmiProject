@@ -14,7 +14,7 @@ import AdminTopicsPanel from "./../../component/adminpaneldet/AdminTopicsPanel";
 import AdminArticlesPanel from "./../../component/adminpaneldet/AdminArticlesPanel";
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
 import SeniorAdminUser from "@/component/adminpaneldet/SeniorAdminUser";
-
+import AdminShowcasePanel from "@/component/adminpaneldet/AdminShowcasePanel";
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -336,6 +336,9 @@ export default function AdminPage() {
       </div>
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <SeniorAdminUser />
+      </div>
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AdminShowcasePanel />
       </div>
 
       {message && (

@@ -52,7 +52,7 @@ export default function ScienceHub() {
       title: "ویترین علمی", 
       subtitle: "فریم به فریم با علمی",
       icon: <Film className="w-6 h-6 text-sky-600" />, 
-      href: "/media",
+      href: "/showcase", // مسیر اصلاح شد به /showcase
       gradient: "from-sky-500 to-blue-400",
       iconBg: "bg-sky-100 group-hover:bg-sky-200",
       borderColor: "border-sky-200 group-hover:border-sky-400"
@@ -167,7 +167,7 @@ export default function ScienceHub() {
           </div>
         </motion.div>
 
-        {/* گرید ریسپانسیو - حذف max-w-6xl و px-2 */}
+        {/* گرید ریسپانسیو */}
         <div className="w-full grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 relative z-10">
           {hubItems.map((item, index) => (
             <ScienceCard key={item.id} item={item} index={index} />
