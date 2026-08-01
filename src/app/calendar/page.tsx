@@ -149,9 +149,7 @@ export default function CalendarPage() {
 
         {/* فیلترهای بالا */}
         <div className="w-full max-w-6xl mx-auto mb-10 px-4 flex flex-wrap justify-center items-center gap-2 relative z-10 text-xs">
-          <span className="flex items-center gap-1 text-slate-500 ml-2 font-[iranBold]">
-            <Filter className="w-3.5 h-3.5" /> فیلتر:
-          </span>
+          
           <button
             onClick={() => setFilterType("all")}
             className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "all" ? "bg-slate-800 text-white border-slate-800 font-[iranBold]" : "bg-white text-slate-600 border-slate-200"}`}
@@ -162,7 +160,7 @@ export default function CalendarPage() {
             onClick={() => setFilterType("class")}
             className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "class" ? "bg-blue-600 text-white border-blue-600 font-[iranBold]" : "bg-white text-blue-600 border-blue-200"}`}
           >
-            فقط کلاس‌ها
+             کلاس‌ها
           </button>
           <button
             onClick={() => setFilterType("exam")}
