@@ -13,6 +13,7 @@ import AdminEliteLeaguePanel from "./../../component/adminpaneldet/AdminEliteLea
 import AdminTopicsPanel from "./../../component/adminpaneldet/AdminTopicsPanel";
 import AdminArticlesPanel from "./../../component/adminpaneldet/AdminArticlesPanel";
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
+import SeniorAdminUser from "@/component/adminpaneldet/SeniorAdminUser";
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -332,6 +333,9 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminCalendarPanel onShowMessage={showMessage} />
+      </div>
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <SeniorAdminUser />
       </div>
 
       {message && (

@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   User,
   KeyRound,
-  Lock
+  Lock,
+  Sparkle
 } from "lucide-react";
 
 import HeroLogo from "./HeroLogo";
@@ -43,6 +44,9 @@ export default function MobileNavbar({
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // وضعیت تشخیص اولین ورود معین ارشد
+  const [isFirstLoginUser, setIsFirstLoginUser] = useState<boolean | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,15 +66,9 @@ export default function MobileNavbar({
     { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
   ];
 
-  // مدیریت درخواست احراز هویت معین ارشد
-  const handleSeniorAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!usernameInput.trim() || !passwordInput.trim()) {
-      setLoginError("لطفاً نام کاربری و رمز عبور را وارد کنید.");
-      return;
-    }
-
-    setIsLoading(true);
+  // بررسی وضعیت اولین ورود موقع خارج شدن از فیلد نام کاربری
+  const checkUsernameStatus = async () => {
+    if (!usernameInput.trim()) return;
     setLoginError("");
 
     try {
@@ -78,6 +76,47 @@ export default function MobileNavbar({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "check",
+          username: usernameInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setIsFirstLoginUser(data.isFirstLogin);
+      } else {
+        setIsFirstLoginUser(null);
+      }
+    } catch {
+      // در صورت خطا بی صدا رد می شویم
+    }
+  };
+
+  // مدیریت درخواست احراز هویت و ذخیره رمز در دیتابیس
+  const handleSeniorAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usernameInput.trim() || !passwordInput.trim()) {
+      setLoginError("لطفاً نام کاربری و رمز عبور را وارد کنید.");
+      return;
+    }
+
+    if (passwordInput.trim().length < 4) {
+      setLoginError("رمز عبور باید حداقل ۴ کاراکتر باشد.");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoginError("");
+
+    // تعیین اکشن مناسب: اگر اولین بار است رمز ذخیره شود، در غیر این صورت لاگین کند
+    const actionToSend = isFirstLoginUser ? "set_first_password" : "login";
+
+    try {
+      const res = await fetch("/api/senior-admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: actionToSend,
           username: usernameInput.trim(),
           password: passwordInput.trim(),
         }),
@@ -85,13 +124,19 @@ export default function MobileNavbar({
 
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && (data.success || data.user)) {
         setIsLoginModalOpen(false);
         setIsOpen(false);
         setUsernameInput("");
         setPasswordInput("");
+        setIsFirstLoginUser(null);
         router.push("/senior-admin");
+        router.refresh();
       } else {
+        // اگر سرور اعلام کرد کاربری بار اولش است، وضعیت را بروزرسانی می‌کنیم
+        if (data.isFirstLogin) {
+          setIsFirstLoginUser(true);
+        }
         setLoginError(data.error || "نام کاربری یا رمز عبور اشتباه است.");
       }
     } catch {
@@ -103,8 +148,10 @@ export default function MobileNavbar({
 
   const handleOpenLoginModal = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsOpen(false); // بستن دکمه همبرگری/دراور
-    setIsLoginModalOpen(true); // باز کردن مودال لاگین
+    setIsOpen(false);
+    setIsFirstLoginUser(null);
+    setLoginError("");
+    setIsLoginModalOpen(true);
   };
 
   return (
@@ -118,7 +165,7 @@ export default function MobileNavbar({
         <Container>
           <div className="flex flex-col items-center">
             
-            {/* ۱. شاسی اصلی Navbar با تقارن کامل بصری */}
+            {/* ۱. شاسی اصلی Navbar */}
             <nav 
               className="relative flex h-16 w-full items-center justify-between rounded-2xl border border-white/80 bg-white/75 px-3.5 backdrop-blur-2xl transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.8)]"
             >
@@ -141,7 +188,7 @@ export default function MobileNavbar({
               {/* مرکز: لوگوی شناور زنده */}
               <HeroLogo logo={logo} />
 
-              {/* سمت چپ: دکمه اعلانات (Notification Button) */}
+              {/* سمت چپ: دکمه اعلانات */}
               <div className="relative z-10 flex items-center">
                 <Link href="/notices" aria-label="اعلانات">
                   <motion.div
@@ -157,7 +204,6 @@ export default function MobileNavbar({
                   >
                     <Bell className="h-4.5 w-4.5 text-slate-700" />
                     
-                    {/* نقطه قرمز جلب توجه با Glow کوتاه */}
                     {hasUnreadNotification && (
                       <span className="absolute top-2 left-2 flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -169,14 +215,13 @@ export default function MobileNavbar({
               </div>
             </nav>
 
-            {/* ۲. اکشن دک شناور (Floating Action Dock) در زیر Navbar */}
+            {/* ۲. اکشن دک شناور */}
             <FloatingActionDock />
 
           </div>
         </Container>
       </header>
 
-      {/* فاصله‌دهنده محتوای اصلی برای جلوگیری از اورلپ در صفحه */}
       <div className="h-32 lg:hidden" />
 
       {/* ۳. کشوی ناوبری RTL (Drawer) */}
@@ -250,7 +295,6 @@ export default function MobileNavbar({
                 </div>
               </div>
 
-              {/* باز کردن مودال ورود با کلیک روی دکمه ورود به پنل */}
               <div className="pt-4 border-t border-slate-100">
                 <motion.button
                   whileTap={{ scale: 0.97 }}
@@ -266,7 +310,7 @@ export default function MobileNavbar({
         )}
       </AnimatePresence>
 
-      {/* ۴. مودال ورود اختصاصی معین ارشد (تم روشن + مارجین تاپ ۲۰) */}
+      {/* ۴. مودال ورود اختصاصی معین ارشد */}
       <AnimatePresence>
         {isLoginModalOpen && (
           <div dir="rtl" className="fixed inset-0 z-[120] flex items-start justify-center p-4 overflow-y-auto">
@@ -314,7 +358,11 @@ export default function MobileNavbar({
                     <input
                       type="text"
                       value={usernameInput}
-                      onChange={(e) => setUsernameInput(e.target.value)}
+                      onChange={(e) => {
+                        setUsernameInput(e.target.value);
+                        setIsFirstLoginUser(null);
+                      }}
+                      onBlur={checkUsernameStatus}
                       placeholder="نام کاربری (مثلاً davood)"
                       className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
                     />
@@ -323,7 +371,7 @@ export default function MobileNavbar({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-2">
-                    رمز عبور
+                    {isFirstLoginUser ? "تعیین رمز عبور جدید (اولین ورود)" : "رمز عبور"}
                   </label>
                   <div className="relative">
                     <KeyRound className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -331,10 +379,16 @@ export default function MobileNavbar({
                       type="password"
                       value={passwordInput}
                       onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder={isFirstLoginUser ? "رمز عبور جدید دلخواه را وارد کنید" : "••••••••"}
                       className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
                     />
                   </div>
+                  {isFirstLoginUser && (
+                    <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[11px] font-bold flex items-center gap-1.5">
+                      <Sparkle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span>این اولین ورود شماست. رمزی که تایپ می‌کنید در دیتابیس ذخیره شده و رمز اختصاصی شما خواهد بود.</span>
+                    </div>
+                  )}
                 </div>
 
                 {loginError && (
@@ -346,10 +400,16 @@ export default function MobileNavbar({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all mt-2 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className={`w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-md transition-all mt-2 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 ${
+                    isFirstLoginUser
+                      ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
+                      : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
+                  }`}
                 >
                   {isLoading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : isFirstLoginUser ? (
+                    "ثبت رمز عبور و ورود به پنل"
                   ) : (
                     "تأیید و ورود به پنل"
                   )}
