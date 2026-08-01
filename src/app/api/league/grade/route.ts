@@ -31,12 +31,19 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   await dbConnect();
   try {
-    const { id, selectedActivities, totalScore } = await req.json();
+    const { id, selectedActivities, addedScore } = await req.json();
+
     const updated = await GradeStudent.findByIdAndUpdate(
       id,
-      { selectedActivities, totalScore },
+      {
+        // امتیاز جدید را به امتیاز قبلی اضافه می‌کند
+        $inc: { totalScore: addedScore }, 
+        // فعالیت‌های جدید را جایگزین یا به لیست فعلی اضافه می‌کند
+        $set: { selectedActivities: selectedActivities } 
+      },
       { new: true }
     );
+
     return NextResponse.json(updated);
   } catch (err) {
     return NextResponse.json({ error: "خطا در به‌روزرسانی امتیازات" }, { status: 500 });

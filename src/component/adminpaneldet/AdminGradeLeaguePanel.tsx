@@ -93,10 +93,10 @@ export default function AdminGradeLeaguePanel() {
     }
   };
 
-  // باز کردن مودال و بازنشانی چک‌باکس‌ها
+  // باز کردن مودال و شروع با چک‌باکس‌های خالی جهت افزودن امتیاز جدید
   const handleOpenModal = (student: any) => {
     setSelectedStudent(student);
-    setActiveCheckboxes(student.selectedActivities || []);
+    setActiveCheckboxes([]); // ریست کردن چک‌باکس‌ها برای انتخاب جدید
     setSearchActivity("");
   };
 
@@ -107,22 +107,29 @@ export default function AdminGradeLeaguePanel() {
     );
   };
 
-  // ذخیره‌سازی امتیازات در دیتابیس
+  // ذخیره‌سازی امتیازات به صورت تجمعی در دیتابیس
   const handleSaveActivities = async () => {
     if (!selectedStudent) return;
     setSaving(true);
+
+    // محاسبه مجموع امتیاز فعالیت‌های انتخاب‌شده در این نوبت
+    const addedScore = calculateTotalScore(activeCheckboxes);
+
     try {
       const res = await fetch("/api/league/grade", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          studentId: selectedStudent._id,
-          selectedActivities: activeCheckboxes,
+          id: selectedStudent._id,
+          selectedActivities: activeCheckboxes, // فعالیت‌های جدید این مرحله
+          addedScore: addedScore,                 // امتیاز برای جمع با امتیاز قبلی در سرور ($inc)
         }),
       });
+
       if (res.ok) {
-        setSelectedStudent(null);
-        fetchStudents();
+        setActiveCheckboxes([]);  // ۱. ریست کردن گزینه‌ها برای نوبت بعدی
+        setSelectedStudent(null);  // ۲. بستن مودال
+        fetchStudents();           // ۳. به‌روزرسانی جدول
       }
     } catch (err) {
       console.error("خطا در ذخیره امتیازات:", err);
@@ -329,7 +336,7 @@ export default function AdminGradeLeaguePanel() {
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 hover:border-emerald-600 text-xs font-bold transition-all"
                               >
                                 <CheckSquare className="w-3.5 h-3.5" />
-                                تعیین امتیاز
+                                افزودن امتیاز
                               </button>
                             </td>
                           </tr>
@@ -358,7 +365,7 @@ export default function AdminGradeLeaguePanel() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-100">
-                    ثبت فعالیت‌ها و نمرات: {selectedStudent.name}
+                    افزودن فعالیت و امتیاز جدید: {selectedStudent.name}
                   </h3>
                   <p className="text-xs text-slate-400 font-[IRANSansXFaNum-Regular]">
                     مقطع: {GRADES.find((g) => g.id === selectedStudent.grade)?.label}
@@ -373,7 +380,7 @@ export default function AdminGradeLeaguePanel() {
               </button>
             </div>
 
-            {/* بخش جستجو و مجموع محاسبه‌شده لحظه‌ای */}
+            {/* بخش جستجو و مجموع محاسبه‌شده لحظه‌ای این مرحله */}
             <div className="p-4 bg-emerald-50/50 border-b border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="relative w-full sm:w-72">
                 <Search className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
@@ -388,7 +395,7 @@ export default function AdminGradeLeaguePanel() {
 
               <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-emerald-200 shadow-sm w-full sm:w-auto justify-between sm:justify-start">
                 <span className="text-xs font-bold text-slate-600 font-[IRANSansXFaNum-Regular]">
-                  محاسبه لحظه‌ای امتیاز:
+                  امتیاز اضافه شونده این مرحله:
                 </span>
                 <span className="text-xl font-black text-emerald-600 font-mono">
                   {toPersianDigits(liveCalculatedScore)}
