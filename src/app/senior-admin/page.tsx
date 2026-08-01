@@ -10,11 +10,12 @@ import {
   ShieldAlert,
   LogOut,
   UserCheck,
-  ArrowRight
+  ArrowRight,
+  Trophy
 } from "lucide-react";
 
-// ۱. اینپورت کامپوننت اصلی تقویم
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
+import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePanel";
 
 interface AdminUser {
   username: string;
@@ -27,7 +28,6 @@ export default function SeniorAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // استیت برای مدیریت بخش فعال (مثلاً null یعنی صفحه اصلی ماژول‌ها)
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -95,7 +95,7 @@ export default function SeniorAdminDashboard() {
     <div className="min-h-screen bg-slate-50/60 p-4 md:p-8" dir="rtl">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* نمایش پیام‌های موفقیت/خطا */}
+        {/* پیام‌های شناور */}
         {toastMessage && (
           <div
             className={`p-4 rounded-2xl text-xs font-bold shadow-md transition-all ${
@@ -108,16 +108,16 @@ export default function SeniorAdminDashboard() {
           </div>
         )}
 
-        {/* ۱. هدر خوش‌آمدگویی اختصاصی */}
+        {/* هدر پنل معین */}
         <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white p-6 md:p-8 rounded-3xl shadow-xl shadow-blue-500/10">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 text-xs font-bold mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>پنل اختصاصی معین ارشد</span>
+                <span>پنل اختصاصی معین علمی</span>
               </div>
               <h1 className="text-xl md:text-2xl font-black tracking-tight">
-                سلام معین ارشد عزیز، <span className="text-amber-300">{user?.name || user?.username}</span> خوش آمدید!
+                سلام معین عزیز، <span className="text-amber-300">{user?.name || user?.username}</span> خوش آمدید!
               </h1>
               <p className="text-xs md:text-sm text-blue-100/90 mt-1">
                 به سامانه مدیریت هوشمند علمی منتظران خوش آمدید. ماژول‌های فعال شما در زیر قرار دارند.
@@ -142,7 +142,7 @@ export default function SeniorAdminDashboard() {
           <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         </div>
 
-        {/* دکمه بازگشت در صورت باز بودن یک ماژول */}
+        {/* دکمه بازگشت به لیست ماژول‌ها */}
         {activeTab && (
           <button
             onClick={() => setActiveTab(null)}
@@ -153,21 +153,25 @@ export default function SeniorAdminDashboard() {
           </button>
         )}
 
-        {/* ۲. بخش نمایش کامپوننت ماژول انتخاب‌شده */}
+        {/* نمایش ماژول انتخاب شده */}
         {activeTab === "calendar" && user?.permissions?.includes("calendar") ? (
           <div className="bg-white border border-slate-200/80 rounded-3xl p-4 md:p-6 shadow-sm">
             <AdminCalendarPanel onShowMessage={handleShowMessage} />
           </div>
+        ) : activeTab === "grade_league" && user?.permissions?.includes("grade_league") ? (
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-4 md:p-6 shadow-sm">
+            <AdminGradeLeaguePanel />
+          </div>
         ) : (
-          /* نمایش کارت ماژول‌ها در صورت عدم انتخاب یک ماژول خاص */
+          /* لیست تمامی کارت‌های دسترسی معین */
           <div>
             <h2 className="text-sm font-bold text-slate-700 mb-4 px-1">
-              دسترسی‌های فعال شما
+              دسترس‌های فعال شما
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               
-              {/* ماژول تقویم آموزشی */}
+              {/* ماژول تقویم */}
               {user?.permissions?.includes("calendar") && (
                 <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
                   <div>
@@ -271,9 +275,35 @@ export default function SeniorAdminDashboard() {
                 </div>
               )}
 
+              {/* ماژول لیگ علمی پایه */}
+              {user?.permissions?.includes("grade_league") && (
+                <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-yellow-50 text-yellow-600 rounded-xl group-hover:scale-105 transition-transform">
+                        <Trophy className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] font-bold px-2.5 py-1 bg-yellow-50 text-yellow-600 rounded-lg">
+                        فعال
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">لیگ علمی پایه</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                      مدیریت، نظارت و ارزیابی فعالیت‌های لیگ علمی پایه.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("grade_league")}
+                    className="w-full py-2.5 bg-slate-50 hover:bg-yellow-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-yellow-600"
+                  >
+                    ورود به لیگ علمی پایه
+                  </button>
+                </div>
+              )}
+
             </div>
 
-            {/* حالت عدم دسترسی به هیچ بخش */}
+            {/* در صورت عدم وجود هیچ دسترسی */}
             {(!user?.permissions || user.permissions.length === 0) && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center text-amber-800">
                 <p className="text-xs font-bold">

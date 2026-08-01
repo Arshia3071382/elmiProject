@@ -338,9 +338,7 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminCalendarPanel onShowMessage={showMessage} />
       </div>
-      <div className="max-w-7xl mx-auto px-6 pb-6">
-        <SeniorAdminUser />
-      </div>
+     
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminShowcasePanel />
       </div>

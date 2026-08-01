@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ success: true, admins });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: "خطا در دریافت معین‌ها" },
+      { success: false, error: "خطا در دریافت لیست معین‌ها" },
       { status: 500 }
     );
   }
