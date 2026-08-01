@@ -5,21 +5,13 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const adminToken = request.cookies.get('admin_token')?.value;
 
-  // ۱. اگر کاربر لاگین کرده باشد و قصد دیدن صفحه لاگین را داشته باشد، مستقیماً به داشبورد هدایت شود
-  if (pathname === '/admin/login' && adminToken) {
-    const dashboardUrl = new URL('/admin', request.url);
-    return NextResponse.redirect(dashboardUrl);
-  }
-
-  // ۲. استثنا قرار دادن صفحه لاگین از بررسی توکن دسترسی
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin' || pathname === '/admin/') {
     return NextResponse.next();
   }
 
-  // ۳. بررسی دسترسی مسیرهای زیرمجموعه /admin
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin/')) {
     if (!adminToken) {
-      const loginUrl = new URL('/admin/login', request.url);
+      const loginUrl = new URL('/admin', request.url);
       return NextResponse.redirect(loginUrl);
     }
   }
