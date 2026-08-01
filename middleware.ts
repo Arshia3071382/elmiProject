@@ -3,19 +3,22 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const adminToken = request.cookies.get('admin_token')?.value;
 
-  if (pathname === '/admin/login' || pathname === '/admin') {
+  // ۱. اگر کاربر لاگین کرده باشد و قصد دیدن صفحه لاگین را داشته باشد، مستقیماً به داشبورد هدایت شود
+  if (pathname === '/admin/login' && adminToken) {
+    const dashboardUrl = new URL('/admin', request.url);
+    return NextResponse.redirect(dashboardUrl);
+  }
+
+  // ۲. استثنا قرار دادن صفحه لاگین از بررسی توکن دسترسی
+  if (pathname === '/admin/login') {
     return NextResponse.next();
   }
 
+  // ۳. بررسی دسترسی مسیرهای زیرمجموعه /admin
   if (pathname.startsWith('/admin')) {
-    const adminToken = request.cookies.get('admin_token')?.value;
-    const actualPassword = process.env.ADMIN_PASSWORD;
-
-    // مقایسه توکن با رمز عبور جهت دسترسی به بخش مدیریت
-    const isAuthorized = adminToken && actualPassword && adminToken.trim() === actualPassword.trim();
-
-    if (!isAuthorized) {
+    if (!adminToken) {
       const loginUrl = new URL('/admin/login', request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -24,7 +27,6 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// این قسمت فقط روی مسیرهای ادمین فعال است و به بخش ویدیوها کاری ندارد
 export const config = {
   matcher: ['/admin/:path*'],
 };

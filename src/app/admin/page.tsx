@@ -182,10 +182,15 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/admin-logout", { method: "POST" });
-      setIsLoggedIn(false);
+      const res = await fetch("/api/admin-logout", { method: "POST" });
+      if (res.ok) {
+        setIsLoggedIn(false);
+        window.location.href = "/";
+      } else {
+        showMessage("error", "خطا در خروج از پنل");
+      }
     } catch {
-      showMessage("error", "خطا در خروج از پنل");
+      showMessage("error", "خطا در ارتباط با سرور");
     }
   };
 
@@ -196,27 +201,44 @@ export default function AdminPage() {
   return (
     <div
       dir="rtl"
-      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans"
+      className="min-h-screen mt-10 sm:mt-30 bg-gradient-to-br from-gray-50 to-gray-100 font-sans"
     >
-      {/* هدر اصلی */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pt-12 pb-12 shadow-sm px-6">
-        <div className="max-w-7xl mx-auto flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-black mb-2">
-              پنل مدیریت علمی منتظران
-            </h1>
-            <p className="text-blue-100">
-              مدیریت مستقیم دوره‌ها، گروه‌ها، اطلاعیه‌ها و لیگ نخبگان
-            </p>
+      {/* هدر اصلی مدرن و جدید */}
+      <header className="relative bg-gradient-to-r from-[#1F3A5F] via-[#2563EB] to-[#1F3A5F] text-white shadow-xl overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-sky-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 py-8 relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4 text-center md:text-right">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner shrink-0">
+              <span className="text-2xl font-black text-sky-300">🎓</span>
+            </div>
+            <div>
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                  پنل مدیریت علمی منتظران
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  بروزرسانی زنده
+                </span>
+              </div>
+              <p className="text-blue-100/80 text-sm font-medium">
+                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها و لیگ نخبگان
+              </p>
+            </div>
           </div>
+
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition shadow-lg"
+            className="group flex items-center gap-2.5 bg-white/10 hover:bg-red-500/90 text-white border border-white/20 hover:border-red-500 px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/25 active:scale-95 font-bold text-sm cursor-pointer"
           >
-            <LogOut className="w-5 h-5" /> خروج از پنل
+            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span>خروج از پنل</span>
           </button>
         </div>
-      </div>
+      </header>
+
       {/* بخش اصلی دوره‌ها و آمار */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
@@ -290,7 +312,8 @@ export default function AdminPage() {
           />
         </div>
       </div>
-      {/* بخش پنل لیگ نخبگان */}
+
+      {/* سایر پنل‌ها */}
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminEliteLeaguePanel onShowMessage={showMessage} />
       </div>
@@ -303,12 +326,10 @@ export default function AdminPage() {
         <AdminArticlesPanel onShowMessage={showMessage} />
       </div>
 
-      {/* بخش پنل اطلاعیه‌ها */}
       <div className="max-w-7xl mx-auto px-6 pb-12">
         <AdminNoticePanel onShowMessage={showMessage} />
       </div>
 
-      {/* بخش پنل تقویم علمی */}
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminCalendarPanel onShowMessage={showMessage} />
       </div>

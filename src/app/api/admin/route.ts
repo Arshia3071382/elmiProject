@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import dbConnect from "../../../../lib/dbConnect";
 import ChatTopic from "../../../../models/ChatTopic";
 
-// GET - دریافت همه تاپیک‌ها
+// GET - دریافت همه تاپیک‌ها (دسترسی عمومی)
 export async function GET() {
   try {
     await dbConnect();
@@ -20,9 +21,20 @@ export async function GET() {
   }
 }
 
-// POST - ایجاد تاپیک جدید
+// POST - ایجاد تاپیک جدید (نیازمند احراز هویت ادمین)
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 ۱. بررسی احراز هویت ادمین از طریق کوکی
+    const cookieStore = await cookies();
+    const adminToken = cookieStore.get("admin_token")?.value;
+
+    if (!adminToken) {
+      return NextResponse.json(
+        { success: false, error: "دسترسی غیرمجاز! لطفا ابتدا وارد حساب ادمین شوید." },
+        { status: 401 }
+      );
+    }
+
     await dbConnect();
     const body = await request.json();
     

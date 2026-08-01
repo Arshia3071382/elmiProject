@@ -8,6 +8,7 @@ interface MongooseCache {
 }
 
 declare global {
+  // جلوگیری از ایجاد چندین Connection در محیط Development
   var mongooseGlobalCache: MongooseCache | undefined;
 }
 
@@ -18,8 +19,12 @@ if (!cached) {
 }
 
 export async function dbConnect(): Promise<typeof mongoose> {
+  // اگر متغیر MONGODB_URI ست نشده باشد هشدار صادر می‌کند
+  if (!process.env.MONGODB_URI) {
+    console.warn("⚠️ MONGODB_URI در فایل .env یافت نشد! در حال استفاده از آدرس پیش‌فرض local.");
+  }
+
   if (cached!.conn) {
-    console.log("✅ Using existing database connection (cached)");
     return cached!.conn;
   }
 
@@ -28,19 +33,24 @@ export async function dbConnect(): Promise<typeof mongoose> {
       bufferCommands: false,
     };
 
-    console.log("⏳ Initializing new MongoDB connection...");
-    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
-      console.log("✅ Connected to database successfully!");
-      return m;
-    });
+    cached!.promise = mongoose
+      .connect(MONGODB_URI, opts)
+      .then((m) => {
+        console.log("✅ اتصال به دیتابیس MongoDB با موفقیت برقرار شد.");
+        return m;
+      })
+      .catch((err) => {
+        cached!.promise = null;
+        console.error("❌ خطا در اتصال اولیه به MongoDB:", err);
+        throw err;
+      });
   }
 
   try {
     cached!.conn = await cached!.promise;
   } catch (error) {
     cached!.promise = null;
-    console.error("❌ MongoDB connection error:", error);
-    throw new Error("Failed to connect to database");
+    throw error;
   }
 
   return cached!.conn;
