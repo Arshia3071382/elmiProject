@@ -56,11 +56,12 @@ export default function CalendarPage() {
 
   const currentMonth =
     months.find((m) => m._id === selectedMonthId) || months[0];
-  const totalDays = 30;
 
-  // محاسبه دقیق روز هفته بر اساس روز اولی که ادمین در دیتابیس ذخیره کرده است
+  // محاسبه تعداد روزهای ماه (شش ماه اول ۳۱ روز، بقیه ۳۰ روز)
+  const totalDays = currentMonth?.monthNumber && currentMonth.monthNumber <= 6 ? 31 : 30;
+
+  // محاسبه دقیق روز هفته بر اساس روز اول ثبت‌شده توسط ادمین
   const getDayName = (dayNum: number, startDay: number = 0) => {
-    // فرمول درست: (روز شروع ادمین + فاصله روز جاری از روز اول) باقیمانده بر ۷
     const calculatedIndex = (startDay + (dayNum - 1)) % 7;
     return BASE_WEEK_DAYS[calculatedIndex];
   };
@@ -77,8 +78,26 @@ export default function CalendarPage() {
         return "bg-white border-slate-100 text-slate-700";
     }
   };
-  console.log(currentMonth);
-  console.log("startDayOfWeek:", currentMonth?.startDayOfWeek);
+
+  // دریافت لیست روزهایی که باید نمایش داده شوند بر اساس فیلتر
+  const getRenderedDays = () => {
+    if (!currentMonth) return [];
+
+    const daysArray = Array.from({ length: totalDays }, (_, i) => i + 1);
+
+    if (filterType === "all") {
+      return daysArray;
+    }
+
+    // اگر فیلتری غیر از "همه" انتخاب شده، فقط روزهایی که رویداد مطابقت دارد را برمی‌گردانیم
+    return daysArray.filter((dayNum) => {
+      const event = currentMonth.events?.find((e) => e.day === dayNum);
+      return event && event.type === filterType;
+    });
+  };
+
+  const renderedDays = getRenderedDays();
+
   return (
     <Container>
       <section className="py-16 md:py-24 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 relative overflow-hidden dir-rtl font-[iranSans-r] min-h-screen">
@@ -135,25 +154,25 @@ export default function CalendarPage() {
           </span>
           <button
             onClick={() => setFilterType("all")}
-            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "all" ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}
+            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "all" ? "bg-slate-800 text-white border-slate-800 font-[iranBold]" : "bg-white text-slate-600 border-slate-200"}`}
           >
             همه رویدادها
           </button>
           <button
             onClick={() => setFilterType("class")}
-            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "class" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-blue-600 border-blue-200"}`}
+            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "class" ? "bg-blue-600 text-white border-blue-600 font-[iranBold]" : "bg-white text-blue-600 border-blue-200"}`}
           >
             فقط کلاس‌ها
           </button>
           <button
             onClick={() => setFilterType("exam")}
-            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "exam" ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-emerald-600 border-emerald-200"}`}
+            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "exam" ? "bg-emerald-600 text-white border-emerald-600 font-[iranBold]" : "bg-white text-emerald-600 border-emerald-200"}`}
           >
             آزمون‌های جامع
           </button>
           <button
             onClick={() => setFilterType("workshop")}
-            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "workshop" ? "bg-amber-600 text-white border-amber-600" : "bg-white text-amber-600 border-amber-200"}`}
+            className={`px-3.5 py-1.5 rounded-xl border transition ${filterType === "workshop" ? "bg-amber-600 text-white border-amber-600 font-[iranBold]" : "bg-white text-amber-600 border-amber-200"}`}
           >
             کارگاه‌ها
           </button>
@@ -164,22 +183,17 @@ export default function CalendarPage() {
           <div className="py-20 text-center text-slate-500 font-[iranSans-r]">
             در حال دریافت اطلاعات...
           </div>
+        ) : renderedDays.length === 0 ? (
+          <div className="py-16 text-center text-slate-500 font-[iranSans-r]">
+            هیچ رویدادی با این فیلتر برای این ماه یافت نشد. 😔
+          </div>
         ) : (
           <div className="w-full max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
-            {[...Array(totalDays)].map((_, index) => {
-              const dayNum = index + 1;
+            {renderedDays.map((dayNum, index) => {
               const eventData = currentMonth?.events?.find(
-                (e) => e.day === dayNum,
+                (e) => e.day === dayNum
               );
 
-              if (
-                filterType !== "all" &&
-                (!eventData || eventData.type !== filterType)
-              ) {
-                return null;
-              }
-
-              // خواندن دقیق مقدار startDayOfWeek از ماه جاری (اگر ست نشده بود پیش‌فرض 0 یعنی شنبه)
               const startDay = currentMonth?.startDayOfWeek ?? 0;
               const weekDayName = getDayName(dayNum, startDay);
 
@@ -191,7 +205,7 @@ export default function CalendarPage() {
                   transition={{ duration: 0.2, delay: index * 0.01 }}
                   className={`flex flex-col justify-between p-4 sm:p-5 rounded-2xl border-2 shadow-sm ${getEventCardStyle(eventData?.type)}`}
                 >
-                  {/* هدر کارت: نام روز هفته (دریافت شده از تنظیمات ادمین) و تاریخ */}
+                  {/* هدر کارت */}
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 mb-3">
                     <div className="text-left font-[iranBold] text-xs sm:text-sm text-slate-700 flex items-center gap-1.5">
                       <span className="text-teal-700">{weekDayName}</span>
