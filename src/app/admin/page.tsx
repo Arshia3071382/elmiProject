@@ -15,6 +15,7 @@ import AdminArticlesPanel from "./../../component/adminpaneldet/AdminArticlesPan
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
 import SeniorAdminUser from "@/component/adminpaneldet/SeniorAdminUser";
 import AdminShowcasePanel from "@/component/adminpaneldet/AdminShowcasePanel";
+import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePanel";
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -317,6 +318,9 @@ export default function AdminPage() {
       {/* سایر پنل‌ها */}
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminEliteLeaguePanel onShowMessage={showMessage} />
+      </div>
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AdminGradeLeaguePanel />
       </div>
 
       <div className="max-w-7xl mx-auto px-6 pb-6">

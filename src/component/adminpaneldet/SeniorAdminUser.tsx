@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, Calendar, Bell, BookOpen, MessageSquare, Save, User } from "lucide-react";
+import { 
+  ShieldCheck, 
+  Calendar, 
+  Bell, 
+  BookOpen, 
+  MessageSquare, 
+  Save, 
+  User, 
+  Trophy 
+} from "lucide-react";
 
 interface SeniorAdminUser {
   _id: string;
@@ -10,12 +19,13 @@ interface SeniorAdminUser {
   permissions: string[];
 }
 
-// لیست تمام ماژول‌های موجود در سیستم
+// لیست تمام ماژول‌های موجود در سیستم (شامل لیگ علمی پایه)
 const ALL_PERMISSIONS = [
   { id: "calendar", label: "تقویم آموزشی", icon: Calendar, color: "text-blue-600" },
   { id: "notices", label: "اطلاعیه‌ها و اخبار", icon: Bell, color: "text-emerald-600" },
   { id: "courses", label: "دوره‌های آموزشی", icon: BookOpen, color: "text-violet-600" },
   { id: "counseling", label: "اتاق‌های مشاوره", icon: MessageSquare, color: "text-amber-600" },
+  { id: "grade_league", label: "لیگ علمی پایه", icon: Trophy, color: "text-yellow-600" },
 ];
 
 export default function AdminPermissionsManager() {
