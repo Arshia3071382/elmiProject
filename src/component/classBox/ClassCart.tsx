@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
 interface ClassItem {
   id: number;
@@ -107,16 +107,29 @@ export default function ClassCart() {
   const [isPaused, setIsPaused] = useState(false);
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
 
-  // دقیقاً هر ۳ ثانیه (۳۰۰۰ میلی‌ثانیه)
+  // رفتن به کارت بعدی
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % CART_ITEMS.length);
+  }, []);
+
+  // رفتن به کارت قبلی
+  const goToPrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + CART_ITEMS.length) % CART_ITEMS.length);
+  }, []);
+
+  // تایمر چرخش خودکار هر ۳ ثانیه
   useEffect(() => {
-    if (isPaused) return;
+    // اگر موس روی کارت باشد یا مودال باز باشد، تایمر اجرا نشود
+    if (isPaused || selectedClass !== null) {
+      return;
+    }
 
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % CART_ITEMS.length);
+      goToNext();
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, selectedClass, goToNext]);
 
   const getCardAt = (offset: number) => {
     const total = CART_ITEMS.length;
@@ -128,6 +141,16 @@ export default function ClassCart() {
     { item: getCardAt(0), role: "active" },
     { item: getCardAt(1), role: "next" },
   ];
+
+  // سواپ لمسی در موبایل
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    const threshold = 50;
+    if (info.offset.x > threshold) {
+      goToNext();
+    } else if (info.offset.x < -threshold) {
+      goToPrev();
+    }
+  };
 
   return (
     <div
@@ -143,18 +166,19 @@ export default function ClassCart() {
           return (
             <motion.div
               key={item.id}
-              layout
-              // سرعتی و فرز (انتقال در ۱۵۰ میلی‌ثانیه)
+              drag={isActive ? "x" : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={isActive ? handleDragEnd : undefined}
               transition={{
-                layout: { duration: 0.15, ease: "easeInOut" },
-                opacity: { duration: 0.15 },
-                scale: { duration: 0.15 },
+                duration: 0.35,
+                ease: "easeOut",
               }}
               onClick={() => {
                 if (role === "prev") {
-                  setCurrentIndex((prev) => (prev - 1 + CART_ITEMS.length) % CART_ITEMS.length);
+                  goToPrev();
                 } else if (role === "next") {
-                  setCurrentIndex((prev) => (prev + 1) % CART_ITEMS.length);
+                  goToNext();
                 } else {
                   setSelectedClass(item);
                 }
@@ -162,9 +186,9 @@ export default function ClassCart() {
               style={{
                 zIndex: isActive ? 20 : 10,
               }}
-              className={`absolute w-[300px] sm:w-[340px] bg-white rounded-3xl border ${
+              className={`absolute w-[300px] sm:w-[340px] bg-white rounded-3xl border touch-pan-y ${
                 isActive
-                  ? "border-blue-400 shadow-[0_20px_50px_rgba(59,130,246,0.15)] cursor-pointer"
+                  ? "border-blue-400 shadow-[0_20px_50px_rgba(59,130,246,0.15)] cursor-grab active:cursor-grabbing"
                   : "border-gray-200/80 shadow-md cursor-pointer hover:border-gray-300"
               }`}
               animate={{
@@ -175,7 +199,7 @@ export default function ClassCart() {
               }}
             >
               {/* تصویر کارت */}
-              <div className="relative w-full aspect-[16/10] overflow-hidden rounded-t-3xl">
+              <div className="relative w-full aspect-[16/10] overflow-hidden rounded-t-3xl pointer-events-none">
                 <Image
                   src={item.image}
                   alt={item.title}
@@ -202,7 +226,7 @@ export default function ClassCart() {
                     e.stopPropagation();
                     setSelectedClass(item);
                   }}
-                  className={`w-full py-2.5 rounded-full text-xs font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-md active:scale-95`}
+                  className={`w-full py-2.5 rounded-full text-xs font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-md active:scale-95 transition-transform`}
                 >
                   مشاهده جزئیات
                 </button>
@@ -212,13 +236,13 @@ export default function ClassCart() {
         })}
       </div>
 
-      {/* نقطه های پایین */}
+      {/* نقطه‌های پایین */}
       <div className="flex justify-center items-center gap-2 mt-8">
         {CART_ITEMS.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`h-2 rounded-full transition-all duration-200 ${
+            className={`h-2 rounded-full transition-all duration-300 ${
               idx === currentIndex
                 ? "w-8 bg-blue-600 shadow-md shadow-blue-500/30"
                 : "w-2 bg-slate-300 hover:bg-slate-400"
@@ -241,8 +265,15 @@ export default function ClassCart() {
 }
 
 function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => void }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   return (
-    <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div dir="rtl" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -255,16 +286,16 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ duration: 0.15 }}
-        className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100"
+        transition={{ duration: 0.2 }}
+        className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col"
       >
-        <div className="relative h-48 w-full">
+        <div className="relative h-48 w-full shrink-0">
           <Image src={item.image} alt={item.title} fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
           
           <button
             onClick={onClose}
-            className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center"
+            className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center transition-colors"
           >
             ✕
           </button>
@@ -275,7 +306,7 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
           </div>
         </div>
 
-        <div className="p-6 space-y-4 text-right">
+        <div className="p-6 space-y-4 text-right overflow-y-auto">
           {item.description && (
             <div>
               <h4 className="text-sm font-[iranBold] text-slate-800 mb-1">درباره این دوره:</h4>
@@ -298,9 +329,15 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
             )}
           </div>
 
+          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 text-center">
+            <p className="text-xs font-[iranBold] text-amber-800">
+              📢 جهت اطلاع از زمان برگزاری به کانال روبیکا مراجعه بفرمایید.
+            </p>
+          </div>
+
           <button
             onClick={onClose}
-            className={`w-full py-3 rounded-xl text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-lg`}
+            className={`w-full py-3 rounded-xl text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-lg active:scale-98 transition-transform`}
           >
             بستن
           </button>
