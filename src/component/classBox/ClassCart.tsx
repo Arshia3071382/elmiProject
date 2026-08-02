@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { motion, useMotionValue, useSpring, useTransform, useInView } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ClassItem {
   id: number;
@@ -13,191 +13,299 @@ interface ClassItem {
   borderColor: string;
   textColor: string;
   sessionsText: string;
+  description?: string;
+  teacher?: string;
+  schedule?: string;
+  topics?: string[];
 }
 
+const CART_ITEMS: ClassItem[] = [
+  {
+    id: 1,
+    title: "کلاس ریاضی هشتم",
+    subtitle: "تسلط بر مفاهیم پایه و پیشرفته",
+    image: "/image/r7.jpg",
+    gradient: "from-blue-500 to-cyan-400",
+    borderColor: "border-blue-200 group-hover:border-blue-400",
+    textColor: "text-blue-600",
+    sessionsText: "سال 1403",
+    description: "این دوره به منظور مرور کامل ریاضی پایه هشتم و آماده‌سازی برای امتحانات نهایی طراحی شده است.",
+    teacher: "آقای داوودآبادی",
+    topics: ["عددهای صحیح و گنگ", "هندسه و استدلال", "جبر و معادله", "توان و جذر"]
+  },
+  {
+    id: 2,
+    title: "کلاس عربی نهم",
+    subtitle: "یادگیری اصولی مفاهیم",
+    image: "/image/2.jpg",
+    gradient: "from-emerald-500 to-teal-400",
+    borderColor: "border-emerald-200 group-hover:border-emerald-400",
+    textColor: "text-emerald-600",
+    sessionsText: "برنامه ویژه امتحانات 1404",
+    description: "یادگیری کامل قواعد عربی نهم، فن ترجمه و حل نمونه سوالات امتحانات نهایی.",
+    teacher: "آقای لعل آبدار",
+    schedule: "برنامه ویژه امتحانات",
+    topics: ["ترجمه و قواعد", "فن ترجمه", "بررسی سوالات نهایی"]
+  },
+  {
+    id: 3,
+    title: "کارگاه انتخاب رشته پایه نهم",
+    subtitle: "برنامه‌ریزی دقیق",
+    image: "/image/m2.jpg",
+    gradient: "from-emerald-500 to-teal-400",
+    borderColor: "border-emerald-200 group-hover:border-emerald-400",
+    textColor: "text-emerald-600",
+    sessionsText: "سال 1402",
+    description: "جمع‌بندی و تست‌زنی ریاضی نهم برای موفقیت در امتحانات و آزمون‌های تیزهوشان.",
+    teacher: "آقای مختاری",
+    topics: ["مجموعه‌ها", "عبارت‌های جبری", "خط و معادلات خطی"]
+  },
+  {
+    id: 4,
+    title: "آزمون جامع پایه هفتم",
+    subtitle: "سنجش سطح و آمادگی کامل",
+    image: "/image/az.jpg",
+    gradient: "from-indigo-500 to-sky-400",
+    borderColor: "border-indigo-200 group-hover:border-indigo-400",
+    textColor: "text-indigo-600",
+    sessionsText: "سال 1404",
+    description: "مجموعه آزمون‌های شبیه‌سازی‌شده به همراه کارنامه تحلیلی.",
+    teacher: "کادر علمی مجموعه",
+    schedule: "آخرین جمعه هر ماه",
+    topics: ["آزمون جامع", "پاسخنامه ویدئویی", "ارائه کارنامه"]
+  },
+  {
+    id: 5,
+    title: "کلاس علوم پایه نهم",
+    subtitle: "آمادگی آزمون پایان ترم مدارس",
+    image: "/image/olom.jpeg",
+    gradient: "from-indigo-500 to-sky-400",
+    borderColor: "border-indigo-200 group-hover:border-indigo-400",
+    textColor: "text-indigo-600",
+    sessionsText: "سال 1404",
+    description: "آمادگی کامل آزمون پایان ترم علوم.",
+    teacher: "کادر علمی",
+    topics: ["فیزیک", "شیمی", "زیست"]
+  },
+  {
+    id: 6,
+    title: "آموزش پایتون",
+    subtitle: "برنامه نویسی",
+    image: "/image/py.jpg",
+    gradient: "from-indigo-500 to-sky-400",
+    borderColor: "border-indigo-200 group-hover:border-indigo-400",
+    textColor: "text-indigo-600",
+    sessionsText: "سال 1400 - 1404",
+    description: "آموزش مقدماتی تا پیشرفته پایتون.",
+    teacher: "کادر علمی",
+    topics: ["مبانی پایتون", "الگوریتم", "پروژه‌محور"]
+  }
+];
+
 export default function ClassCart() {
-  const cartItem: ClassItem[] = [
-    {
-      id: 1,
-      title: "کلاس ریاضی هشتم",
-      subtitle: "تسلط بر مفاهیم پایه و پیشرفته",
-      image: "/image/r7.jpg",
-      gradient: "from-blue-500 to-cyan-400",
-      borderColor: "border-blue-200 group-hover:border-blue-400",
-      textColor: "text-blue-600",
-      sessionsText: "۳۲ جلسه برگزار شده"
-    },
-    {
-      id: 2,
-      title: "کلاس علوم نهم",
-      subtitle: "آزمایشگاه و تحلیل هوشمند",
-      image: "/image/2.jpg",
-      gradient: "from-emerald-500 to-teal-400",
-      borderColor: "border-emerald-200 group-hover:border-emerald-400",
-      textColor: "text-emerald-600",
-      sessionsText: "۱۵ جلسه برگزار شده"
-    },
-    {
-      id: 3,
-      title: "کارگاه مشاوره کنکور",
-      subtitle: "برنامه‌ریزی دقیق و انگیزشی",
-      image: "/image/r9.jpg",
-      gradient: "from-emerald-500 to-teal-400",
-      borderColor: "border-emerald-200 group-hover:border-emerald-400",
-      textColor: "text-emerald-600",
-      sessionsText: "۵ جلسه برگزار شده"
-    },
-    {
-      id: 4,
-      title: "آزمون جامع پایه هفتم",
-      subtitle: "سنجش سطح و آمادگی کامل",
-      image: "/image/az.jpg",
-      gradient: "from-indigo-500 to-sky-400",
-      borderColor: "border-indigo-200 group-hover:border-indigo-400",
-      textColor: "text-indigo-600",
-      sessionsText: "۱۰ جلسه برگزار شده"
-    },
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
+
+  // دقیقاً هر ۳ ثانیه (۳۰۰۰ میلی‌ثانیه)
+  useEffect(() => {
+    if (isPaused) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % CART_ITEMS.length);
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  const getCardAt = (offset: number) => {
+    const total = CART_ITEMS.length;
+    return CART_ITEMS[(currentIndex + offset + total) % total];
+  };
+
+  const visibleCards = [
+    { item: getCardAt(-1), role: "prev" },
+    { item: getCardAt(0), role: "active" },
+    { item: getCardAt(1), role: "next" },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-      {cartItem.map((item, index) => (
-        <ClassCard key={item.id} item={item} index={index} />
-      ))}
+    <div
+      className="relative z-10 w-full py-10 overflow-hidden select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      dir="rtl"
+    >
+      <div className="relative flex items-center justify-center min-h-[440px] max-w-5xl mx-auto px-4">
+        {visibleCards.map(({ item, role }) => {
+          const isActive = role === "active";
+
+          return (
+            <motion.div
+              key={item.id}
+              layout
+              // سرعتی و فرز (انتقال در ۱۵۰ میلی‌ثانیه)
+              transition={{
+                layout: { duration: 0.15, ease: "easeInOut" },
+                opacity: { duration: 0.15 },
+                scale: { duration: 0.15 },
+              }}
+              onClick={() => {
+                if (role === "prev") {
+                  setCurrentIndex((prev) => (prev - 1 + CART_ITEMS.length) % CART_ITEMS.length);
+                } else if (role === "next") {
+                  setCurrentIndex((prev) => (prev + 1) % CART_ITEMS.length);
+                } else {
+                  setSelectedClass(item);
+                }
+              }}
+              style={{
+                zIndex: isActive ? 20 : 10,
+              }}
+              className={`absolute w-[300px] sm:w-[340px] bg-white rounded-3xl border ${
+                isActive
+                  ? "border-blue-400 shadow-[0_20px_50px_rgba(59,130,246,0.15)] cursor-pointer"
+                  : "border-gray-200/80 shadow-md cursor-pointer hover:border-gray-300"
+              }`}
+              animate={{
+                x: role === "prev" ? "-105%" : role === "next" ? "105%" : "0%",
+                scale: isActive ? 1.05 : 0.9,
+                opacity: isActive ? 1 : 0.5,
+                filter: isActive ? "blur(0px)" : "blur(1px)",
+              }}
+            >
+              {/* تصویر کارت */}
+              <div className="relative w-full aspect-[16/10] overflow-hidden rounded-t-3xl">
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-[11px] px-3 py-1 rounded-full font-[iranBold] text-slate-800 shadow-sm">
+                  {item.sessionsText}
+                </span>
+              </div>
+
+              {/* محتوای کارت */}
+              <div className="p-5 text-center flex flex-col items-center">
+                <h3 className="text-base font-[iranBold] text-slate-900 mb-1 line-clamp-1">
+                  {item.title}
+                </h3>
+                <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
+                  {item.subtitle}
+                </p>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedClass(item);
+                  }}
+                  className={`w-full py-2.5 rounded-full text-xs font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-md active:scale-95`}
+                >
+                  مشاهده جزئیات
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* نقطه های پایین */}
+      <div className="flex justify-center items-center gap-2 mt-8">
+        {CART_ITEMS.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            className={`h-2 rounded-full transition-all duration-200 ${
+              idx === currentIndex
+                ? "w-8 bg-blue-600 shadow-md shadow-blue-500/30"
+                : "w-2 bg-slate-300 hover:bg-slate-400"
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* مودال جزئیات */}
+      <AnimatePresence>
+        {selectedClass && (
+          <ClassDetailModal
+            item={selectedClass}
+            onClose={() => setSelectedClass(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function ClassCard({ item, index }: { item: ClassItem; index: number }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(cardRef, { once: true, amount: 0.2 });
-
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(mouseY, [-100, 100], [10, -10]), { damping: 20, stiffness: 200 });
-  const rotateY = useSpring(useTransform(mouseX, [-100, 100], [-10, 10]), { damping: 20, stiffness: 200 });
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    mouseX.set(x);
-    mouseY.set(y);
-  }
-
+function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => void }) {
   return (
-    <motion.div
-      ref={cardRef}
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.95 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ 
-        y: -8,
-        transition: { duration: 0.3 }
-      }}
-    >
-      <div className="block h-full cursor-pointer">
-        <motion.div
-          ref={cardRef}
-          onMouseMove={handleMouseMove}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => {
-            setIsHovered(false);
-            mouseX.set(0);
-            mouseY.set(0);
-          }}
-          style={{
-            rotateX: isHovered ? rotateX : 0,
-            rotateY: isHovered ? rotateY : 0,
-            transformStyle: "preserve-3d",
-          }}
-          className={`group relative flex flex-col items-center bg-white/90 backdrop-blur-sm border-2 ${item.borderColor} rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full`}
-        >
-          {/* Gradient Background Effect - Dimmed */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ 
-              opacity: isHovered ? 0.08 : 0,
-              scale: isHovered ? 1 : 0.5,
-            }}
-            transition={{ duration: 0.4 }}
-            className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-2xl pointer-events-none`}
-          />
+    <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-md"
+      />
 
-          {/* Shine Effect */}
-          <motion.div
-            initial={{ x: "-100%", opacity: 0 }}
-            animate={isHovered ? { x: "200%", opacity: [0, 0.1, 0] } : { x: "-100%", opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
-          />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        transition={{ duration: 0.15 }}
+        className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100"
+      >
+        <div className="relative h-48 w-full">
+          <Image src={item.image} alt={item.title} fill className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+          
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center"
+          >
+            ✕
+          </button>
 
-          {/* Image Container */}
-          <div className="relative w-full aspect-[16/10] overflow-hidden">
-            <Image
-              src={item.image}
-              alt={item.title}
-              fill
-              className="transition-transform duration-700 group-hover:scale-110 object-cover"
-            />
-            
-            {/* Gradient Overlay */}
-            <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+          <div className="absolute bottom-4 right-6 left-6 text-white text-right">
+            <h2 className="text-xl font-[iranBold]">{item.title}</h2>
+            <p className="text-xs text-slate-200 mt-1">{item.subtitle}</p>
           </div>
+        </div>
 
-          {/* Content - Centered */}
-          <div className="p-5 flex flex-col items-center flex-grow w-full">
-            <motion.div
-              style={{
-                transform: isHovered ? "translateZ(20px)" : "translateZ(0px)",
-              }}
-              className="flex-grow w-full text-center"
-            >
-              <h3 className="text-base font-[iranBold] text-primary mb-1 line-clamp-1">
-                {item.title}
-              </h3>
-              <p className="text-xs text-text-secondary/70 line-clamp-2">
-                {item.subtitle}
-              </p>
-            </motion.div>
+        <div className="p-6 space-y-4 text-right">
+          {item.description && (
+            <div>
+              <h4 className="text-sm font-[iranBold] text-slate-800 mb-1">درباره این دوره:</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+            </div>
+          )}
 
-            {/* Footer with Stats and Button - Centered */}
-            <motion.div
-              style={{
-                transform: isHovered ? "translateZ(15px)" : "translateZ(0px)",
-              }}
-              className="mt-4 pt-4 border-t border-gray-100 w-full"
-            >
-              <div className="flex flex-col items-center gap-3">
-                {/* Stats - Centered with full text */}
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-text-secondary">📚</span>
-                  <span className="text-[10px] text-text-secondary font-medium">{item.sessionsText}</span>
-                </div>
-
-                {/* Bigger Button - Centered */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`w-full max-w-[160px] px-6 py-2.5 rounded-full text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-md hover:shadow-lg transition-all duration-300`}
-                >
-                  جزئیات
-                </motion.button>
+          <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
+            {item.teacher && (
+              <div>
+                <span className="text-slate-400 block mb-0.5">مدرس:</span>
+                <span className="font-semibold text-slate-700">{item.teacher}</span>
               </div>
-            </motion.div>
+            )}
+            {item.schedule && (
+              <div>
+                <span className="text-slate-400 block mb-0.5">زمان:</span>
+                <span className="font-semibold text-slate-700">{item.schedule}</span>
+              </div>
+            )}
           </div>
 
-          {/* Bottom Decorative Line */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={isHovered ? { scaleX: 1 } : { scaleX: 0 }}
-            transition={{ duration: 0.4 }}
-            className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${item.gradient}`}
-          />
-        </motion.div>
-      </div>
-    </motion.div>
+          <button
+            onClick={onClose}
+            className={`w-full py-3 rounded-xl text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-lg`}
+          >
+            بستن
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
