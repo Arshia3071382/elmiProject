@@ -103,7 +103,7 @@ export default function SelectGradePage() {
         {/* دکمه بازگشت */}
         <div className="mb-8">
           <Link
-            href="/league"
+            href="/elite-league"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-100/80 hover:bg-emerald-200/80 text-emerald-900 border border-emerald-300/70 text-sm transition-all duration-300 font-[iranSans-r] shadow-sm"
           >
             <ArrowRight className="w-4 h-4" />

@@ -164,7 +164,7 @@ export default function EliteLeaguePublicPage() {
               <button
                 type="button"
                 onClick={() => setActiveLeague(null)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold transition-all font-[iranSans-r]"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-gray-700 text-sm font-bold transition-all font-[iranSans-r]"
               >
                 <ArrowRight className="w-4 h-4" />
                 بازگشت به انتخاب لیگ‌ها

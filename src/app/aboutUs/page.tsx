@@ -6,6 +6,7 @@ import { Compass, BookOpen, Users, Award, LucideIcon } from "lucide-react";
 import TimelineHeader from "./TimelineHeader";
 import DesktopTimeline from "./DesktopTimeline";
 import MobileTimeline from "./MobileTimeline";
+import Container from "@/component/Container";
 
 export interface TimelineItem {
   year: string;
@@ -80,31 +81,33 @@ export default function AboutUs() {
   });
 
   return (
-    <div
-      dir="rtl"
-      ref={containerRef}
-      className="min-h-screen bg-slate-50 text-slate-900 relative overflow-hidden font-[iranBold]"
-    >
-      <TimelineHeader />
+    <Container>
+      <div
+        dir="rtl"
+        ref={containerRef}
+        className="min-h-screen bg-slate-50 mt-10 sm:mt-20 text-slate-900 relative overflow-hidden font-[iranBold]"
+      >
+        <TimelineHeader />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative pb-32">
-        {/* Timeline line vectors */}
-        <div className="absolute right-6 md:right-1/2 md:translate-x-1/2 top-0 bottom-0 w-[3px] bg-slate-200 border-dashed border-r pointer-events-none" />
-        <motion.div
-          style={{ scaleY, transformOrigin: "top" }}
-          className="absolute right-6 md:right-1/2 md:translate-x-1/2 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-600 via-sky-400 to-emerald-500 pointer-events-none rounded-full z-10"
-        />
+        <div className="max-w-7xl mx-auto px-4 md:px-6 relative pb-32">
+          {/* Timeline line vectors */}
+          <div className="absolute right-6 md:right-1/2 md:translate-x-1/2 top-0 bottom-0 w-[3px] bg-slate-200 border-dashed border-r pointer-events-none" />
+          <motion.div
+            style={{ scaleY, transformOrigin: "top" }}
+            className="absolute right-6 md:right-1/2 md:translate-x-1/2 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-600 via-sky-400 to-emerald-500 pointer-events-none rounded-full z-10"
+          />
 
-        {/* Render list rows */}
-        <div className="space-y-24 md:space-y-36 relative">
-          {timelineData.map((item) => (
-            <div key={item.year} className="relative">
-              <DesktopTimeline item={item} />
-              <MobileTimeline item={item} />
-            </div>
-          ))}
+          {/* Render list rows */}
+          <div className="space-y-24 md:space-y-36 relative">
+            {timelineData.map((item) => (
+              <div key={item.year} className="relative">
+                <DesktopTimeline item={item} />
+                <MobileTimeline item={item} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </Container>
   );
 }

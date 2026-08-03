@@ -64,7 +64,7 @@ export default function CuriosityPage() {
   };
 
   return (
-    <main className="py-16 min-h-screen bg-bg font-[iranSans-r] text-text-primary" dir="rtl">
+    <main className="py-16 min-h-screen mt-10 sm:mt-20 bg-bg font-[iranSans-r] text-text-primary" dir="rtl">
       <Container>
         {/* هدر صفحه */}
         <div className="text-center max-w-2xl mx-auto mb-12">

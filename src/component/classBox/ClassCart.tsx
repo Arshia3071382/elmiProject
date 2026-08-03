@@ -50,13 +50,13 @@ const CART_ITEMS: ClassItem[] = [
   {
     id: 3,
     title: "کارگاه انتخاب رشته پایه نهم",
-    subtitle: "برنامه‌ریزی دقیق",
+    subtitle: "مشاوره تحصیلی",
     image: "/image/m2.jpg",
     gradient: "from-emerald-500 to-teal-400",
     borderColor: "border-emerald-200 group-hover:border-emerald-400",
     textColor: "text-emerald-600",
     sessionsText: "سال 1402",
-    description: "جمع‌بندی و تست‌زنی ریاضی نهم برای موفقیت در امتحانات و آزمون‌های تیزهوشان.",
+    description: "آشنایی با  رشته های پنج گانه تحصیلی",
     teacher: "آقای مختاری",
     topics: ["مجموعه‌ها", "عبارت‌های جبری", "خط و معادلات خطی"]
   },
@@ -71,7 +71,7 @@ const CART_ITEMS: ClassItem[] = [
     sessionsText: "سال 1404",
     description: "مجموعه آزمون‌های شبیه‌سازی‌شده به همراه کارنامه تحلیلی.",
     teacher: "کادر علمی مجموعه",
-    schedule: "آخرین جمعه هر ماه",
+    schedule: "آخرین پنجشنبه و جمعه هر ماه",
     topics: ["آزمون جامع", "پاسخنامه ویدئویی", "ارائه کارنامه"]
   },
   {
@@ -84,7 +84,7 @@ const CART_ITEMS: ClassItem[] = [
     textColor: "text-indigo-600",
     sessionsText: "سال 1404",
     description: "آمادگی کامل آزمون پایان ترم علوم.",
-    teacher: "کادر علمی",
+    teacher: "آقای داداش زاده",
     topics: ["فیزیک", "شیمی", "زیست"]
   },
   {
@@ -97,7 +97,7 @@ const CART_ITEMS: ClassItem[] = [
     textColor: "text-indigo-600",
     sessionsText: "سال 1400 - 1404",
     description: "آموزش مقدماتی تا پیشرفته پایتون.",
-    teacher: "کادر علمی",
+    teacher: "آقای خانجانی",
     topics: ["مبانی پایتون", "الگوریتم", "پروژه‌محور"]
   }
 ];
@@ -317,7 +317,7 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
           <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
             {item.teacher && (
               <div>
-                <span className="text-slate-400 block mb-0.5">مدرس:</span>
+                <span className="text-slate-400 block mb-0.5">مدرس/طراح:</span>
                 <span className="font-semibold text-slate-700">{item.teacher}</span>
               </div>
             )}

@@ -363,7 +363,7 @@ export default function MobileNavbar({
                         setIsFirstLoginUser(null);
                       }}
                       onBlur={checkUsernameStatus}
-                      placeholder="نام کاربری (مثلاً davood)"
+                      
                       className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
                     />
                   </div>

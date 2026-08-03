@@ -40,12 +40,12 @@ export default function PopularClasses() {
             ))}
           </div>
 
-          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
+          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight">
             کلاس‌های پرطرفدار
           </h2>
           
           {/* Bottom Pins Line (Left to Right) */}
-          <div className="flex justify-start gap-1 mt-6 pr-0">
+          <div className="flex justify-start gap-1 mt-2 pr-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={`bottom-${i}`}
@@ -60,7 +60,7 @@ export default function PopularClasses() {
         </motion.div>
 
         {/* Cards List - Responsive Grid: بدون max-w محدود کننده */}
-        <div className="w-full">
+        <div className="w-full -mt-10">
           <ClassCart />
         </div>
       </Container>
