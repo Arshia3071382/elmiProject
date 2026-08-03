@@ -144,7 +144,7 @@ export default function ScienceHub() {
           </div>
 
           <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
-            قطب‌نمای علم
+            قطب‌نمای علمی
           </h2>
           
           {/* خط‌چین پایین */}

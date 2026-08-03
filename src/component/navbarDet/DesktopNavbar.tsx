@@ -231,7 +231,7 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
                 className="flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50/90 px-3.5 py-2 text-xs font-bold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-100/90"
               >
                 <BookOpen className="h-3.5 w-3.5 text-slate-500" />
-                <span>دوره‌ها</span>
+                <span>دوره های آموزشی</span>
               </motion.button>
             </Link>
 
