@@ -117,7 +117,7 @@ export default function SeniorAdminDashboard() {
                 <span>پنل اختصاصی معین علمی</span>
               </div>
               <h1 className="text-xl md:text-2xl font-black tracking-tight">
-                سلام معین عزیز، <span className="text-amber-300">{user?.name || user?.username}</span> خوش آمدید!
+                سلام معین عزیز، <span className="text-amber-300">{user?.name || user?.username}</span> خوش اومدی!
               </h1>
               <p className="text-xs md:text-sm text-blue-100/90 mt-1">
                 به سامانه مدیریت هوشمند علمی منتظران خوش آمدید. ماژول‌های فعال شما در زیر قرار دارند.

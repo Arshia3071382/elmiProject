@@ -166,7 +166,12 @@ export async function POST(req: Request) {
 
       admin.lastLoginAt = new Date();
 
-      await admin.save();
+      try {
+        await admin.validate();
+      } catch (err: any) {
+        console.log(err.errors);
+        throw err;
+      }
 
       await setAuthCookie(admin.username);
 
@@ -191,15 +196,12 @@ export async function POST(req: Request) {
       },
     );
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error("FULL ERROR:", error);
+    console.error(error instanceof Error ? error.stack : error);
 
     return NextResponse.json(
-      {
-        error: "خطای سرور",
-      },
-      {
-        status: 500,
-      },
+      { error: "خطایی در سرور رخ داد" },
+      { status: 500 },
     );
   }
 }
