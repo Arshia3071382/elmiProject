@@ -5,19 +5,19 @@ import { StaticImageData } from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Bell, 
-  X, 
-  ChevronLeft, 
-  Sparkles, 
-  Newspaper, 
-  PhoneCall, 
-  Info, 
+import {
+  Bell,
+  X,
+  ChevronLeft,
+  Sparkles,
+  Newspaper,
+  PhoneCall,
+  Info,
   ShieldCheck,
   User,
   KeyRound,
   Lock,
-  Sparkle
+  Sparkle,
 } from "lucide-react";
 
 import HeroLogo from "./HeroLogo";
@@ -29,9 +29,9 @@ interface MobileNavbarProps {
   hasUnreadNotification?: boolean;
 }
 
-export default function MobileNavbar({ 
-  logo, 
-  hasUnreadNotification = true 
+export default function MobileNavbar({
+  logo,
+  hasUnreadNotification = true,
 }: MobileNavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,9 +44,11 @@ export default function MobileNavbar({
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // وضعیت تشخیص اولین ورود معین ارشد
-  const [isFirstLoginUser, setIsFirstLoginUser] = useState<boolean | null>(null);
+  const [isFirstLoginUser, setIsFirstLoginUser] = useState<boolean | null>(
+    null,
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,7 +67,12 @@ export default function MobileNavbar({
     { label: "درباره ما", href: "/aboutUs", icon: Info },
     { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
   ];
-
+  const resetLoginModal = () => {
+    setUsernameInput("");
+    setPasswordInput("");
+    setLoginError("");
+    setIsFirstLoginUser(null);
+  };
   // بررسی وضعیت اولین ورود موقع خارج شدن از فیلد نام کاربری
   const checkUsernameStatus = async () => {
     if (!usernameInput.trim()) return;
@@ -149,30 +156,25 @@ export default function MobileNavbar({
   const handleOpenLoginModal = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsOpen(false);
-    setIsFirstLoginUser(null);
-    setLoginError("");
+    resetLoginModal();
     setIsLoginModalOpen(true);
   };
-
   return (
     <>
-      <header 
-        dir="rtl" 
+      <header
+        dir="rtl"
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 lg:hidden ${
           isScrolled ? "pt-2" : "pt-3"
         }`}
       >
         <Container>
           <div className="flex flex-col items-center">
-            
             {/* ۱. شاسی اصلی Navbar */}
-            <nav 
-              className="relative flex h-16 w-full items-center justify-between rounded-2xl border border-white/80 bg-white/75 px-3.5 backdrop-blur-2xl transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.8)]"
-            >
+            <nav className="relative flex h-16 w-full items-center justify-between rounded-2xl border border-white/80 bg-white/75 px-3.5 backdrop-blur-2xl transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.8)]">
               {/* سمت راست: منوی همبرگری */}
               <div className="relative z-10 flex items-center">
                 <motion.button
-                  whileTap={{ scale: 0.90 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setIsOpen(true)}
                   className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-100/70 text-slate-800 backdrop-blur-md active:bg-slate-200 shadow-sm"
                   aria-label="باز کردن منو"
@@ -192,7 +194,7 @@ export default function MobileNavbar({
               <div className="relative z-10 flex items-center">
                 <Link href="/notices" aria-label="اعلانات">
                   <motion.div
-                    whileTap={{ scale: 0.90 }}
+                    whileTap={{ scale: 0.9 }}
                     animate={{ scale: [1, 1.08, 1] }}
                     transition={{
                       duration: 1.2,
@@ -203,7 +205,7 @@ export default function MobileNavbar({
                     className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-100/70 text-slate-700 backdrop-blur-md active:bg-slate-200 shadow-sm"
                   >
                     <Bell className="h-4.5 w-4.5 text-slate-700" />
-                    
+
                     {hasUnreadNotification && (
                       <span className="absolute top-2 left-2 flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -217,7 +219,6 @@ export default function MobileNavbar({
 
             {/* ۲. اکشن دک شناور */}
             <FloatingActionDock />
-
           </div>
         </Container>
       </header>
@@ -251,8 +252,12 @@ export default function MobileNavbar({
                       <Sparkles className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-['iranBold'] text-sm text-slate-900">علمی منتظران</h3>
-                      <p className="text-[10px] text-slate-400">پلتفرم آموزشی هوشمند</p>
+                      <h3 className="font-['iranBold'] text-sm text-slate-900">
+                        علمی منتظران
+                      </h3>
+                      <p className="text-[10px] text-slate-400">
+                        پلتفرم آموزشی هوشمند
+                      </p>
                     </div>
                   </div>
 
@@ -313,7 +318,10 @@ export default function MobileNavbar({
       {/* ۴. مودال ورود اختصاصی معین ارشد */}
       <AnimatePresence>
         {isLoginModalOpen && (
-          <div dir="rtl" className="fixed inset-0 z-[120] flex items-start justify-center p-4 overflow-y-auto">
+          <div
+            dir="rtl"
+            className="fixed inset-0 z-[120] flex items-start justify-center p-4 overflow-y-auto"
+          >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -330,7 +338,10 @@ export default function MobileNavbar({
               className="relative mt-20 w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-2xl z-10 text-slate-800 overflow-hidden"
             >
               <button
-                onClick={() => setIsLoginModalOpen(false)}
+                onClick={() => {
+                  setIsLoginModalOpen(false);
+                  resetLoginModal();
+                }}
                 className="absolute top-5 left-5 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-all"
               >
                 <X className="w-5 h-5" />
@@ -363,7 +374,6 @@ export default function MobileNavbar({
                         setIsFirstLoginUser(null);
                       }}
                       onBlur={checkUsernameStatus}
-                      
                       className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
                     />
                   </div>
@@ -371,7 +381,9 @@ export default function MobileNavbar({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-2">
-                    {isFirstLoginUser ? "تعیین رمز عبور جدید (اولین ورود)" : "رمز عبور"}
+                    {isFirstLoginUser
+                      ? "تعیین رمز عبور جدید (اولین ورود)"
+                      : "رمز عبور"}
                   </label>
                   <div className="relative">
                     <KeyRound className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -379,14 +391,21 @@ export default function MobileNavbar({
                       type="password"
                       value={passwordInput}
                       onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder={isFirstLoginUser ? "رمز عبور جدید دلخواه را وارد کنید" : "••••••••"}
+                      placeholder={
+                        isFirstLoginUser
+                          ? "رمز عبور جدید دلخواه را وارد کنید"
+                          : "••••••••"
+                      }
                       className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white text-slate-900 pr-11 pl-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400"
                     />
                   </div>
                   {isFirstLoginUser && (
                     <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[11px] font-bold flex items-center gap-1.5">
                       <Sparkle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <span>این اولین ورود شماست. رمزی که تایپ می‌کنید در دیتابیس ذخیره شده و رمز اختصاصی شما خواهد بود.</span>
+                      <span>
+                        این اولین ورود شماست. رمزی که تایپ می‌کنید در دیتابیس
+                        ذخیره شده و رمز اختصاصی شما خواهد بود.
+                      </span>
                     </div>
                   )}
                 </div>

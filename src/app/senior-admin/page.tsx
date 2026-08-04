@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Sparkles, 
-  Calendar, 
-  Bell, 
-  BookOpen, 
-  MessageSquare, 
+import {
+  Sparkles,
+  Calendar,
+  Bell,
+  BookOpen,
+  MessageSquare,
   ShieldAlert,
   LogOut,
   UserCheck,
   ArrowRight,
-  Trophy
+  Trophy,
 } from "lucide-react";
 
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
@@ -27,9 +27,12 @@ export default function SeniorAdminDashboard() {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
+
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const handleShowMessage = (type: "success" | "error", text: string) => {
     setToastMessage({ type, text });
@@ -58,43 +61,44 @@ export default function SeniorAdminDashboard() {
   }, []);
 
   const handleLogout = async () => {
-    document.cookie = "senior_admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    window.location.href = "/";
-  };
+    try {
+      await fetch("/api/senior-admin/logout", {
+        method: "POST",
+      });
 
+      // جلوگیری از برگشت با بک مرورگر
+      window.history.replaceState(null, "", "/");
+
+      // انتقال به صفحه اصلی
+      window.location.replace("/");
+    } catch {
+      window.location.replace("/");
+    }
+  };
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50" dir="rtl">
+      <div
+        className="min-h-screen flex items-center justify-center bg-slate-50"
+        dir="rtl"
+      >
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold text-slate-500">در حال بارگذاری اطلاعات پنل...</p>
+          <p className="text-xs font-bold text-slate-500">
+            در حال بارگذاری اطلاعات پنل...
+          </p>
         </div>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir="rtl">
-        <div className="bg-white border border-rose-200 p-6 rounded-3xl max-w-sm w-full text-center shadow-lg">
-          <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-          <h2 className="text-base font-bold text-slate-800 mb-1">خطا در احراز هویت</h2>
-          <p className="text-xs text-slate-500 mb-5">{error}</p>
-          <a
-            href="/"
-            className="inline-block w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
-          >
-            بازگشت به صفحه اصلی
-          </a>
-        </div>
-      </div>
-    );
+    window.location.replace("/");
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-slate-50/60 p-4 md:p-8" dir="rtl">
       <div className="max-w-6xl mx-auto space-y-6">
-        
         {/* پیام‌های شناور */}
         {toastMessage && (
           <div
@@ -117,10 +121,15 @@ export default function SeniorAdminDashboard() {
                 <span>پنل اختصاصی معین علمی</span>
               </div>
               <h1 className="text-xl md:text-2xl font-black tracking-tight">
-                سلام معین عزیز، <span className="text-amber-300">{user?.name || user?.username}</span> خوش اومدی!
+                سلام معین عزیز،{" "}
+                <span className="text-amber-300">
+                  {user?.name || user?.username}
+                </span>{" "}
+                خوش اومدی!
               </h1>
               <p className="text-xs md:text-sm text-blue-100/90 mt-1">
-                به سامانه مدیریت هوشمند علمی منتظران خوش آمدید. ماژول‌های فعال شما در زیر قرار دارند.
+                به سامانه مدیریت هوشمند علمی منتظران خوش آمدید. ماژول‌های فعال
+                شما در زیر قرار دارند.
               </p>
             </div>
 
@@ -138,7 +147,7 @@ export default function SeniorAdminDashboard() {
               </button>
             </div>
           </div>
-          
+
           <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         </div>
 
@@ -158,7 +167,8 @@ export default function SeniorAdminDashboard() {
           <div className="bg-white border border-slate-200/80 rounded-3xl p-4 md:p-6 shadow-sm">
             <AdminCalendarPanel onShowMessage={handleShowMessage} />
           </div>
-        ) : activeTab === "grade_league" && user?.permissions?.includes("grade_league") ? (
+        ) : activeTab === "grade_league" &&
+          user?.permissions?.includes("grade_league") ? (
           <div className="bg-white border border-slate-200/80 rounded-3xl p-4 md:p-6 shadow-sm">
             <AdminGradeLeaguePanel />
           </div>
@@ -170,7 +180,6 @@ export default function SeniorAdminDashboard() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              
               {/* ماژول تقویم */}
               {user?.permissions?.includes("calendar") && (
                 <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
@@ -183,9 +192,12 @@ export default function SeniorAdminDashboard() {
                         فعال
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm mb-1">مدیریت تقویم آموزشی</h3>
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">
+                      مدیریت تقویم آموزشی
+                    </h3>
                     <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                      تنظیم روزهای ماه، تاریخ‌ها و رویدادهای تقویم آموزشی سامانه.
+                      تنظیم روزهای ماه، تاریخ‌ها و رویدادهای تقویم آموزشی
+                      سامانه.
                     </p>
                   </div>
                   <button
@@ -209,7 +221,9 @@ export default function SeniorAdminDashboard() {
                         فعال
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm mb-1">مدیریت اطلاعیه‌ها</h3>
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">
+                      مدیریت اطلاعیه‌ها
+                    </h3>
                     <p className="text-xs text-slate-500 leading-relaxed mb-4">
                       ارسال، ویرایش و انتشار اطلاعیه‌ها و بنرهای خبری سامانه.
                     </p>
@@ -235,7 +249,9 @@ export default function SeniorAdminDashboard() {
                         فعال
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm mb-1">مدیریت دوره‌های آموزشی</h3>
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">
+                      مدیریت دوره‌های آموزشی
+                    </h3>
                     <p className="text-xs text-slate-500 leading-relaxed mb-4">
                       مدیریت سرفصل‌ها، فایل‌ها و محتوای دوره‌های آموزشی.
                     </p>
@@ -261,7 +277,9 @@ export default function SeniorAdminDashboard() {
                         فعال
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm mb-1">اتاق‌های مشاوره</h3>
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">
+                      اتاق‌های مشاوره
+                    </h3>
                     <p className="text-xs text-slate-500 leading-relaxed mb-4">
                       پاسخگویی و هدایت چت‌های مشاوره کاربران و متقاضیان.
                     </p>
@@ -287,7 +305,9 @@ export default function SeniorAdminDashboard() {
                         فعال
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm mb-1">لیگ علمی پایه</h3>
+                    <h3 className="font-bold text-slate-800 text-sm mb-1">
+                      لیگ علمی پایه
+                    </h3>
                     <p className="text-xs text-slate-500 leading-relaxed mb-4">
                       مدیریت، نظارت و ارزیابی فعالیت‌های لیگ علمی پایه.
                     </p>
@@ -300,20 +320,19 @@ export default function SeniorAdminDashboard() {
                   </button>
                 </div>
               )}
-
             </div>
 
             {/* در صورت عدم وجود هیچ دسترسی */}
             {(!user?.permissions || user.permissions.length === 0) && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center text-amber-800">
                 <p className="text-xs font-bold">
-                  هیچ دسترسی مشخصی برای حساب شما تعریف نشده است. لطفاً با مدیر سیستم تماس بگیرید.
+                  هیچ دسترسی مشخصی برای حساب شما تعریف نشده است. لطفاً با مدیر
+                  سیستم تماس بگیرید.
                 </p>
               </div>
             )}
           </div>
         )}
-
       </div>
     </div>
   );

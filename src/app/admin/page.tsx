@@ -13,9 +13,10 @@ import AdminEliteLeaguePanel from "./../../component/adminpaneldet/AdminEliteLea
 import AdminTopicsPanel from "./../../component/adminpaneldet/AdminTopicsPanel";
 import AdminArticlesPanel from "./../../component/adminpaneldet/AdminArticlesPanel";
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
-import SeniorAdminUser from "@/component/adminpaneldet/SeniorAdminUser";
 import AdminShowcasePanel from "@/component/adminpaneldet/AdminShowcasePanel";
 import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePanel";
+import SeniorPermissionManager from "@/component/adminpaneldet/SeniorPermissionManager";
+
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -108,26 +109,33 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetch("/api/check-auth", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.isLoggedIn) {
-          setIsLoggedIn(true);
-          fetchCategories();
-          fetchCourses();
-          fetchContactMessages();
-          fetchChatTopics();
-        } else {
-          setIsLoggedIn(false);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
+  const checkAuth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/check-auth", { cache: "no-store" });
+      const data = await res.json();
+
+      if (data.isLoggedIn === true) {
+        setIsLoggedIn(true);
+        await Promise.all([
+          fetchCategories(),
+          fetchCourses(),
+          fetchContactMessages(),
+          fetchChatTopics(),
+        ]);
+      } else {
         setIsLoggedIn(false);
-      })
-      .finally(() => setIsCheckingAuth(false));
+      }
+    } catch (error) {
+      console.error("Auth check error:", error);
+      setIsLoggedIn(false);
+    } finally {
+      setIsCheckingAuth(false);
+    }
   }, [fetchCategories, fetchCourses, fetchContactMessages, fetchChatTopics]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +205,7 @@ export default function AdminPage() {
   };
 
   if (isCheckingAuth) return <div className="min-h-screen bg-white"></div>;
+  
   if (!isLoggedIn)
     return <AdminLoginModal onLoginSuccess={() => window.location.reload()} />;
 
@@ -240,6 +249,11 @@ export default function AdminPage() {
           </button>
         </div>
       </header>
+
+      {/* بخش مدیریت دسترسی معین‌ها - فقط برای super_admin */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <SeniorPermissionManager onShowMessage={showMessage} />
+      </div>
 
       {/* بخش اصلی دوره‌ها و آمار */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">

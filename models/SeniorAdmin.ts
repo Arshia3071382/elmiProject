@@ -1,11 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-
-export type SeniorPermission =
-  | "calendar"
-  | "notices"
-  | "elites"
-  | "counseling"
-  | "grade_league";
+import { Permission } from "@/config/permissions";
 
 export interface ISeniorAdmin extends Document {
   username: string;
@@ -16,7 +10,7 @@ export interface ISeniorAdmin extends Document {
 
   role: "senior_admin" | "super_admin";
 
-  permissions: SeniorPermission[];
+  permissions: Permission[];
 
   isFirstLogin: boolean;
 
