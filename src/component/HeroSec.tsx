@@ -6,11 +6,10 @@ import Image from 'next/image'
 
 const images: string[] = [
   "/image/hero.png",
-  "/image/hero8.png",
-  "/image/hero3.png",
   "/image/hero10.png",
   "/image/hero6.png",
-  "/image/hero7.png",
+  "/image/hero11.png",
+  "/image/hero12.png",
   "/image/hero9.png"
 ]
 
