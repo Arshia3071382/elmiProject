@@ -1,11 +1,28 @@
 "use client";
 
 import { useState, useEffect, useCallback, use } from "react";
-import { Award, ArrowRight, Sparkles, Users, Trophy } from "lucide-react";
+import { ArrowRight, Sparkles, Users, Trophy, Clock } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-const GRADES = [
+// ==================== Types ====================
+interface IStudent {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  grade: number;
+  selectedActivities: string[];
+  totalScore: number;
+  published: boolean;
+}
+
+interface IGrade {
+  id: number;
+  label: string;
+}
+
+// ==================== Constants ====================
+const GRADES: IGrade[] = [
   { id: 2, label: "پایه دوم" },
   { id: 3, label: "پایه سوم" },
   { id: 4, label: "پایه چهارم" },
@@ -16,23 +33,47 @@ const GRADES = [
   { id: 9, label: "پایه نهم" },
 ];
 
+// ==================== Helpers ====================
+const toPersianDate = (dateString: string): string => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('fa-IR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Tehran'
+  }).format(date);
+};
+
+const toPersianDigits = (n: number | string): string => {
+  return n.toString().replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
+};
+
+// ==================== Component ====================
 export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ gradeId: string }> }) {
   const resolvedParams = use(params);
   const selectedGrade = parseInt(resolvedParams.gradeId, 10);
 
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<IStudent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
   const currentGradeLabel = GRADES.find((g) => g.id === selectedGrade)?.label || `پایه ${selectedGrade}`;
 
   const fetchGradeStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/league/grade?grade=${selectedGrade}`).then((r) =>
-        r.json()
-      );
-      if (Array.isArray(res)) {
-        setStudents(res);
+      const res = await fetch(`/api/league/grade?grade=${selectedGrade}&published=true`);
+      const data = await res.json();
+      
+      if (data.success && data.students) {
+        setStudents(data.students);
+        if (data.lastUpdate) {
+          setLastUpdate(data.lastUpdate);
+        }
       }
     } catch (error) {
       console.error("خطا در بارگذاری جدول لیگ پایه:", error);
@@ -44,10 +85,6 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
   useEffect(() => {
     fetchGradeStudents();
   }, [fetchGradeStudents]);
-
-  const toPersianDigits = (n: number | string) => {
-    return n.toString().replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
-  };
 
   return (
     <div dir="rtl" className="max-w-5xl mx-auto px-4 py-12 font-[iranBold] mt-16 md:mt-20">
@@ -77,16 +114,29 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
 
       {/* جدول اصلی داده‌ها */}
       <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 overflow-hidden">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-emerald-100 bg-emerald-50/30">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-emerald-100 bg-emerald-50/30 gap-3">
           <div className="flex items-center gap-3">
             <Sparkles className="w-6 h-6 text-emerald-600" />
             <h2 className="text-lg font-bold text-slate-800">
               جدول امتیازات
             </h2>
           </div>
-          <div className="flex items-center gap-2 text-xs text-emerald-800 font-[iranSans-r] bg-emerald-100/70 border border-emerald-200 px-3 py-1.5 rounded-full">
-            <Users className="w-4 h-4 text-emerald-600" />
-            <span>تعداد شرکت‌کنندگان: {toPersianDigits(students.length)} نفر</span>
+          
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            {/* نمایش تاریخ آخرین بروزرسانی */}
+            {lastUpdate && (
+              <div className="flex items-center gap-2 text-xs text-slate-600 font-[iranSans-r] bg-white/70 border border-slate-200 px-3 py-1.5 rounded-full shadow-sm">
+                <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="whitespace-nowrap">
+                  آخرین بروزرسانی: {toPersianDate(lastUpdate)}
+                </span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2 text-xs text-emerald-800 font-[iranSans-r] bg-emerald-100/70 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <Users className="w-4 h-4 text-emerald-600" />
+              <span className="whitespace-nowrap">تعداد: {toPersianDigits(students.length)} نفر</span>
+            </div>
           </div>
         </div>
 
@@ -110,8 +160,8 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                 <thead>
                   <tr className="bg-emerald-700 text-white font-[iranSans-r]">
                     <th className="p-4 text-right w-16 sm:w-20 font-bold">رتبه</th>
-                    <th className="p-4 text-right font-bold">نام و نام خانوادگی</th>
-                    <th className="p-4 text-right font-bold">پایه تحصیلی</th>
+                    <th className="p-4 text-right font-bold">نام</th>
+                    <th className="p-4 text-right font-bold">نام خانوادگی</th>
                     <th className="py-4 pr-4 pl-6 sm:pl-8 text-left font-bold">امتیاز کل</th>
                   </tr>
                 </thead>
@@ -143,11 +193,11 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                             )}
                           </div>
                         </td>
-                        <td className="p-4 font-bold text-slate-800 break-words whitespace-pre-line sm:whitespace-normal max-w-[120px] sm:max-w-none leading-snug">
-                          {student.name ? student.name.trim().replace(/\s+/g, "\n") : ""}
+                        <td className="p-4 font-bold text-slate-800">
+                          {student.firstName || "نامشخص"}
                         </td>
-                        <td className="p-4 text-slate-600 font-medium font-[iranSans-r]">
-                          {GRADES.find((g) => g.id === student.grade)?.label || currentGradeLabel}
+                        <td className="p-4 font-bold text-slate-800">
+                          {student.lastName || "نامشخص"}
                         </td>
                         <td className="py-4 pr-4 pl-6 sm:pl-8 text-left font-black text-emerald-700 font-mono">
                           {toPersianDigits(student.totalScore?.toLocaleString() || 0)}
