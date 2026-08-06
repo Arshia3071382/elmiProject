@@ -110,7 +110,10 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
           />
 
           {/* ۱. سمت راست: لوگوی بزرگ‌تر و نمایان‌تر دسکتاپ (h-16 w-16) */}
-          <motion.div variants={itemVariants} className="relative z-10 flex items-center">
+          <motion.div
+            variants={itemVariants}
+            className="relative z-10 flex items-center"
+          >
             <Link href="/" aria-label="صفحه اصلی">
               <motion.div
                 animate={{
@@ -188,14 +191,20 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
                     href={item.href}
                     onMouseEnter={() => setHoveredIndex(index)}
                     className={`relative z-10 block px-4 py-2 text-xs font-bold transition-colors duration-200 ${
-                      isActive ? "text-blue-900" : "text-slate-600 hover:text-slate-900"
+                      isActive
+                        ? "text-blue-900"
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     <motion.span
                       animate={{
                         y: isHovered ? -1 : 0,
                       }}
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25,
+                      }}
                       className="block"
                     >
                       {item.label}
@@ -205,7 +214,11 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
                   {isActive && (
                     <motion.div
                       layoutId="activePillDesktop"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 30,
+                      }}
                       className="absolute inset-0 rounded-full border border-blue-200/80 bg-white shadow-[0_2px_8px_rgba(37,99,235,0.08)]"
                     />
                   )}
@@ -213,7 +226,11 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
                   {isHovered && !isActive && (
                     <motion.div
                       layoutId="hoverPillDesktop"
-                      transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 450,
+                        damping: 30,
+                      }}
                       className="absolute inset-0 rounded-full bg-slate-200/60"
                     />
                   )}
@@ -223,7 +240,10 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
           </motion.ul>
 
           {/* ۳. سمت چپ: دکمه‌های کنشی */}
-          <motion.div variants={itemVariants} className="relative z-10 flex items-center gap-2.5">
+          <motion.div
+            variants={itemVariants}
+            className="relative z-10 flex items-center gap-2.5"
+          >
             <Link href="/courses">
               <motion.button
                 whileHover={{ scale: 1.04, y: -1.5 }}
@@ -253,9 +273,9 @@ export default function DesktopNavbar({ logo }: DesktopNavbarProps) {
                 whileTap={{ scale: 0.95 }}
                 className="group relative overflow-hidden flex items-center gap-2 rounded-xl border border-blue-400/60 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 px-4.5 py-2 text-xs font-bold text-white shadow-[0_6px_20px_rgba(37,99,235,0.3)] transition-all hover:shadow-[0_8px_25px_rgba(37,99,235,0.42)]"
               >
+                <MessageCircle className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
                 <span>گفتینو</span>
-                <MessageCircle className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
               </motion.button>
             </Link>
           </motion.div>
