@@ -45,7 +45,7 @@ export default function PopularClasses() {
           </h2>
           
           {/* Bottom Pins Line (Left to Right) */}
-          <div className="flex justify-start gap-1 mt-2 pr-0">
+          <div className="flex justify-start gap-2 mt-4 pr-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={`bottom-${i}`}

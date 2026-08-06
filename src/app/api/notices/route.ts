@@ -1,43 +1,162 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "./../../../../lib/dbConnect"; 
+import dbConnect from "./../../../../lib/dbConnect";
 import Notice from "./../../../../models/Notice";
 
-// Get notices with built-in pagination
-export async function GET(req: NextRequest) {
+function createSlug(text: string) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+
+
+export async function GET() {
   try {
-    await connectDB();
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = 8;
-    const skip = (page - 1) * limit;
+    await dbConnect();
 
-    const total = await Notice.countDocuments();
-    const notices = await Notice.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const notices = await Notice.find({
+      status: "published",
+      publishAt: { $lte: new Date() },
+    })
+      .sort({
+        isPinned: -1,
+        priority: -1,
+        publishAt: -1,
+      })
+      .lean();
 
-    return NextResponse.json({ success: true, notices, total, pages: Math.ceil(total / limit) });
+    return NextResponse.json({
+      success: true,
+      count: notices.length,
+      notices,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Server Error" }, { status: 500 });
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "خطا در دریافت اطلاعیه‌ها",
+      },
+      {
+        status: 500,
+      },
+    );
   }
 }
 
-// Create notice and auto-delete oldest if count exceeds 20
+
 export async function POST(req: NextRequest) {
   try {
-    await connectDB();
-    const body = await req.json();
-    
-    // Save new notice
-    const newNotice = await Notice.create(body);
+    await dbConnect();
 
-    // Keep collection size within 20 items maximum
-    const allNotices = await Notice.find().sort({ createdAt: -1 });
-    if (allNotices.length > 20) {
-      const idsToDelete = allNotices.slice(20).map(n => n._id);
-      await Notice.deleteMany({ _id: { $in: idsToDelete } });
+    const body = await req.json();
+
+    const {
+      title,
+      slug,
+      description,
+      content,
+      type,
+      priority,
+      image,
+      attachment,
+      tags,
+      targetGrades,
+      targetClasses,
+      publishAt,
+      expireAt,
+      isPinned,
+      status,
+      createdBy,
+      isReadRequired,
+    } = body;
+
+    if (!title || !content) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "عنوان و متن اطلاعیه الزامی است.",
+        },
+        {
+          status: 400,
+        },
+      );
     }
 
-    return NextResponse.json({ success: true, data: newNotice });
+    const finalSlug = slug ? createSlug(slug) : createSlug(title);
+
+    const duplicate = await Notice.findOne({
+      slug: finalSlug,
+    });
+
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Slug تکراری است.",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
+
+    const notice = await Notice.create({
+      title,
+
+      slug: finalSlug,
+
+      description,
+
+      content,
+
+      type,
+
+      priority,
+
+      image,
+
+      attachment,
+
+      tags,
+
+      targetGrades,
+
+      targetClasses,
+
+      publishAt,
+
+      expireAt,
+
+      isPinned,
+
+      status,
+
+      createdBy,
+
+      isReadRequired,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "اطلاعیه با موفقیت ثبت شد.",
+      notice,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Creation Failed" }, { status: 500 });
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "خطا در ثبت اطلاعیه",
+      },
+      {
+        status: 500,
+      },
+    );
   }
 }
