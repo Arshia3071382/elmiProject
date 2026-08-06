@@ -5,9 +5,9 @@ import Container from './Container'
 import Image from 'next/image'
 
 const images: string[] = [
-  "/image/hero.png",
+  "/image/hero17.png",
   "/image/hero13.jpg",
-  "/image/hero6.png",
+  "/image/hero16.png",
   "/image/hero15.png",
   "/image/hero11.png",
   "/image/hero12.png",

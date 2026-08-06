@@ -1,224 +1,50 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose from "mongoose";
 
-export type NoticeType =
-  | "schedule"
-  | "cancel"
-  | "news"
-  | "correction"
-  | "competition"
-  | "reminder"
-  | "event"
-  | "success";
-
-export type NoticePriority = "normal" | "important" | "critical";
-
-export type NoticeStatus = "draft" | "published" | "archived";
-
-export interface INoticeImage {
-  publicId: string;
-  secureUrl: string;
-  width: number;
-  height: number;
-  format: string;
-  bytes: number;
-}
-
-export interface INoticeAttachment {
-  name: string;
-  url: string;
-  type: string;
-  size: number;
-}
-
-export interface INotice extends Document {
-  title: string;
-
-  slug: string;
-
-  description?: string;
-
-  content: string;
-
-  type: NoticeType;
-
-  priority: NoticePriority;
-
-  status: NoticeStatus;
-
-  image?: INoticeImage;
-
-  attachment?: INoticeAttachment;
-
-  tags: string[];
-
-  targetGrades: string[];
-
-  targetClasses: string[];
-
-  isPinned: boolean;
-
-  publishAt: Date;
-
-  expireAt?: Date;
-
-  createdBy?: string;
-
-  isReadRequired: boolean;
-
-  createdAt: Date;
-
-  updatedAt: Date;
-}
-
-const NoticeSchema = new Schema<INotice>(
+const NoticeSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: [true, "Title is required"],
       trim: true,
-      maxlength: 120,
+      maxlength: [100, "Title cannot be more than 100 characters"],
     },
-
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
-
-    description: {
-      type: String,
-      maxlength: 300,
-      default: "",
-    },
-
     content: {
       type: String,
-      required: true,
+      required: [true, "Content is required"],
+      trim: true,
+      maxlength: [500, "Content cannot be more than 500 characters"],
     },
-
+    image: {
+      type: String,
+      default: null,
+    },
     type: {
       type: String,
-      enum: [
-        "schedule",
-        "cancel",
-        "news",
-        "correction",
-        "competition",
-        "reminder",
-        "event",
-        "success",
-      ],
+      enum: {
+        values: ["news", "schedule", "cancel", "correction"],
+        message: "{VALUE} is not a valid notice type",
+      },
       default: "news",
-      index: true,
+      required: true,
     },
-
-    priority: {
-      type: String,
-      enum: ["normal", "important", "critical"],
-      default: "normal",
-      index: true,
-    },
-
-    status: {
-      type: String,
-      enum: ["draft", "published", "archived"],
-      default: "published",
-      index: true,
-    },
-
-    image: {
-      publicId: String,
-      secureUrl: String,
-      width: Number,
-      height: Number,
-      format: String,
-      bytes: Number,
-    },
-
-    attachment: {
-      name: String,
-      url: String,
-      type: String,
-      size: Number,
-    },
-
-    tags: {
-      type: [String],
-      default: [],
-      index: true,
-    },
-
-    targetGrades: {
-      type: [String],
-      default: ["all"],
-      index: true,
-    },
-
-    targetClasses: {
-      type: [String],
-      default: [],
-    },
-
-    isPinned: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-
-    publishAt: {
-      type: Date,
-      default: Date.now,
-      index: true,
-    },
-
-    expireAt: {
-      type: Date,
-    },
-
-    createdBy: {
-      type: String,
-      default: "",
-    },
-
-    isReadRequired: {
+    isRead: {
       type: Boolean,
       default: false,
     },
+    readBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
   },
   {
     timestamps: true,
   },
 );
 
-/*
-|--------------------------------------------------------------------------
-| Indexes
-|--------------------------------------------------------------------------
-*/
-
-NoticeSchema.index({
-  status: 1,
-  publishAt: -1,
-});
-
-NoticeSchema.index({
-  type: 1,
-  priority: 1,
-});
-
-NoticeSchema.index({
-  isPinned: -1,
-  publishAt: -1,
-});
-
-NoticeSchema.index({
-  expireAt: 1,
-});
-
-const Notice: Model<INotice> =
-  mongoose.models.Notice || mongoose.model<INotice>("Notice", NoticeSchema);
+// جلوگیری از خطای OverwriteModelError
+const Notice = mongoose.models.Notice || mongoose.model("Notice", NoticeSchema);
 
 export default Notice;

@@ -1,162 +1,106 @@
-import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "./../../../../lib/dbConnect";
-import Notice from "./../../../../models/Notice";
+import { NextResponse } from 'next/server';
+import dbConnect from './../../../../lib/dbConnect';
+import Notice from './../../../../models/Notice';
 
-function createSlug(text: string) {
-  return text
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-
-
-export async function GET() {
+export async function POST(request: Request) {
   try {
     await dbConnect();
-
-    const notices = await Notice.find({
-      status: "published",
-      publishAt: { $lte: new Date() },
-    })
-      .sort({
-        isPinned: -1,
-        priority: -1,
-        publishAt: -1,
-      })
-      .lean();
-
-    return NextResponse.json({
-      success: true,
-      count: notices.length,
-      notices,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "خطا در دریافت اطلاعیه‌ها",
-      },
-      {
-        status: 500,
-      },
-    );
-  }
-}
-
-
-export async function POST(req: NextRequest) {
-  try {
-    await dbConnect();
-
-    const body = await req.json();
-
-    const {
-      title,
-      slug,
-      description,
-      content,
-      type,
-      priority,
-      image,
-      attachment,
-      tags,
-      targetGrades,
-      targetClasses,
-      publishAt,
-      expireAt,
-      isPinned,
-      status,
-      createdBy,
-      isReadRequired,
-    } = body;
+    
+    const body = await request.json();
+    console.log('Received body:', body); // برای دیباگ
+    
+    const { title, content, image, type } = body;
 
     if (!title || !content) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "عنوان و متن اطلاعیه الزامی است.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    const finalSlug = slug ? createSlug(slug) : createSlug(title);
-
-    const duplicate = await Notice.findOne({
-      slug: finalSlug,
-    });
-
-    if (duplicate) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Slug تکراری است.",
-        },
-        {
-          status: 409,
-        },
+        { error: 'Title and content are required', success: false },
+        { status: 400 }
       );
     }
 
     const notice = await Notice.create({
-      title,
-
-      slug: finalSlug,
-
-      description,
-
-      content,
-
-      type,
-
-      priority,
-
-      image,
-
-      attachment,
-
-      tags,
-
-      targetGrades,
-
-      targetClasses,
-
-      publishAt,
-
-      expireAt,
-
-      isPinned,
-
-      status,
-
-      createdBy,
-
-      isReadRequired,
+      title: title.trim(),
+      content: content.trim(),
+      image: image || null,
+      type: type || 'news',
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "اطلاعیه با موفقیت ثبت شد.",
-      notice,
-    });
-  } catch (error) {
-    console.error(error);
+    console.log('Notice created:', notice); // برای دیباگ
 
     return NextResponse.json(
-      {
+      { message: 'Notice created successfully', notice, success: true },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error('Error creating notice:', error);
+    return NextResponse.json(
+      { 
+        error: error.message || 'Internal server error', 
         success: false,
-        error: "خطا در ثبت اطلاعیه",
+        details: error.stack 
       },
-      {
-        status: 500,
-      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    await dbConnect();
+    
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+
+    const notices = await Notice.find()
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    return NextResponse.json({ notices, success: true });
+  } catch (error: any) {
+    console.error('Error fetching notices:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error', success: false },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    await dbConnect();
+    
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Notice ID is required', success: false },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { isRead } = body;
+
+    const notice = await Notice.findByIdAndUpdate(
+      id,
+      { isRead },
+      { new: true }
+    );
+
+    if (!notice) {
+      return NextResponse.json(
+        { error: 'Notice not found', success: false },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ notice, success: true });
+  } catch (error: any) {
+    console.error('Error updating notice:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error', success: false },
+      { status: 500 }
     );
   }
 }
