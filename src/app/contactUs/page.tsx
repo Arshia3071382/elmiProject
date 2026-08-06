@@ -226,7 +226,7 @@ export default function ContactUs() {
                   گردید.
                 </p>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col sm:grid grid-cols-2 gap-3">
                   <a
                     href={socialLinks.rubika}
                     target="_blank"
@@ -414,7 +414,7 @@ export default function ContactUs() {
                       className="w-full border-2 border-border bg-white/50 rounded-xl pr-12 pl-4 py-3.5 text-sm focus:outline-none focus:border-secondary focus:ring-4 focus:ring-blue-500/10 transition-all hover:border-blue-300 appearance-none cursor-pointer"
                       style={{ fontFamily: "iranSans-r" }}
                     >
-                      <option value="">پایه تحصیلی خود را انتخاب کنید</option>
+                      <option value="">پایه تحصیلی</option>
                       {grades.map((grade) => (
                         <option key={grade} value={grade}>
                           {grade}
@@ -479,7 +479,7 @@ export default function ContactUs() {
                     <input
                       type="text"
                       required
-                      placeholder="شماره تماس (۰۹۱۲۳۴۵۶۷۸۹)"
+                      placeholder="شماره تماس"
                       value={formData.phone}
                       onChange={handlePhoneChange}
                       className="w-full text-right w-full border-2 border-border bg-white/50 rounded-xl pr-12 pl-4 py-3.5 text-sm focus:outline-none focus:border-secondary focus:ring-4 focus:ring-blue-500/10 transition-all hover:border-blue-300 text-left font-mono"
