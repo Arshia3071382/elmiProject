@@ -17,6 +17,7 @@ import AdminShowcasePanel from "@/component/adminpaneldet/AdminShowcasePanel";
 import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePanel";
 import SeniorPermissionManager from "@/component/adminpaneldet/SeniorPermissionManager";
 import AdminNoticePanel from "@/component/adminpaneldet/AdminNoticePanel";
+import AdminTeachersPanel from "@/component/adminpaneldet/AdminTeachersPanel";
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -31,7 +32,7 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeTab, setActiveTab] = useState<"courses" | "categories">(
-    "courses",
+    "courses"
   );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -215,7 +216,6 @@ export default function AdminPage() {
       dir="rtl"
       className="min-h-screen mt-10 sm:mt-30 bg-gradient-to-br from-gray-50 to-gray-100 font-sans"
     >
-      {/* هدر اصلی مدرن و جدید */}
       <header className="relative bg-gradient-to-r from-[#1F3A5F] via-[#2563EB] to-[#1F3A5F] text-white shadow-xl overflow-hidden">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-sky-400/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
@@ -236,7 +236,7 @@ export default function AdminPage() {
                 </span>
               </div>
               <p className="text-blue-100/80 text-sm font-medium">
-                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها و لیگ نخبگان
+                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها، اساتید و لیگ نخبگان
               </p>
             </div>
           </div>
@@ -251,12 +251,10 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* بخش مدیریت دسترسی معین‌ها - فقط برای super_admin */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         <SeniorPermissionManager onShowMessage={showMessage} />
       </div>
 
-      {/* بخش اصلی دوره‌ها و آمار */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex border-b border-gray-200">
@@ -330,7 +328,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* سایر پنل‌ها */}
       <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminEliteLeaguePanel onShowMessage={showMessage} />
       </div>
@@ -346,9 +343,12 @@ export default function AdminPage() {
         <AdminArticlesPanel onShowMessage={showMessage} />
       </div>
 
-      {/* پنل اطلاعیه‌ها - جایگزین شده با کامپوننت جدید */}
-      <div className="max-w-7xl mx-auto px-6 pb-12">
+      <div className="max-w-7xl mx-auto px-6 pb-6">
         <AdminNoticePanel onShowMessage={showMessage} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 pb-6">
+        <AdminTeachersPanel/>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 pb-6">

@@ -14,13 +14,14 @@ import {
   PhoneCall,
   Info,
   ShieldCheck,
+  GraduationCap,
 } from "lucide-react";
 
 import HeroLogo from "./HeroLogo";
 import FloatingActionDock from "./FloatingActionDock";
-import Container from "../Container";
-import SeniorAdminLoginModal from "./../seniorAdmin/SeniorAdminLoginModal";
-import { useSeniorAdminLogin } from "./../seniorAdmin/useSeniorAdminLogin";
+import Container from "@/component/Container";
+import SeniorAdminLoginModal from "@/component/seniorAdmin/SeniorAdminLoginModal";
+import { useSeniorAdminLogin } from "@/component/seniorAdmin/useSeniorAdminLogin";
 
 interface Notice {
   _id: string;
@@ -82,6 +83,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
   }, [pathname]);
 
   const secondaryLinks = [
+    { label: "معرفی اساتید", href: "/teachers", icon: GraduationCap },
     { label: "اخبار و اطلاعیه‌ها", href: "/notices", icon: Newspaper },
     { label: "درباره ما", href: "/aboutUs", icon: Info },
     { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
@@ -261,7 +263,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
         )}
       </AnimatePresence>
 
-      {/* مودال ورود معین ارشد - کامپوننت جدا شده */}
+      {/* مودال ورود معین ارشد */}
       <SeniorAdminLoginModal
         isOpen={isLoginModalOpen}
         onClose={closeLoginModal}
