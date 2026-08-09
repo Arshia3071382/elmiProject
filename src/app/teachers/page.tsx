@@ -125,7 +125,7 @@ export default function TeachersSection() {
     <section dir="rtl">
       <Container>
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mt-10 sm:mt-30 mb-12">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}

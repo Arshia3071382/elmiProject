@@ -8,6 +8,7 @@ import ScrollAnimation from "./../component/ScrollAnimation";
 import CounterStats from "@/component/CounterStats"; 
 import ScienceHub from "@/component/ScienceHub";
 import { motion } from "framer-motion";
+import PuzzleActionSection from "@/component/PuzzleButton";
 
 export default function Home() {
   return (
@@ -29,6 +30,10 @@ export default function Home() {
       {/* ScienceHub - خودش Container دارد */}
       <ScrollAnimation direction="up" delay={0.2}>
         <ScienceHub />
+      </ScrollAnimation>
+
+      <ScrollAnimation direction="up" delay={0.2}>
+        <PuzzleActionSection />
       </ScrollAnimation>
 
       {/* PopularClasses - باید Container داشته باشد */}
