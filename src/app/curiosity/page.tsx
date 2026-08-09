@@ -14,11 +14,26 @@ interface Article {
   createdAt: string;
 }
 
+const LOCAL_STORAGE_KEY = "user_liked_articles";
+
 export default function CuriosityPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedIds, setLikedIds] = useState<string[]>([]);
 
+  // Load likes from localStorage
+  useEffect(() => {
+    try {
+      const savedLikes = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedLikes) {
+        setLikedIds(JSON.parse(savedLikes));
+      }
+    } catch (err) {
+      console.error("Error reading from localStorage:", err);
+    }
+  }, []);
+
+  // Fetch articles
   useEffect(() => {
     fetch("/api/articles", {
       cache: "no-store",
@@ -30,11 +45,7 @@ export default function CuriosityPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          // مطمئن می‌شویم داده حتماً آرایه است تا map ارور ندهد
           setArticles(Array.isArray(data.articles) ? data.articles : []);
-          if (Array.isArray(data.userLikedIds)) {
-            setLikedIds(data.userLikedIds);
-          }
         } else {
           setArticles([]);
         }
@@ -45,7 +56,8 @@ export default function CuriosityPage() {
       })
       .finally(() => setLoading(false));
   }, []);
-  
+
+  // Handle like
   const handleLike = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     if (likedIds.includes(id)) return;
@@ -56,17 +68,19 @@ export default function CuriosityPage() {
         setArticles((prev) =>
           prev.map((art) => (art._id === id ? { ...art, likes: res.likes } : art))
         );
-        setLikedIds((prev) => [...prev, id]);
+        const updatedLikes = [...likedIds, id];
+        setLikedIds(updatedLikes);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedLikes));
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error liking article:", err);
     }
   };
 
   return (
     <main className="py-16 min-h-screen mt-10 sm:mt-20 bg-bg font-[iranSans-r] text-text-primary" dir="rtl">
       <Container>
-        {/* هدر صفحه */}
+        {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-secondary/10 text-secondary text-xs font-bold rounded-full mb-4 border border-secondary/20">
             <Compass className="w-4 h-4 text-secondary" />
@@ -80,7 +94,7 @@ export default function CuriosityPage() {
           </p>
         </div>
 
-        {/* حالت لودینگ */}
+        {/* Loading */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -92,7 +106,7 @@ export default function CuriosityPage() {
             <p className="text-text-secondary text-sm font-medium">هنوز موضوعی اضافه نشده است.</p>
           </div>
         ) : (
-          /* شبکه‌بندی کارت موضوعات */
+          /* Articles Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => {
               const isLiked = likedIds.includes(article._id);
@@ -104,7 +118,7 @@ export default function CuriosityPage() {
                   className="group bg-surface rounded-2xl p-6 border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-right"
                 >
                   <div>
-                    {/* آیکون و لایک */}
+                    {/* Icon and Like */}
                     <div className="flex items-center justify-between mb-4">
                       <span className="p-2.5 bg-secondary/10 text-secondary rounded-xl group-hover:bg-secondary group-hover:text-text-invert transition-colors duration-300">
                         <HelpCircle className="w-5 h-5" />
@@ -114,8 +128,8 @@ export default function CuriosityPage() {
                         onClick={(e) => handleLike(e, article._id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                           isLiked
-                            ? "bg-rose-50 text-rose-600 border border-rose-200"
-                            : "bg-bg text-text-secondary hover:bg-rose-50 hover:text-rose-600 border border-border/50"
+                            ? "bg-rose-50 text-rose-600 border border-rose-200 cursor-default"
+                            : "bg-bg text-text-secondary hover:bg-rose-50 hover:text-rose-600 border border-border/50 cursor-pointer"
                         }`}
                       >
                         <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
@@ -123,11 +137,12 @@ export default function CuriosityPage() {
                       </button>
                     </div>
 
-                    {/* عنوان موضوع */}
+                    {/* Title */}
                     <h2 className="text-lg font-[iranBold] text-primary group-hover:text-secondary transition-colors line-clamp-2 leading-snug mb-2 text-right">
                       {article.title}
                     </h2>
 
+                    {/* Summary */}
                     {article.summary && (
                       <p className="text-text-secondary text-xs leading-relaxed line-clamp-3 mb-4 text-right">
                         {article.summary}
@@ -135,7 +150,7 @@ export default function CuriosityPage() {
                     )}
                   </div>
 
-                  {/* دکمه ورود به موضوع */}
+                  {/* Footer */}
                   <div className="pt-4 border-t border-border flex items-center justify-between text-xs font-bold text-secondary group-hover:-translate-x-1 transition-transform">
                     <span>ورود به این موضوع</span>
                     <ArrowLeft className="w-4 h-4" />

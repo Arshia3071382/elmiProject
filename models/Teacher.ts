@@ -18,29 +18,35 @@ const CourseSchema = new Schema(
 
 const TeacherSchema = new Schema(
   {
+    // نام استاد
     name: {
       type: String,
       required: true,
       trim: true,
     },
 
+    // سمت / عنوان
     role: {
       type: String,
       required: true,
       trim: true,
     },
 
+    // حوزه تدریس
     subject: {
       type: String,
       required: true,
       trim: true,
     },
 
+    // تصویر استاد
     avatar: {
       type: String,
       required: true,
+      trim: true,
     },
 
+    // بیوگرافی
     bio: {
       type: String,
       default: "",
@@ -48,6 +54,7 @@ const TeacherSchema = new Schema(
     },
 
     // مدرک تحصیلی
+    // مثال: کارشناسی مهندسی کامپیوتر
     education: {
       type: String,
       default: "",
@@ -66,7 +73,7 @@ const TeacherSchema = new Schema(
       default: 0,
     },
 
-    // افتخارات
+    // افتخارات و سوابق
     achievements: {
       type: [String],
       default: [],
@@ -78,22 +85,22 @@ const TeacherSchema = new Schema(
       default: [],
     },
 
-    // ایمیل
+    // ایمیل ارتباطی - اختیاری
     email: {
       type: String,
       default: "",
       trim: true,
-      required: true,
     },
 
     // لینک نمونه تدریس
+    // مثال: لینک ویدیوی آپارات
     teachingSampleUrl: {
       type: String,
       default: "",
       trim: true,
     },
 
-    // دوره‌های ارائه‌شده
+    // دوره‌های ارائه‌شده توسط استاد
     courses: {
       type: [CourseSchema],
       default: [],

@@ -11,8 +11,16 @@ import {
   ChevronLeft,
   GraduationCap,
   Tag,
+  Smile,
 } from "lucide-react";
 import Container from "@/component/Container";
+import Image from "next/image";
+import aparat from "./../../../public/image/Aparat_Icon.png";
+
+export interface TeacherCourse {
+  title: string;
+  url: string;
+}
 
 export interface Teacher {
   id: string;
@@ -21,11 +29,14 @@ export interface Teacher {
   subject: string;
   avatar: string;
   bio: string;
+  education: string;
   articlesCount: number;
   experienceYears: number;
   achievements: string[];
   recentTopics: string[];
   email: string;
+  teachingSampleUrl: string;
+  courses: TeacherCourse[];
 }
 
 interface ApiTeacher {
@@ -35,41 +46,39 @@ interface ApiTeacher {
   subject: string;
   avatar: string;
   bio?: string;
+  education?: string;
   articlesCount?: number;
   experienceYears?: number;
   achievements?: string[];
   recentTopics?: string[];
   email?: string;
+  teachingSampleUrl?: string;
+  courses?: TeacherCourse[];
 }
 
 export default function TeachersSection() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Fetch teachers
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
         setLoading(true);
         setError("");
-
         const response = await fetch("/api/teachers", {
           method: "GET",
           cache: "no-store",
         });
-
         if (!response.ok) {
           throw new Error(`خطا در دریافت اطلاعات اساتید: ${response.status}`);
         }
-
         const result = await response.json();
-
         if (!result.success || !Array.isArray(result.data)) {
           throw new Error("ساختار اطلاعات دریافتی از سرور صحیح نیست");
         }
-
         const formattedTeachers: Teacher[] = result.data.map(
           (teacher: ApiTeacher) => ({
             id: teacher._id,
@@ -78,6 +87,7 @@ export default function TeachersSection() {
             subject: teacher.subject || "",
             avatar: teacher.avatar || "/default-avatar.png",
             bio: teacher.bio || "",
+            education: teacher.education || "",
             articlesCount: teacher.articlesCount ?? 0,
             experienceYears: teacher.experienceYears ?? 0,
             achievements: Array.isArray(teacher.achievements)
@@ -87,13 +97,20 @@ export default function TeachersSection() {
               ? teacher.recentTopics
               : [],
             email: teacher.email || "",
+            teachingSampleUrl: teacher.teachingSampleUrl || "",
+            courses: Array.isArray(teacher.courses)
+              ? teacher.courses
+                  .filter((course) => course && course.title && course.url)
+                  .map((course) => ({
+                    title: course.title,
+                    url: course.url,
+                  }))
+              : [],
           }),
         );
-
         setTeachers(formattedTeachers);
       } catch (err) {
         console.error("Error fetching teachers:", err);
-
         setError(
           err instanceof Error ? err.message : "خطا در دریافت اطلاعات اساتید",
         );
@@ -101,12 +118,11 @@ export default function TeachersSection() {
         setLoading(false);
       }
     };
-
     fetchTeachers();
   }, []);
 
   return (
-    <section dir="rtl" className="py-16">
+    <section dir="rtl">
       <Container>
         {/* Header */}
         <div className="text-center mb-12">
@@ -118,7 +134,6 @@ export default function TeachersSection() {
           >
             کادر علمی و استادان
           </motion.div>
-
           <motion.h2
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -128,7 +143,6 @@ export default function TeachersSection() {
           >
             معرفی اساتید و دبیران
           </motion.h2>
-
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -144,7 +158,6 @@ export default function TeachersSection() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-10 h-10 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin mb-4" />
-
             <p className="text-sm text-[var(--color-text-secondary)] font-['iranSans-r']">
               در حال دریافت اطلاعات اساتید...
             </p>
@@ -157,11 +170,9 @@ export default function TeachersSection() {
             <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mb-4">
               <X className="w-6 h-6 text-red-500" />
             </div>
-
             <h3 className="text-base font-['iranBold'] text-red-600 mb-2">
               دریافت اطلاعات با خطا مواجه شد
             </h3>
-
             <p className="text-xs text-[var(--color-text-secondary)] max-w-md">
               {error}
             </p>
@@ -174,11 +185,9 @@ export default function TeachersSection() {
             <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mb-5">
               <GraduationCap className="w-7 h-7 text-blue-500" />
             </div>
-
             <h3 className="text-lg font-['iranBold'] text-[var(--color-primary)] mb-2">
               هنوز استادی برای نمایش ثبت نشده است
             </h3>
-
             <p className="text-xs sm:text-sm text-[var(--color-text-secondary)]">
               به زودی اساتید گرانقدر به این بخش اضافه خواهند شد.
             </p>
@@ -212,7 +221,6 @@ export default function TeachersSection() {
                         "conic-gradient(from 0deg, var(--color-secondary) 0deg 90deg, transparent 90deg 180deg, var(--color-accent) 180deg 270deg, transparent 270deg 360deg)",
                     }}
                   />
-
                   <motion.div
                     animate={{ rotate: -360 }}
                     transition={{
@@ -226,19 +234,14 @@ export default function TeachersSection() {
                         "conic-gradient(from 90deg, var(--color-success) 0deg 60deg, transparent 60deg 180deg, var(--color-primary) 180deg 240deg, transparent 240deg 360deg)",
                     }}
                   />
-
                   <div className="relative w-[150px] h-[150px] rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-inner">
                     <img
-                      src={teacher.avatar}
+                      src={teacher.avatar || "/default-avatar.png"}
                       alt={teacher.name}
                       className="w-full h-full object-cover"
                       onError={(event) => {
                         const image = event.currentTarget;
-
-                        if (image.src.endsWith("/default-avatar.png")) {
-                          return;
-                        }
-
+                        if (image.src.endsWith("/default-avatar.png")) return;
                         image.src = "/default-avatar.png";
                       }}
                     />
@@ -251,17 +254,18 @@ export default function TeachersSection() {
                 </h3>
 
                 {/* Subject */}
-                <p className="text-xs text-[var(--color-text-secondary)] mb-5">
-                  {teacher.subject}
-                </p>
+                {teacher.subject && (
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-5">
+                    {teacher.subject}
+                  </p>
+                )}
 
-                {/* Details Button */}
+                {/* Details button */}
                 <button
                   onClick={() => setSelectedTeacher(teacher)}
                   className="w-full py-2.5 px-4 rounded-xl bg-[var(--color-bg)] hover:bg-blue-50 text-[var(--color-primary)] hover:text-[var(--color-secondary)] border border-[var(--color-border)] font-['iranBold'] text-xs transition-all flex items-center justify-center gap-2 group"
                 >
                   <span>اطلاعات تکمیلی</span>
-
                   <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 </button>
               </motion.div>
@@ -282,35 +286,20 @@ export default function TeachersSection() {
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
               />
 
-              {/* Modal */}
+              {/* Modal content */}
               <motion.div
                 dir="rtl"
-                initial={{
-                  opacity: 0,
-                  scale: 0.95,
-                  y: 15,
-                }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  scale: 0.95,
-                  y: 15,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 350,
-                  damping: 30,
-                }}
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
                 className="relative w-full max-w-xl bg-white border border-[var(--color-border)] rounded-3xl shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col font-['iranSans-r']"
               >
-                {/* Close */}
+                {/* Close button */}
                 <button
                   onClick={() => setSelectedTeacher(null)}
                   className="absolute top-4 left-4 z-20 p-2 rounded-xl bg-[var(--color-bg)] hover:bg-slate-200 text-[var(--color-text-secondary)] transition-colors"
+                  aria-label="بستن"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -319,78 +308,165 @@ export default function TeachersSection() {
                 <div className="p-6 bg-[var(--color-bg)] border-b border-[var(--color-border)] flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow shrink-0">
                     <img
-                      src={selectedTeacher.avatar}
+                      src={selectedTeacher.avatar || "/default-avatar.png"}
                       alt={selectedTeacher.name}
                       className="w-full h-full object-cover"
                       onError={(event) => {
                         const image = event.currentTarget;
-
-                        if (image.src.endsWith("/default-avatar.png")) {
-                          return;
-                        }
-
+                        if (image.src.endsWith("/default-avatar.png")) return;
                         image.src = "/default-avatar.png";
                       }}
                     />
                   </div>
-
                   <div className="min-w-0">
-                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-blue-100 text-[var(--color-secondary)] text-[10px] font-['iranBold'] mb-1">
-                      {selectedTeacher.subject}
-                    </span>
-
+                    {selectedTeacher.subject && (
+                      <span className="inline-block px-2.5 py-0.5 rounded-md bg-blue-100 text-[var(--color-secondary)] text-[10px] font-['iranBold'] mb-1">
+                        {selectedTeacher.subject}
+                      </span>
+                    )}
                     <h3 className="text-xl font-['iranBold'] text-[var(--color-primary)] truncate">
                       {selectedTeacher.name}
                     </h3>
-
-                    <p className="text-xs text-[var(--color-text-secondary)]">
-                      {selectedTeacher.role}
-                    </p>
+                    {selectedTeacher.role && (
+                      <p className="text-xs text-[var(--color-text-secondary)]">
+                        {selectedTeacher.role}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 {/* Modal Content */}
                 <div className="p-6 space-y-5 overflow-y-auto">
                   {/* Bio */}
-                  <div>
-                    <h4 className="text-xs font-['iranBold'] text-[var(--color-primary)] mb-1.5">
-                      توضیحات و بیوگرافی
-                    </h4>
+                  {selectedTeacher.bio && (
+                    <div>
+                      <h4 className="text-xs font-['iranBold'] text-[var(--color-primary)] mb-1.5">
+                        توضیحات و بیوگرافی
+                      </h4>
+                      <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed bg-[var(--color-bg)] p-3.5 rounded-2xl border border-[var(--color-border)]">
+                        {selectedTeacher.bio}
+                      </p>
+                    </div>
+                  )}
 
-                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed bg-[var(--color-bg)] p-3.5 rounded-2xl border border-[var(--color-border)]">
-                      {selectedTeacher.bio ||
-                        "توضیحاتی برای این استاد ثبت نشده است."}
-                    </p>
-                  </div>
+                  {/* Education */}
+                  {selectedTeacher.education && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-violet-50 border border-violet-100">
+                      <GraduationCap className="w-5 h-5 text-violet-600 shrink-0" />
+                      <div>
+                        <div className="text-[10px] text-violet-600 font-['iranBold'] mb-0.5">
+                          مدرک تحصیلی
+                        </div>
+                        <div className="text-xs font-['iranBold'] text-[var(--color-primary)]">
+                          {selectedTeacher.education}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Stats */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-[var(--color-primary)]">
-                      <BookOpen className="w-4 h-4 text-[var(--color-secondary)]" />
-
-                      <span>
-                        {selectedTeacher.articlesCount} مقاله منتشر شده
-                      </span>
+                  {(selectedTeacher.articlesCount > 0 ||
+                    selectedTeacher.experienceYears > 0) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedTeacher.articlesCount > 0 && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/60 border border-blue-100">
+                          <BookOpen className="w-5 h-5 text-[var(--color-secondary)] shrink-0" />
+                          <div>
+                            <div className="text-sm font-['iranBold'] text-[var(--color-primary)]">
+                              {selectedTeacher.articlesCount}
+                            </div>
+                            <div className="text-[10px] text-[var(--color-text-secondary)]">
+                              مقاله منتشر شده
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {selectedTeacher.experienceYears > 0 && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
+                          <GraduationCap className="w-5 h-5 text-[var(--color-success)] shrink-0" />
+                          <div>
+                            <div className="text-sm font-['iranBold'] text-[var(--color-primary)]">
+                              {selectedTeacher.experienceYears}
+                            </div>
+                            <div className="text-[10px] text-[var(--color-text-secondary)]">
+                              سال سابقه تدریس
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
+                  )}
 
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 text-xs text-[var(--color-primary)]">
-                      <GraduationCap className="w-4 h-4 text-[var(--color-success)]" />
+                  {/* Teaching Sample */}
+                  {selectedTeacher.teachingSampleUrl && (
+                    <a
+                      href={selectedTeacher.teachingSampleUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-red-50 border border-red-100 hover:bg-red-100 hover:border-red-200 transition-all group"
+                    >
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-white text-white flex items-center justify-center shadow-sm">
+                          <Image
+                            src={aparat}
+                            alt="aparatLogo"
+                            className="w-8 h-8 object-contain"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-sm font-['iranBold'] text-red-700">
+                            مشاهده نمونه تدریس
+                          </div>
+                          <div className="text-[10px] text-red-500 mt-0.5">
+                            مشاهده ویدئوی تدریس استاد در آپارات
+                          </div>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-red-500 group-hover:-translate-x-1 transition-transform" />
+                    </a>
+                  )}
 
-                      <span>
-                        {selectedTeacher.experienceYears} سال سابقه تدریس
-                      </span>
+                  {/* Courses */}
+                  {selectedTeacher.courses.length > 0 && (
+                    <div>
+                      <h4 className="flex items-center gap-1.5 text-xs font-['iranBold'] text-[var(--color-primary)] mb-3">
+                        <BookOpen className="w-4 h-4 text-[var(--color-secondary)]" />
+                        <span>دوره‌های آموزشی</span>
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedTeacher.courses.map((course, index) => (
+                          <div
+                            key={`${course.title}-${index}`}
+                            className="flex items-center justify-between gap-3 p-3 rounded-xl bg-blue-50/50 border border-blue-100"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <BookOpen className="w-4 h-4 text-[var(--color-secondary)] shrink-0" />
+                              <span className="text-xs font-['iranBold'] text-[var(--color-primary)] truncate">
+                                {course.title}
+                              </span>
+                            </div>
+                            <a
+                              href={course.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 px-3 py-1.5 rounded-lg bg-[var(--color-secondary)] hover:bg-[var(--color-primary)] text-white text-[10px] font-['iranBold'] transition-colors flex items-center gap-1"
+                            >
+                              <span>مشاهده دوره</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Topics */}
                   {selectedTeacher.recentTopics.length > 0 && (
                     <div>
                       <h4 className="text-xs font-['iranBold'] text-[var(--color-primary)] mb-2 flex items-center gap-1.5">
                         <Tag className="w-4 h-4 text-[var(--color-secondary)]" />
-
                         <span>حوزه‌های تخصصی و پژوهشی</span>
                       </h4>
-
                       <div className="flex flex-wrap gap-1.5">
                         {selectedTeacher.recentTopics.map((topic, index) => (
                           <span
@@ -409,10 +485,8 @@ export default function TeachersSection() {
                     <div>
                       <h4 className="text-xs font-['iranBold'] text-[var(--color-primary)] mb-2 flex items-center gap-1.5">
                         <Award className="w-4 h-4 text-amber-500" />
-
                         <span>افتخارات و سوابق</span>
                       </h4>
-
                       <div className="space-y-1.5">
                         {selectedTeacher.achievements.map((item, index) => (
                           <div
@@ -420,35 +494,37 @@ export default function TeachersSection() {
                             className="flex items-center gap-2 text-xs text-[var(--color-text-primary)] bg-[var(--color-bg)] p-2.5 rounded-xl border border-[var(--color-border)]"
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-secondary)] shrink-0" />
-
                             <span>{item}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Footer */}
-                <div className="p-4 bg-[var(--color-bg)] border-t border-[var(--color-border)] flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] min-w-0">
-                    <Mail className="w-3.5 h-3.5 text-[var(--color-secondary)] shrink-0" />
-
-                    <span className="truncate">
-                      {selectedTeacher.email || "ایمیل ثبت نشده است"}
+                  {/* Student Satisfaction */}
+                  <div className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-100">
+                    <span className="text-sm font-['iranBold'] text-emerald-700">
+                      میزان رضایت دانش‌آموزان:
+                    </span>
+                    <span
+                      className="text-2xl leading-none"
+                      role="img"
+                      aria-label="رضایت بالا"
+                    >
+                      😊
                     </span>
                   </div>
+                </div>
 
-                  {selectedTeacher.email && (
-                    <a
-                      href={`mailto:${selectedTeacher.email}`}
-                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[var(--color-secondary)] hover:bg-[var(--color-primary)] text-white font-['iranBold'] text-xs transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <span>ارتباط با دبیر</span>
-
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                {/* Modal Footer */}
+                <div className="p-4 bg-[var(--color-bg)] border-t border-[var(--color-border)]">
+                  <button
+                    onClick={() => setSelectedTeacher(null)}
+                    className="w-full py-2.5 rounded-xl bg-[var(--color-secondary)] hover:bg-[var(--color-primary)] text-white font-['iranBold'] text-xs transition-colors flex items-center justify-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>بستن جزئیات</span>
+                  </button>
                 </div>
               </motion.div>
             </div>

@@ -1,29 +1,37 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
+import { useInView, useMotionValue, animate } from "framer-motion";
 import { Users, GraduationCap, Laptop, BookOpen } from "lucide-react";
 import Container from "./Container";
 
-// Convert numbers to Persian strings
+// Helper
 const toPersianNum = (num: number) => {
   return num.toString().replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
 };
 
+// Counter Item
 interface CounterItemProps {
   target: number;
   label: string;
   suffix?: string;
   icon: React.ReactNode;
   bgColor: string;
-  iconColor?: string;
+  prefix?: string;
 }
 
-function CounterItem({ target, label, suffix = "", icon, bgColor }: CounterItemProps) {
+function CounterItem({
+  target,
+  label,
+  suffix = "",
+  icon,
+  bgColor,
+  prefix = "",
+}: CounterItemProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const count = useMotionValue(0);
-  const [displayValue, setDisplayValue] = useState(toPersianNum(0) + suffix);
+  const [displayValue, setDisplayValue] = useState(toPersianNum(0));
 
   useEffect(() => {
     if (isInView) {
@@ -31,94 +39,94 @@ function CounterItem({ target, label, suffix = "", icon, bgColor }: CounterItemP
         duration: 2,
         ease: "easeOut",
         onUpdate: (latest) => {
-          setDisplayValue(toPersianNum(Math.round(latest)) + suffix);
-        }
+          setDisplayValue(toPersianNum(Math.round(latest)));
+        },
       });
       return controls.stop;
     }
-  }, [isInView, target, count, suffix]);
+  }, [isInView, target, count]);
 
   return (
-    <div 
+    <div
       ref={ref}
-      className="bg-white p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl flex flex-col items-center text-center group"
-      style={{ borderColor: "#E5E7EB" }}
+      className="bg-white p-6 rounded-3xl border border-gray-100 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 flex flex-col items-center text-center group"
     >
-      {/* Icon container */}
-      <div 
-        className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 shadow-sm"
+      {/* Icon */}
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 shadow-sm"
         style={{ backgroundColor: bgColor }}
       >
         {icon}
       </div>
 
-      {/* Output number */}
-      <span 
-        className="text-3xl font-bold mb-1 tracking-tight"
-        style={{ color: "#1F3A5F", fontFamily: "iranBold" }}
+      {/* Number */}
+      <div
+        className="text-5xl font-black mb-3 text-slate-800 tracking-tight"
+        style={{ fontFamily: "iranBold" }}
       >
+        {prefix}
         {displayValue}
-      </span>
+      </div>
 
-      {/* Stat item label */}
-      <p 
-        className="text-sm font-medium"
-        style={{ color: "#475569", fontFamily: "iranSans-r" }}
-      >
-        {label}
-      </p>
+      {/* Label */}
+      <div className="flex flex-col items-center gap-1">
+        <span
+          className="text-sm font-medium text-slate-400 min-h-[22px]"
+          style={{ fontFamily: "iranSans-r" }}
+        >
+          {suffix}
+        </span>
+        <p
+          className="text-base font-bold text-slate-700"
+          style={{ fontFamily: "iranBold" }}
+        >
+          {label}
+        </p>
+      </div>
     </div>
   );
 }
 
+// Main Component
 export default function CounterStats() {
   const stats = [
     {
       target: 1000,
       label: "دانش آموختگان",
-      suffix: "+",
-      icon: <GraduationCap className="w-7 h-7" style={{ color: "#2563EB" }} />,
+      prefix: "+",
+      icon: <GraduationCap className="w-8 h-8 text-blue-600" />,
       bgColor: "#EFF6FF",
     },
     {
       target: 420,
       label: "کلاس‌های حضوری",
-      suffix: " جلسه",
-      icon: <Users className="w-7 h-7" style={{ color: "#22C55E" }} />,
+      suffix: "جلسه",
+      icon: <Users className="w-8 h-8 text-green-600" />,
       bgColor: "#F0FDF4",
     },
     {
       target: 100,
       label: "دوره‌های مجازی",
-      suffix: " جلسه",
-      icon: <Laptop className="w-7 h-7" style={{ color: "#06B6D4" }} />,
+      suffix: "جلسه",
+      icon: <Laptop className="w-8 h-8 text-cyan-600" />,
       bgColor: "#ECFEFF",
     },
     {
       target: 35,
       label: "تعداد اساتید مجموعه",
       suffix: "",
-      icon: <BookOpen className="w-7 h-7" style={{ color: "#F59E0B" }} />,
+      icon: <BookOpen className="w-8 h-8 text-amber-600" />,
       bgColor: "#FEF3C7",
     },
   ];
 
   return (
     <Container>
-      
-        <div className="grid  grid-cols-2 lg:grid-cols-4 gap-4 my-15 md:gap-4">
-          {stats.map((stat, idx) => (
-            <CounterItem 
-              key={idx} 
-              target={stat.target}
-              label={stat.label}
-              suffix={stat.suffix}
-              icon={stat.icon}
-              bgColor={stat.bgColor}
-            />
-          ))}
-        </div>
-      
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 my-16">
+        {stats.map((stat, idx) => (
+          <CounterItem key={idx} {...stat} />
+        ))}
+      </div>
     </Container>
   );
 }
