@@ -26,11 +26,11 @@ export default function StudentComments() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const pinColors = [
-    'bg-blue-400',
-    'bg-emerald-400', 
-    'bg-cyan-400',
-    'bg-teal-400',
-    'bg-indigo-400'
+    "bg-blue-400",
+    "bg-emerald-400",
+    "bg-cyan-400",
+    "bg-teal-400",
+    "bg-indigo-400",
   ];
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function StudentComments() {
         </div>
 
         {/* تایتل و هدر بخش نظرات */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -84,9 +84,9 @@ export default function StudentComments() {
           </div>
 
           <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-            نظرات دانشجویان
+            تجربه یادگیری
           </h2>
-          
+
           <div className="flex justify-start gap-2 mt-4 pr-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
@@ -113,8 +113,8 @@ export default function StudentComments() {
                 className="w-full bg-white border-2 border-slate-100 rounded-3xl shadow-lg p-6 sm:p-8 flex flex-col justify-between text-right"
               >
                 {/* متن نظر (با رفع مشکل چیدمان و برعکس شدن ایموجی‌ها) */}
-                <p 
-                  dir="auto" 
+                <p
+                  dir="auto"
                   className="font-[iranSans-r] text-slate-700 text-right leading-8 text-sm sm:text-base mb-6 whitespace-pre-line [unicode-bidi:plaintext]"
                 >
                   {currentComment.comment}
@@ -122,7 +122,6 @@ export default function StudentComments() {
 
                 {/* بخش پایینی با فلکس و ریسپانسیو کامل */}
                 <div className="flex flex-row-reverse flex-wrap sm:flex-nowrap items-center justify-between pt-4 border-t border-slate-100 gap-y-3">
-                  
                   {/* راست: پروفایل کاربر و ستاره‌ها زیر نام */}
                   <div className="flex flex-row-reverse items-center gap-2 text-right justify-start">
                     <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
@@ -160,7 +159,6 @@ export default function StudentComments() {
                       <Calendar className="w-3 h-3 shrink-0" />
                     </div>
                   </div>
-
                 </div>
               </motion.div>
             </AnimatePresence>
