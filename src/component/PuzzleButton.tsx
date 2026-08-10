@@ -165,7 +165,7 @@ export default function PuzzleActionSection() {
               transition={{ duration: 0.4, delay: 0.2 }}
             >
               <Link
-                href="/elite-rules"
+                href="/league-guide"
                 onMouseEnter={() => setHoveredIndex(2)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="group relative block rounded-2xl p-[1px] overflow-hidden h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
@@ -206,7 +206,7 @@ export default function PuzzleActionSection() {
 
                   <div>
                     <h3 className="text-sm sm:text-base font-[family-name:var(--font-iranBold)] font-bold text-[var(--color-text-primary)] group-hover:text-amber-700 transition-colors duration-200 mb-0.5">
-                      قوانین لیگ نخبگان
+                      آشنایی با لیگ نخبگان
                     </h3>
                     <p className="text-xs font-[family-name:var(--font-iranSans-r)] text-[var(--color-text-secondary)]">
                       ضوابط، امتیازات و رتبه‌بندی
