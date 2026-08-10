@@ -101,7 +101,7 @@ export default function StudentComments() {
           </div>
         </motion.div>
 
-        <div className="w-full max-w-2xl items-center mx-auto relative z-10 px-4">
+        <div className="w-full max-w-2xl mx-auto relative z-10 px-4">
           <div className="relative min-h-[220px] flex items-center justify-center">
             <AnimatePresence mode="wait">
               <motion.div
@@ -110,18 +110,21 @@ export default function StudentComments() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.4 }}
-                className="w-full bg-white border-2 border-slate-100 rounded-3xl shadow-lg p-6 sm:p-8 flex flex-col justify-between"
+                className="w-full bg-white border-2 border-slate-100 rounded-3xl shadow-lg p-6 sm:p-8 flex flex-col justify-between text-right"
               >
-                {/* متن نظر */}
-                <p className="font-[iranSans-r] text-slate-700 text-right leading-7 text-sm sm:text-base mb-6">
-                  &ldquo;{currentComment.comment}&rdquo;
+                {/* متن نظر (با رفع مشکل چیدمان و برعکس شدن ایموجی‌ها) */}
+                <p 
+                  dir="auto" 
+                  className="font-[iranSans-r] text-slate-700 text-right leading-8 text-sm sm:text-base mb-6 whitespace-pre-line [unicode-bidi:plaintext]"
+                >
+                  {currentComment.comment}
                 </p>
 
                 {/* بخش پایینی با فلکس و ریسپانسیو کامل */}
-                <div className="flex flex-row-reverse flex-wrap sm:flex-nowrap items-center justify-between pt-4 border-t border-slate-100 gap-y-3">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between pt-4 border-t border-slate-100 gap-y-3">
                   
                   {/* راست: پروفایل کاربر و ستاره‌ها زیر نام */}
-                  <div className="flex flex-row-reverse items-center gap-2 text-right justify-start">
+                  <div className="flex items-center gap-2 text-right justify-start">
                     <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
                       <UserIcon className="w-4 h-4" />
                     </div>
@@ -143,7 +146,7 @@ export default function StudentComments() {
                   </div>
 
                   {/* بخش چپ و وسط (در موبایل رپ شده و به خط بعد می‌رود) */}
-                  <div className="flex flex-row-reverse w-full sm:w-auto items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                  <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                     {/* وسط: نام دوره آموزشی */}
                     <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-medium text-[10px] sm:text-xs truncate max-w-[160px]">
                       {currentComment.coursesCount}
@@ -172,7 +175,9 @@ export default function StudentComments() {
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            
+            <span className="text-xs font-bold text-slate-500">
+              {currentIndex + 1} از {comments.length}
+            </span>
 
             <button
               onClick={handleNext}
