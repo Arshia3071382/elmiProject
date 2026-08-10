@@ -173,10 +173,7 @@ export default function StudentComments() {
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <span className="text-xs font-bold text-slate-500">
-              {currentIndex + 1} از {comments.length}
-            </span>
-
+            
             <button
               onClick={handleNext}
               className="w-10 h-10 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-blue-600 hover:text-white flex items-center justify-center shadow-sm cursor-pointer transition-all"

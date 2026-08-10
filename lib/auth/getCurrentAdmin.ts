@@ -1,4 +1,5 @@
-// src/lib/auth/getCurrentAdmin.ts
+
+// src/lib/auth/.ts
 
 import { cookies } from "next/headers";
 import dbConnect from "../dbConnect";
@@ -23,36 +24,48 @@ export interface AdminUser {
 export async function getCurrentAdmin(): Promise<ISeniorAdmin | null> {
   try {
     const cookieStore = await cookies();
+
     const token = cookieStore.get("senior_admin_token")?.value;
 
+    // اگر توکن وجود نداشته باشد
     if (!token) {
+      console.log("No senior_admin_token cookie found");
       return null;
     }
 
-    // Decode token (هماهنگ با سیستم موجود)
+    // Decode token
     let session: AdminSession;
+
     try {
-      const decoded = Buffer.from(token, "base64").toString();
+      const decoded = Buffer.from(token, "base64").toString("utf-8");
+
       session = JSON.parse(decoded);
     } catch (error) {
       console.error("Token decode failed:", error);
       return null;
     }
 
-    if (!session.username) {
+    // بررسی username
+    if (!session?.username) {
+      console.log("Invalid admin session: username missing");
       return null;
     }
 
-    // Connect to database
+    // اتصال به دیتابیس
     await dbConnect();
 
-    // Find admin
+    // پیدا کردن ادمین فعال
     const admin = await SeniorAdmin.findOne({
       username: session.username,
       isActive: true,
     }).lean();
 
     if (!admin) {
+      console.log(
+        "Admin not found or inactive:",
+        session.username
+      );
+
       return null;
     }
 
@@ -62,3 +75,4 @@ export async function getCurrentAdmin(): Promise<ISeniorAdmin | null> {
     return null;
   }
 }
+

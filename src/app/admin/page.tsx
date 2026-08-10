@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Menu,
   X,
-  Star // ایمپورت آیکون ستاره برای نظرات
+  Star,
+  Headphones // ایمپورت آیکون هدفون برای پادکست‌ها
 } from "lucide-react";
 
 import StatsCards from "./../../component/adminpaneldet/StatsCards";
@@ -34,7 +35,8 @@ import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePan
 import SeniorPermissionManager from "@/component/adminpaneldet/SeniorPermissionManager";
 import AdminNoticePanel from "@/component/adminpaneldet/AdminNoticePanel";
 import AdminTeachersPanel from "@/component/adminpaneldet/AdminTeachersPanel";
-import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel"; // ایمپورت کامپوننت مدیریت نظرات که ساختیم
+import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel";
+import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel"; // ایمپورت پنل مدیریت پادکست‌ها که ساختیم
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -49,7 +51,7 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   
-  // مدیریت تب‌ها و منوی موبایل (اضافه شدن "comments" به لیست تب‌ها)
+  // مدیریت تب‌ها و منوی موبایل (اضافه شدن "podcasts" به لیست تب‌ها)
   const [activeMainTab, setActiveMainTab] = useState<
     | "dashboard"
     | "courses"
@@ -63,6 +65,7 @@ export default function AdminPage() {
     | "showcase"
     | "permissions"
     | "comments"
+    | "podcasts"
   >("dashboard");
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -255,7 +258,8 @@ export default function AdminPage() {
     { id: "teachers", label: "اساتید", icon: Users },
     { id: "calendar", label: "تقویم", icon: Calendar },
     { id: "showcase", label: "ویترین", icon: Sparkles },
-    { id: "comments", label: "نظرات دانشجویان", icon: Star }, // اضافه شدن تب نظرات به منو
+    { id: "comments", label: "نظرات دانشجویان", icon: Star },
+    { id: "podcasts", label: "پادکست‌های آموزشی", icon: Headphones }, // اضافه شدن تب پادکست‌ها به منو
     { id: "permissions", label: "سطح دسترسی ارشد", icon: ShieldCheck },
   ];
 
@@ -287,7 +291,7 @@ export default function AdminPage() {
                 </span>
               </div>
               <p className="text-blue-100/80 text-xs sm:text-sm font-medium">
-                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها، اساتید و لیگ نخبگان
+                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها، اساتید و پادکست‌های علمی
               </p>
             </div>
           </div>
@@ -509,10 +513,16 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* پنل مدیریت نظرات دانشجویان */}
           {activeMainTab === "comments" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminCommentsPanel />
+            </div>
+          )}
+
+          {/* پنل مدیریت پادکست‌ها */}
+          {activeMainTab === "podcasts" && (
+            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
+              <AdminPodcastPanel />
             </div>
           )}
 

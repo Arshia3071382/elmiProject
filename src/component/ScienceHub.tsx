@@ -79,10 +79,10 @@ export default function ScienceHub() {
     },
     { 
       id: 6, 
-      title: "همایش و گردهمایی", 
-      subtitle: "دیدار با هم‌فکران",
+      title: "رادیو علمی", 
+      subtitle: "انگیزشی و علمی",
       icon: <Users className="w-6 h-6 text-cyan-600" />, 
-      href: "/conferences",
+      href: "/podcasts",
       gradient: "from-cyan-500 to-teal-400",
       iconBg: "bg-cyan-100 group-hover:bg-cyan-200",
       borderColor: "border-cyan-200 group-hover:border-cyan-400"
