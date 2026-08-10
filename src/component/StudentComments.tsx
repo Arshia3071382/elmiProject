@@ -121,10 +121,10 @@ export default function StudentComments() {
                 </p>
 
                 {/* بخش پایینی با فلکس و ریسپانسیو کامل */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between pt-4 border-t border-slate-100 gap-y-3">
+                <div className="flex flex-row-reverse flex-wrap sm:flex-nowrap items-center justify-between pt-4 border-t border-slate-100 gap-y-3">
                   
                   {/* راست: پروفایل کاربر و ستاره‌ها زیر نام */}
-                  <div className="flex items-center gap-2 text-right justify-start">
+                  <div className="flex flex-row-reverse items-center gap-2 text-right justify-start">
                     <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
                       <UserIcon className="w-4 h-4" />
                     </div>
@@ -146,7 +146,7 @@ export default function StudentComments() {
                   </div>
 
                   {/* بخش چپ و وسط (در موبایل رپ شده و به خط بعد می‌رود) */}
-                  <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                  <div className="flex flex-row-reverse w-full sm:w-auto items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                     {/* وسط: نام دوره آموزشی */}
                     <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-medium text-[10px] sm:text-xs truncate max-w-[160px]">
                       {currentComment.coursesCount}
