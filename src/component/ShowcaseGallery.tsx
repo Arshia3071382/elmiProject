@@ -66,7 +66,7 @@ export default function ShowcaseGallery({ folder, initialCover }: Props) {
 
   return (
     <div className="mt-8">
-      <div className="flex items-center gap-2 mb-4 font-[iranBold] text-slate-800">
+      <div className="flex justify-end items-center gap-2 mb-4 font-[iranBold] text-slate-800">
         <Images className="w-5 h-5 text-teal-600" />
         <span>تصاویر آلبوم ({images.length} تصویر)</span>
       </div>
