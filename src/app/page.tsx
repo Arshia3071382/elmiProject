@@ -9,11 +9,11 @@ import CounterStats from "@/component/CounterStats";
 import ScienceHub from "@/component/ScienceHub";
 import { motion } from "framer-motion";
 import PuzzleActionSection from "@/component/PuzzleButton";
+import StudentComments from "@/component/StudentComments"; // اضافه کردن کامپوننت نظرات
 
 export default function Home() {
   return (
     <>
-      
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -38,16 +38,17 @@ export default function Home() {
 
       {/* PopularClasses - باید Container داشته باشد */}
       <ScrollAnimation direction="up" delay={0.3}>
-        
-          <PopularClasses />
-        
+        <PopularClasses />
+      </ScrollAnimation>
+
+      {/* بخش نظرات دانشجویان (محل دقیق: بعد از دوره‌ها و قبل از سوالات) */}
+      <ScrollAnimation direction="up" delay={0.35}>
+        <StudentComments />
       </ScrollAnimation>
 
       {/* Questions - باید Container داشته باشد */}
       <ScrollAnimation direction="up" delay={0.4}>
-        
-          <Questions />
-        
+        <Questions />
       </ScrollAnimation>
     </>
   );

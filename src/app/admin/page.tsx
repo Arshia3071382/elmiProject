@@ -14,7 +14,8 @@ import {
   Sparkles, 
   ShieldCheck,
   Menu,
-  X
+  X,
+  Star // ایمپورت آیکون ستاره برای نظرات
 } from "lucide-react";
 
 import StatsCards from "./../../component/adminpaneldet/StatsCards";
@@ -33,6 +34,7 @@ import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePan
 import SeniorPermissionManager from "@/component/adminpaneldet/SeniorPermissionManager";
 import AdminNoticePanel from "@/component/adminpaneldet/AdminNoticePanel";
 import AdminTeachersPanel from "@/component/adminpaneldet/AdminTeachersPanel";
+import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel"; // ایمپورت کامپوننت مدیریت نظرات که ساختیم
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -47,7 +49,7 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   
-  // مدیریت تب‌ها و منوی موبایل
+  // مدیریت تب‌ها و منوی موبایل (اضافه شدن "comments" به لیست تب‌ها)
   const [activeMainTab, setActiveMainTab] = useState<
     | "dashboard"
     | "courses"
@@ -60,6 +62,7 @@ export default function AdminPage() {
     | "calendar"
     | "showcase"
     | "permissions"
+    | "comments"
   >("dashboard");
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -252,10 +255,10 @@ export default function AdminPage() {
     { id: "teachers", label: "اساتید", icon: Users },
     { id: "calendar", label: "تقویم", icon: Calendar },
     { id: "showcase", label: "ویترین", icon: Sparkles },
+    { id: "comments", label: "نظرات دانشجویان", icon: Star }, // اضافه شدن تب نظرات به منو
     { id: "permissions", label: "سطح دسترسی ارشد", icon: ShieldCheck },
   ];
 
-  // پیدا کردن عنوان تب فعال برای نمایش در دکمه منوی موبایل
   const activeItemTitle = menuItems.find(i => i.id === activeMainTab)?.label || "انتخاب بخش";
 
   return (
@@ -299,10 +302,10 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* بخش انتخاب بخش‌ها (ریسپانسیو برای موبایل و دسکتاپ) */}
+      {/* بخش انتخاب بخش‌ها */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 sm:mt-6">
         
-        {/* حالت موبایل: دکمه کشویی برای باز کردن منو */}
+        {/* حالت موبایل */}
         <div className="block lg:hidden">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -317,7 +320,6 @@ export default function AdminPage() {
             <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg">تغییر بخش</span>
           </button>
 
-          {/* منوی کشویی موبایل */}
           {isMobileMenuOpen && (
             <div className="mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl p-2 space-y-1 z-50 relative animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 mb-1">
@@ -354,7 +356,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* حالت دسکتاپ و تبلت بزرگ: نوار اسکرول‌پذیر افقی پیشرفته */}
+        {/* حالت دسکتاپ */}
         <div className="hidden lg:flex bg-white rounded-2xl shadow-sm border border-gray-100 p-2 items-center gap-1 overflow-x-auto scrollbar-thin">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -382,7 +384,6 @@ export default function AdminPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="transition-all duration-300">
           
-          {/* 1. داشبورد و آمار */}
           {activeMainTab === "dashboard" && (
             <div className="space-y-6">
               <StatsCards
@@ -407,7 +408,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* 2. مدیریت دوره‌ها و گروه‌ها */}
           {activeMainTab === "courses" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 space-y-6">
               <div className="flex border-b border-gray-200 overflow-x-auto">
@@ -461,63 +461,61 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* 3. لیگ نخبگان */}
           {activeMainTab === "elite-league" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminEliteLeaguePanel onShowMessage={showMessage} />
             </div>
           )}
 
-          {/* 4. لیگ مقاطع */}
           {activeMainTab === "grade-league" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminGradeLeaguePanel />
             </div>
           )}
 
-          {/* 5. مباحث چت */}
           {activeMainTab === "topics" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminTopicsPanel onShowMessage={showMessage} />
             </div>
           )}
 
-          {/* 6. مقالات */}
           {activeMainTab === "articles" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminArticlesPanel onShowMessage={showMessage} />
             </div>
           )}
 
-          {/* 7. اطلاعیه‌ها */}
           {activeMainTab === "notices" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminNoticePanel onShowMessage={showMessage} />
             </div>
           )}
 
-          {/* 8. اساتید */}
           {activeMainTab === "teachers" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminTeachersPanel />
             </div>
           )}
 
-          {/* 9. تقویم */}
           {activeMainTab === "calendar" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminCalendarPanel onShowMessage={showMessage} />
             </div>
           )}
 
-          {/* 10. ویترین */}
           {activeMainTab === "showcase" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminShowcasePanel />
             </div>
           )}
 
-          {/* 11. سطح دسترسی ارشد */}
+          {/* پنل مدیریت نظرات دانشجویان */}
+          {activeMainTab === "comments" && (
+            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
+              <AdminCommentsPanel />
+            </div>
+          )}
+
           {activeMainTab === "permissions" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <SeniorPermissionManager onShowMessage={showMessage} />
@@ -527,7 +525,7 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* پیام‌رسان (Toast) با پوزیشن ریسپانسیو در موبایل */}
+      {/* پیام‌رسان (Toast) */}
       {message && (
         <div
           className={`fixed bottom-4 right-4 left-4 sm:left-auto sm:right-6 flex items-center justify-center sm:justify-start gap-2 px-4 py-3 rounded-xl shadow-lg z-50 text-white font-bold text-xs sm:text-sm ${message.type === "success" ? "bg-green-600" : "bg-red-600"}`}

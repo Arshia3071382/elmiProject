@@ -138,13 +138,9 @@ export default function LeagueGuidePage() {
             transition={{ duration: 0.7 }}
             className="mx-auto max-w-3xl text-center"
           >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-5 py-2 text-sm font-bold text-sky-100 backdrop-blur">
-              <Trophy size={18} />
-              مجموعه علمی منتظران
-            </div>
-
+           
             <h1 className="font-[iranBold] text-4xl leading-[1.5] text-white md:text-6xl">
-              لیگ نخبگان علمی
+              راهنمای لیگ نخبگان  
             </h1>
 
             <p className="mt-6 text-base leading-9 text-blue-100 md:text-lg">

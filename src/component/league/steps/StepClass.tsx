@@ -19,7 +19,7 @@ export function StepClass({ onNext }: { onNext: () => void }) {
         <ScoreTable title="تکالیف" rows={homeworkScores} accent="purple" />
       </div>
 
-      <NextButton onClick={onNext}>جایزه چی هست حالا؟ 🎁</NextButton>
+      <NextButton onClick={onNext}>آزمون های جامع هم نمره داره؟</NextButton>
     </div>
   );
 }
