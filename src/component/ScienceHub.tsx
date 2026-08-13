@@ -59,7 +59,7 @@ export default function ScienceHub() {
     },
     { 
       id: 4, 
-      title: "تقویم علمی", 
+      title: "روزشمار ", 
       subtitle: "رویدادهای پیش رو",
       icon: <CalendarDays className="w-6 h-6 text-teal-600" />, 
       href: "/calendar",

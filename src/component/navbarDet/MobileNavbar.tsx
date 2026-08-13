@@ -15,6 +15,8 @@ import {
   Info,
   ShieldCheck,
   GraduationCap,
+  Trophy,
+  Rocket,
 } from "lucide-react";
 
 import HeroLogo from "./HeroLogo";
@@ -83,10 +85,12 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
   }, [pathname]);
 
   const secondaryLinks = [
-    { label: "معرفی اساتید", href: "/teachers", icon: GraduationCap },
     { label: "اخبار و اطلاعیه‌ها", href: "/notices", icon: Newspaper },
     { label: "درباره ما", href: "/aboutUs", icon: Info },
     { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
+    { label: "معرفی اساتید", href: "/teachers", icon: GraduationCap },
+    { label: "آشنایی با لیگ نخبگان", href: "/league-guide", icon: Trophy },
+    { label: "آشنایی با برهان", href: "/", icon: Rocket },
   ];
 
   const handleOpenLoginModal = (e: React.MouseEvent) => {

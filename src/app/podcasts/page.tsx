@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Headphones, Play, Pause, Download, Sparkles, Volume2, Calendar, Radio } from "lucide-react";
+import { Headphones, Play, Pause, Download, Sparkles, Volume2, Calendar, Radio, FastForward, Rewind } from "lucide-react";
 
 export default function PodcastsPage() {
   const [podcasts, setPodcasts] = useState<any[]>([]);
@@ -12,6 +12,7 @@ export default function PodcastsPage() {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("00:00");
   const [durationTime, setDurationTime] = useState("00:00");
+  const [playbackRate, setPlaybackRate] = useState(1); // سرعت پیش‌فرض روی 1x
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -24,6 +25,13 @@ export default function PodcastsPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // اعمال تغییرات سرعت روی المان صوتی
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   const formatTime = (seconds: number) => {
     if (isNaN(seconds)) return "00:00";
@@ -46,9 +54,29 @@ export default function PodcastsPage() {
       setActiveTitle(pod.title);
       setIsPlaying(true);
       setTimeout(() => {
-        audioRef.current?.play();
+        if (audioRef.current) {
+          audioRef.current.playbackRate = playbackRate;
+          audioRef.current.play();
+        }
       }, 150);
     }
+  };
+
+  // قابلیت پرش ۵ ثانیه به جلو یا عقب
+  const handleSkip = (seconds: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(
+        Math.max(audioRef.current.currentTime + seconds, 0),
+        audioRef.current.duration || 0
+      );
+    }
+  };
+
+  // تغییر سرعت بین مقادیر مختلف (شامل ۲ برابری)
+  const handleSpeedChange = () => {
+    const speeds = [1, 1.25, 1.5, 2];
+    const nextIndex = (speeds.indexOf(playbackRate) + 1) % speeds.length;
+    setPlaybackRate(speeds[nextIndex]);
   };
 
   const handleTimeUpdate = () => {
@@ -199,20 +227,56 @@ export default function PodcastsPage() {
                     </div>
                   </div>
 
-                  {/* نوار پیشرفت سفارشی (فقط برای پادکست فعال نمایش داده می‌شود) */}
+                  {/* نوار پیشرفت سفارشی و امکانات تکمیلی (فقط برای پادکست فعال) */}
                   {isCurrentActive && (
                     <div className="mt-6 pt-4 border-t border-[var(--color-border)] animate-in fade-in duration-300">
-                      <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] font-bold mb-2">
-                        <span className="text-[var(--color-secondary)] flex items-center gap-1">
-                          <Volume2 className="w-3.5 h-3.5 animate-bounce" />
-                          {isStreamingStatusText(isPlaying)}
-                        </span>
-                        <div dir="ltr" className="font-mono text-gray-500">
+                      
+                      {/* ابزارهای کنترلی جدید (سرعت و پرش ۵ ثانیه) */}
+                      <div className="flex items-center justify-between mb-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          {/* دکمه عقب ۵ ثانیه */}
+                          <button
+                            onClick={() => handleSkip(-5)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-[var(--color-text-secondary)] font-bold transition-all active:scale-95"
+                            title="۵ ثانیه عقب"
+                          >
+                            <Rewind className="w-3.5 h-3.5" />
+                            <span>۵- ثانیه</span>
+                          </button>
+
+                          {/* دکمه جلو ۵ ثانیه */}
+                          <button
+                            onClick={() => handleSkip(5)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-[var(--color-text-secondary)] font-bold transition-all active:scale-95"
+                            title="۵ ثانیه جلو"
+                          >
+                            <span>۵+ ثانیه</span>
+                            <FastForward className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* دکمه تغییر سرعت (1x, 1.25x, 1.5x, 2x) */}
+                          <button
+                            onClick={handleSpeedChange}
+                            className="px-2.5 py-1.5 rounded-lg bg-[var(--color-secondary)]/10 text-[var(--color-secondary)] font-bold hover:bg-[var(--color-secondary)]/25 transition-all active:scale-95"
+                            title="تغییر سرعت پخش"
+                          >
+                            سرعت: {playbackRate}x
+                          </button>
+                        </div>
+
+                        <div dir="ltr" className="font-mono text-gray-500 font-bold">
                           {currentTime} / {durationTime}
                         </div>
                       </div>
 
-                      {/* نوار اسکراب شونده - تنظیم شده روی LTR برای پر شدن صحیح از چپ به راست */}
+                      <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] font-bold mb-1">
+                        <span className="text-[var(--color-secondary)] flex items-center gap-1">
+                          <Volume2 className="w-3.5 h-3.5 animate-bounce" />
+                          {isStreamingStatusText(isPlaying)}
+                        </span>
+                      </div>
+
+                      {/* نوار اسکراب شونده - تنظیم شده روی LTR */}
                       <div 
                         dir="ltr"
                         onClick={handleProgressSeek}
@@ -223,11 +287,11 @@ export default function PodcastsPage() {
                             className="bg-gradient-to-r from-[var(--color-secondary)] to-[var(--color-primary)] h-full transition-all duration-75 relative rounded-full" 
                             style={{ width: `${progress}%` }}
                           >
-                            {/* دایره کوچک نشانگر روی لبه نوار */}
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white border-2 border-[var(--color-secondary)] rounded-full shadow-md scale-75 group-hover:scale-100 transition-transform" />
                           </div>
                         </div>
                       </div>
+
                     </div>
                   )}
 
