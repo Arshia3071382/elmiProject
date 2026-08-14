@@ -1,32 +1,34 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-export interface IGradeStudent {
-  _id?: string;
+export interface IGradeStudent extends Document {
   firstName: string;
   lastName: string;
+  nationalId: string;
   grade: number;
   selectedActivities: string[];
   totalScore: number;
   published: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  studentId?: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const GradeStudentSchema = new Schema<IGradeStudent>(
   {
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    grade: { type: Number, required: true, min: 2, max: 9 },
-    selectedActivities: [{ type: String }],
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    nationalId: { type: String, required: true, trim: true, unique: true },
+    grade: { type: Number, required: true },
+    selectedActivities: { type: [String], default: [] },
     totalScore: { type: Number, default: 0 },
     published: { type: Boolean, default: true },
+    studentId: { type: Schema.Types.ObjectId, ref: "Student" },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-// ایندکس برای جستجوی بهتر
-GradeStudentSchema.index({ firstName: 1, lastName: 1 });
-GradeStudentSchema.index({ grade: 1, published: 1 });
+const GradeStudent =
+  mongoose.models.GradeStudent ||
+  mongoose.model<IGradeStudent>("GradeStudent", GradeStudentSchema);
 
-export default models.GradeStudent ||
-  model<IGradeStudent>("GradeStudent", GradeStudentSchema);
+export default GradeStudent;

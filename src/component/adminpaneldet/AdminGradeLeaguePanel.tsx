@@ -23,6 +23,7 @@ interface IStudent {
   _id: string;
   firstName: string;
   lastName: string;
+  nationalId: string;
   grade: number;
   selectedActivities: string[];
   totalScore: number;
@@ -76,12 +77,14 @@ export default function AdminGradeLeaguePanel() {
   // فرم ثبت دانش‌آموز
   const [newFirstName, setNewFirstName] = useState<string>("");
   const [newLastName, setNewLastName] = useState<string>("");
+  const [newNationalId, setNewNationalId] = useState<string>("");
   const [creating, setCreating] = useState<boolean>(false);
 
   // ویرایش دانش‌آموز
   const [editingStudent, setEditingStudent] = useState<IStudent | null>(null);
   const [editFirstName, setEditFirstName] = useState<string>("");
   const [editLastName, setEditLastName] = useState<string>("");
+  const [editNationalId, setEditNationalId] = useState<string>("");
 
   // مودال امتیازات
   const [selectedStudent, setSelectedStudent] = useState<IStudent | null>(null);
@@ -117,7 +120,7 @@ export default function AdminGradeLeaguePanel() {
   // ==================== Create Student ====================
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFirstName.trim() || !newLastName.trim() || activeGrade === null) return;
+    if (!newFirstName.trim() || !newLastName.trim() || !newNationalId.trim() || activeGrade === null) return;
 
     setCreating(true);
     try {
@@ -127,6 +130,7 @@ export default function AdminGradeLeaguePanel() {
         body: JSON.stringify({
           firstName: newFirstName.trim(),
           lastName: newLastName.trim(),
+          nationalId: newNationalId.trim(),
           grade: activeGrade,
         }),
       });
@@ -136,6 +140,7 @@ export default function AdminGradeLeaguePanel() {
       if (data.success) {
         setNewFirstName("");
         setNewLastName("");
+        setNewNationalId("");
         await fetchStudents();
       } else {
         alert(`خطا: ${data.error || "مشکلی در ثبت دانش‌آموز پیش آمد"}`);
@@ -174,6 +179,7 @@ export default function AdminGradeLeaguePanel() {
     setEditingStudent(student);
     setEditFirstName(student.firstName || "");
     setEditLastName(student.lastName || "");
+    setEditNationalId(student.nationalId || "");
   };
 
   const handleSaveEdit = async () => {
@@ -187,6 +193,7 @@ export default function AdminGradeLeaguePanel() {
           id: editingStudent._id,
           firstName: editFirstName,
           lastName: editLastName,
+          nationalId: editNationalId,
         }),
       });
       
@@ -441,6 +448,21 @@ export default function AdminGradeLeaguePanel() {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-2 font-[IRANSansXFaNum-Regular]">
+                      کد ملی:
+                    </label>
+                    <input
+                      type="text"
+                      value={newNationalId}
+                      onChange={(e) => setNewNationalId(e.target.value)}
+                      placeholder="مثال: ۰۰۱۲۳۴۵۶۷۸"
+                      maxLength={10}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-[IRANSansXFaNum-Regular]"
+                      required
+                    />
+                  </div>
+
                   <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-100 text-xs text-emerald-800 font-[IRANSansXFaNum-Regular]">
                     ثبت در:{" "}
                     <strong className="font-bold">
@@ -496,6 +518,7 @@ export default function AdminGradeLeaguePanel() {
                           <th className="py-3 px-3">رتبه</th>
                           <th className="py-3 px-3">نام</th>
                           <th className="py-3 px-3">نام خانوادگی</th>
+                          <th className="py-3 px-3">کد ملی</th>
                           <th className="py-3 px-3">پایه</th>
                           <th className="py-3 px-3 text-center">تعداد فعالیت</th>
                           <th className="py-3 px-3 text-center">امتیاز کل</th>
@@ -513,6 +536,9 @@ export default function AdminGradeLeaguePanel() {
                             </td>
                             <td className="py-3 px-3 font-bold text-slate-800">
                               {st.lastName || "نامشخص"}
+                            </td>
+                            <td className="py-3 px-3 text-slate-600 font-mono text-xs">
+                              {st.nationalId ? toPersianDigits(st.nationalId) : "نامشخص"}
                             </td>
                             <td className="py-3 px-3 text-slate-600">
                               {GRADES.find((g) => g.id === st.grade)?.label || st.grade}
@@ -574,7 +600,7 @@ export default function AdminGradeLeaguePanel() {
                     افزودن فعالیت و امتیاز: {selectedStudent.firstName} {selectedStudent.lastName}
                   </h3>
                   <p className="text-xs text-slate-400 font-[IRANSansXFaNum-Regular]">
-                    مقطع: {GRADES.find((g) => g.id === selectedStudent.grade)?.label}
+                    مقطع: {GRADES.find((g) => g.id === selectedStudent.grade)?.label} | کد ملی: {toPersianDigits(selectedStudent.nationalId || "")}
                   </p>
                 </div>
               </div>
@@ -730,36 +756,28 @@ export default function AdminGradeLeaguePanel() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-2 font-[IRANSansXFaNum-Regular]">
-                  پایه تحصیلی:
+                  کد ملی:
                 </label>
-                <select
-                  value={editingStudent.grade}
-                  onChange={(e) => setEditingStudent({
-                    ...editingStudent,
-                    grade: parseInt(e.target.value)
-                  })}
+                <input
+                  type="text"
+                  value={editNationalId}
+                  onChange={(e) => setEditNationalId(e.target.value)}
+                  maxLength={10}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-[IRANSansXFaNum-Regular]"
-                >
-                  {GRADES.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   onClick={() => setEditingStudent(null)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 transition-colors font-[IRANSansXFaNum-Regular]"
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 transition-colors"
                 >
                   انصراف
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all"
                 >
-                  <Save className="w-4 h-4" />
                   ذخیره تغییرات
                 </button>
               </div>

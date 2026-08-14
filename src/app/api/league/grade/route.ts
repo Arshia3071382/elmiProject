@@ -48,11 +48,11 @@ export async function POST(req: Request) {
   await dbConnect();
   try {
     const body = await req.json();
-    const { firstName, lastName, grade } = body;
+    const { firstName, lastName, nationalId, grade } = body;
 
-    if (!firstName || !lastName || !grade) {
+    if (!firstName || !lastName || !nationalId || !grade) {
       return NextResponse.json(
-        { success: false, error: "نام، نام خانوادگی و پایه الزامی هستند" },
+        { success: false, error: "نام، نام خانوادگی، کد ملی و پایه الزامی هستند" },
         { status: 400 }
       );
     }
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     const newStudent = await GradeStudent.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      nationalId: nationalId.trim(),
       grade: Number(grade),
       totalScore: 0,
       selectedActivities: [],
@@ -84,7 +85,7 @@ export async function PUT(req: Request) {
   await dbConnect();
   try {
     const body = await req.json();
-    const { id, firstName, lastName, grade, selectedActivities, addedScore } = body;
+    const { id, firstName, lastName, nationalId, grade, selectedActivities, addedScore } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -107,6 +108,7 @@ export async function PUT(req: Request) {
     // ویرایش اطلاعات
     if (firstName !== undefined) updateData.firstName = firstName.trim();
     if (lastName !== undefined) updateData.lastName = lastName.trim();
+    if (nationalId !== undefined) updateData.nationalId = nationalId.trim();
     if (grade !== undefined) updateData.grade = Number(grade);
 
     // افزودن فعالیت‌های جدید (بدون جایگزینی)

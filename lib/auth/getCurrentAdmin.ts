@@ -1,5 +1,4 @@
 
-// src/lib/auth/.ts
 
 import { cookies } from "next/headers";
 import dbConnect from "../dbConnect";

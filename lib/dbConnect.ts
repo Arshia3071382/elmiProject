@@ -8,7 +8,6 @@ interface MongooseCache {
 }
 
 declare global {
-  // جلوگیری از ایجاد چندین Connection در محیط Development
   var mongooseGlobalCache: MongooseCache | undefined;
 }
 
@@ -19,7 +18,6 @@ if (!cached) {
 }
 
 export async function dbConnect(): Promise<typeof mongoose> {
-  // اگر متغیر MONGODB_URI ست نشده باشد هشدار صادر می‌کند
   if (!process.env.MONGODB_URI) {
     console.warn("⚠️ MONGODB_URI در فایل .env یافت نشد! در حال استفاده از آدرس پیش‌فرض local.");
   }
@@ -60,4 +58,5 @@ export async function connectToDB() {
   return dbConnect();
 }
 
+// اضافه کردن export default برای جلوگیری از خطای ایمپورت در APIها
 export default dbConnect;

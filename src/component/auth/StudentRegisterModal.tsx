@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, LockKeyhole, Phone, User, CreditCard, AtSign, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, LockKeyhole, Phone, CreditCard, AtSign, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { AuthInput } from "./AuthInput";
 
 interface StudentRegisterModalProps {
@@ -16,8 +17,11 @@ export default function StudentRegisterModal({
   onClose,
   onSwitchToLogin,
 }: StudentRegisterModalProps) {
-  const [fullName, setFullName] = useState("");
+  const router = useRouter();
+
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [nationalId, setNationalId] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +33,9 @@ export default function StudentRegisterModal({
 
   // Error states
   const [errors, setErrors] = useState({
-    fullName: "",
     username: "",
+    firstName: "",
+    lastName: "",
     nationalId: "",
     phone: "",
     password: "",
@@ -57,25 +62,26 @@ export default function StudentRegisterModal({
   // محاسبه ساده قدرت رمز عبور
   const getPasswordStrength = (pass: string) => {
     if (!pass) return { label: "", color: "" };
-    if (pass.length < 8) return { label: "ضعیف (حداقل ۸ کاراکتر)", color: "bg-red-500 text-red-500" };
+    if (pass.length < 8) return { label: "ضعیف (حداقل ۸ کاراکتر)", color: "text-red-500" };
     if (/[A-Z]/.test(pass) && /[0-9]/.test(pass) && pass.length >= 10) {
-      return { label: "قوی", color: "bg-emerald-500 text-emerald-600" };
+      return { label: "قوی", color: "text-emerald-600" };
     }
-    return { label: "متوسط", color: "bg-amber-500 text-amber-600" };
+    return { label: "متوسط", color: "text-amber-600" };
   };
 
   const strength = getPasswordStrength(password);
 
   const handleResetAndClose = () => {
     if (status === "loading") return;
-    setFullName("");
     setUsername("");
+    setFirstName("");
+    setLastName("");
     setNationalId("");
     setPhone("");
     setPassword("");
     setConfirmPassword("");
     setAcceptRules(false);
-    setErrors({ fullName: "", username: "", nationalId: "", phone: "", password: "", confirmPassword: "", rules: "" });
+    setErrors({ username: "", firstName: "", lastName: "", nationalId: "", phone: "", password: "", confirmPassword: "", rules: "" });
     setStatus("idle");
     setErrorMessage("");
     onClose();
@@ -93,15 +99,20 @@ export default function StudentRegisterModal({
 
   const validateForm = () => {
     let isValid = true;
-    const newErrors = { fullName: "", username: "", nationalId: "", phone: "", password: "", confirmPassword: "", rules: "" };
-
-    if (!fullName.trim()) {
-      newErrors.fullName = "نام و نام خانوادگی الزامی است.";
-      isValid = false;
-    }
+    const newErrors = { username: "", firstName: "", lastName: "", nationalId: "", phone: "", password: "", confirmPassword: "", rules: "" };
 
     if (!username.trim() || /\s/.test(username)) {
       newErrors.username = "نام کاربری نامعتبر است (بدون فاصله).";
+      isValid = false;
+    }
+
+    if (!firstName.trim()) {
+      newErrors.firstName = "نام الزامی است.";
+      isValid = false;
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = "نام خانوادگی الزامی است.";
       isValid = false;
     }
 
@@ -141,20 +152,44 @@ export default function StudentRegisterModal({
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm() || status === "loading") return;
 
     setStatus("loading");
     setErrorMessage("");
 
-    // شبیه‌سازی ثبت‌نام در سرور
-    setTimeout(() => {
-      setStatus("success");
-      setTimeout(() => {
-        handleResetAndClose();
-      }, 1800);
-    }, 1800);
+    try {
+      const res = await fetch("/api/auth/student/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          firstName,
+          lastName,
+          nationalId,
+          phone,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setStatus("success");
+        setTimeout(() => {
+          onClose();
+          router.push(data.redirectTo || "/student/dashboard");
+          router.refresh();
+        }, 1200);
+      } else {
+        setStatus("error");
+        setErrorMessage(data.message || "خطایی در ثبت‌نام رخ داد.");
+      }
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage("ارتباط با سرور برقرار نشد.");
+    }
   };
 
   return (
@@ -179,6 +214,7 @@ export default function StudentRegisterModal({
           >
             {/* دکمه بستن */}
             <button
+              type="button"
               onClick={handleResetAndClose}
               disabled={status === "loading"}
               className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all"
@@ -201,7 +237,7 @@ export default function StudentRegisterModal({
             {status === "success" && (
               <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 animate-fadeIn">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span className="text-sm font-medium">ثبت‌نام با موفقیت انجام شد. خوش آمدید!</span>
+                <span className="text-sm font-medium">ثبت‌نام با موفقیت انجام شد. در حال انتقال به داشبورد...</span>
               </div>
             )}
 
@@ -215,16 +251,6 @@ export default function StudentRegisterModal({
             {/* فرم ثبت‌نام */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <AuthInput
-                label="نام و نام خانوادگی"
-                placeholder="نام و نام خانوادگی خود را وارد کنید"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                error={errors.fullName}
-                icon={<User className="w-4 h-4" />}
-                disabled={status === "loading" || status === "success"}
-              />
-
-              <AuthInput
                 label="نام کاربری"
                 placeholder="یک نام کاربری انتخاب کنید"
                 value={username}
@@ -234,6 +260,27 @@ export default function StudentRegisterModal({
                 icon={<AtSign className="w-4 h-4" />}
                 disabled={status === "loading" || status === "success"}
               />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AuthInput
+                  label="نام"
+                  placeholder="نام خود را وارد کنید"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  error={errors.firstName}
+                  icon={<User className="w-4 h-4" />}
+                  disabled={status === "loading" || status === "success"}
+                />
+                <AuthInput
+                  label="نام خانوادگی"
+                  placeholder="نام خانوادگی خود را وارد کنید"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  error={errors.lastName}
+                  icon={<User className="w-4 h-4" />}
+                  disabled={status === "loading" || status === "success"}
+                />
+              </div>
 
               <AuthInput
                 label="کد ملی"
