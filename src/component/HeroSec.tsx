@@ -7,10 +7,14 @@ import Image from 'next/image'
 const images: string[] = [
   "/image/hero17.png",
   "/image/hero13.jpg",
+  "/image/hero20.png",
+  "/image/hero19.png",
   "/image/hero16.png",
   "/image/hero15.png",
+  "/image/hero21.png",
   "/image/hero11.png",
   "/image/hero12.png",
+  "/image/hero18.png",
   "/image/hero14.png"
 ]
 
