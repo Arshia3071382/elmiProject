@@ -18,11 +18,9 @@ function HeroSec() {
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [isPaused, setIsPaused] = useState<boolean>(false)
   
-  // Touch coordinates for swipe feature
   const touchStartX = useRef<number>(0)
   const touchEndX = useRef<number>(0)
 
-  // Auto-slide every 3 seconds across all devices
   useEffect(() => {
     if (isPaused) return
 
@@ -33,7 +31,6 @@ function HeroSec() {
     return () => clearInterval(timer)
   }, [isPaused])
 
-  // Touch event handlers for mobile swiping
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setIsPaused(true)
     touchStartX.current = e.targetTouches[0].clientX
@@ -63,15 +60,15 @@ function HeroSec() {
 
   return (
     <Container>
+      {/* اعمال عرض کمتر با max-w-4xl (می‌توانید به max-w-3xl یا max-w-5xl هم تغییر دهید) */}
       <div 
-        className='w-full mx-auto mt-10  sm:mt-10 lg:mt-30 h-[250px] sm:h-[350px] lg:h-[450px] relative overflow-hidden rounded-xl group shadow-2xl touch-pan-y'
+        className='w-full max-w-4xl mx-auto mt-10 sm:mt-10 lg:mt-30 h-[230px] sm:h-[320px] lg:h-[400px] relative overflow-hidden rounded-2xl group shadow-2xl touch-pan-y'
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Render slide images */}
         {images.map((imgSrc, index) => {
           const isActive = index === currentIndex
           return (
@@ -88,8 +85,8 @@ function HeroSec() {
                 alt={`herosection-slide-${index + 1}`} 
                 fill
                 priority={index === 0}
-                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 83vw, 1200px"
-                className="object-cover rounded-xl select-none"
+                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 80vw, 900px"
+                className="object-cover rounded-2xl select-none"
               />
             </div>
           )

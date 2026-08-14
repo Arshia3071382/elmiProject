@@ -10,6 +10,7 @@ import ScienceHub from "@/component/ScienceHub";
 import { motion } from "framer-motion";
 import PuzzleActionSection from "@/component/PuzzleButton";
 import StudentComments from "@/component/StudentComments"; // اضافه کردن کامپوننت نظرات
+import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 
 export default function Home() {
   return (
@@ -21,7 +22,7 @@ export default function Home() {
       >
         <HeroSec />
       </motion.div>
-
+      <StudentAuthButtons />
       {/* CounterStats - خودش Container دارد */}
       <ScrollAnimation direction="up" delay={0.1}>
         <CounterStats />
