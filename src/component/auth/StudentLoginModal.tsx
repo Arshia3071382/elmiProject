@@ -26,7 +26,6 @@ export default function StudentLoginModal({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // پاکسازی کامل فرم هنگام بسته شدن
   const handleResetAndClose = () => {
     if (status === "loading") return;
     setPhone("");
@@ -58,7 +57,7 @@ export default function StudentLoginModal({
       setPhoneError("شماره تماس الزامی است.");
       isValid = false;
     } else if (!phoneRegex.test(phone)) {
-      setPhoneError("شماره تماس وارد شده معتبر نیست.");
+      setPhoneError("شماره تماس باید با 09 شروع شده و ۱۱ رقم باشد.");
       isValid = false;
     }
 
@@ -70,21 +69,39 @@ export default function StudentLoginModal({
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm() || status === "loading") return;
 
     setStatus("loading");
     setErrorMessage("");
 
-    // شبیه‌سازی درخواست API
-    setTimeout(() => {
-      // شبیه‌سازی تایید یا خطا جهت بررسی UI
-      setStatus("success");
-      setTimeout(() => {
-        handleResetAndClose();
-      }, 1500);
-    }, 1500);
+    try {
+      const res = await fetch("/api/auth/student/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setStatus("success");
+        // ذخیره شماره تماس یا توکن در صورت نیاز برای داشبورد
+        localStorage.setItem("studentPhone", phone);
+        
+        setTimeout(() => {
+          handleResetAndClose();
+          window.location.href = "/student/dashboard";
+        }, 1200);
+      } else {
+        setStatus("error");
+        setErrorMessage(data.error || "خطا در ورود اطلاعات.");
+      }
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage("مشکل در ارتباط با سرور. لطفاً دوباره تلاش کنید.");
+    }
   };
 
   return (
@@ -123,7 +140,7 @@ export default function StudentLoginModal({
                 ورود به پنل دانش‌آموز
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                برای ورود به حساب کاربری خود، اطلاعات ورود را وارد کنید.
+                برای ورود به حساب کاربری خود، شماره تماس و رمز عبور را وارد کنید.
               </p>
             </div>
 
@@ -147,7 +164,7 @@ export default function StudentLoginModal({
               <AuthInput
                 label="شماره تماس"
                 placeholder="09123456789"
-                type="tel"
+                type="text"
                 maxLength={11}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
@@ -177,15 +194,9 @@ export default function StudentLoginModal({
                 disabled={status === "loading" || status === "success"}
               />
 
-              {/* گزینه فراموشی رمز */}
+              {/* راهنما */}
               <div className="flex justify-between items-center text-xs">
-                <a
-                  href="#forgot-password"
-                  onClick={(e) => e.preventDefault()}
-                  className="text-blue-600 hover:underline font-medium"
-                >
-                  رمز عبور را فراموش کرده‌اید؟
-                </a>
+                <span className="text-slate-400">شماره موبایل ۱۱ رقمی خود را وارد کنید</span>
               </div>
 
               {/* دکمه‌ها */}
