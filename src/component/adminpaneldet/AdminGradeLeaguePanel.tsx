@@ -85,6 +85,7 @@ export default function AdminGradeLeaguePanel() {
   const [editFirstName, setEditFirstName] = useState<string>("");
   const [editLastName, setEditLastName] = useState<string>("");
   const [editNationalId, setEditNationalId] = useState<string>("");
+  const [editingSave, setEditingSave] = useState<boolean>(false);
 
   // مودال امتیازات
   const [selectedStudent, setSelectedStudent] = useState<IStudent | null>(null);
@@ -184,6 +185,7 @@ export default function AdminGradeLeaguePanel() {
 
   const handleSaveEdit = async () => {
     if (!editingStudent) return;
+    setEditingSave(true);
     
     try {
       const res = await fetch("/api/league/grade", {
@@ -191,9 +193,9 @@ export default function AdminGradeLeaguePanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: editingStudent._id,
-          firstName: editFirstName,
-          lastName: editLastName,
-          nationalId: editNationalId,
+          firstName: editFirstName.trim(),
+          lastName: editLastName.trim(),
+          nationalId: editNationalId.trim(),
         }),
       });
       
@@ -208,13 +210,16 @@ export default function AdminGradeLeaguePanel() {
     } catch (err) {
       console.error("خطا در ویرایش دانش‌آموز:", err);
       alert("خطا در ارتباط با سرور");
+    } finally {
+      setEditingSave(false);
     }
   };
 
   // ==================== Activities Modal ====================
+  // ==================== ویرایش و مدیریت مودال امتیاز ====================
   const handleOpenModal = (student: IStudent) => {
     setSelectedStudent(student);
-    setActiveCheckboxes([]);
+    setActiveCheckboxes([]); // خالی کردن تیک‌ها در لحظه باز شدن مودال
     setSearchActivity("");
   };
 
@@ -228,6 +233,7 @@ export default function AdminGradeLeaguePanel() {
     if (!selectedStudent) return;
     setSaving(true);
 
+    // محاسبه امتیاز فعالیت‌هایی که در این نوبت جدید تیک زده‌اید
     const addedScore = calculateTotalScore(activeCheckboxes);
 
     try {
@@ -244,9 +250,13 @@ export default function AdminGradeLeaguePanel() {
       const data = await res.json();
 
       if (data.success) {
-        setActiveCheckboxes([]);
-        setSelectedStudent(null);
-        await fetchStudents();
+        // ریست کامل stateهای مودال بعد از ذخیره موفق
+        setActiveCheckboxes([]); 
+        setSearchActivity("");   
+        setSelectedStudent(null); // بستن مودال
+        
+        // بروزرسانی جدول اصلی
+        await fetchStudents(); 
       } else {
         alert(`خطا: ${data.error || "مشکلی در ذخیره امتیازات پیش آمد"}`);
       }
@@ -258,6 +268,7 @@ export default function AdminGradeLeaguePanel() {
     }
   };
 
+  // ... (ادامه کد)
   // ==================== Publish Changes ====================
   const handlePublishChanges = async () => {
     setIsPublishing(true);
@@ -296,9 +307,6 @@ export default function AdminGradeLeaguePanel() {
   return (
     <div dir="rtl" className="w-full bg-slate-50 min-h-screen p-4 md:p-8 font-[IRANSansXFaNum-Bold] text-slate-800">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* =========================================================
-            صفحه ۱: انتخاب اولیه پایه تحصیلی
-           ========================================================= */}
         {activeGrade === null ? (
           <div className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200">
             <div className="text-center max-w-xl mx-auto mb-10">
@@ -339,11 +347,7 @@ export default function AdminGradeLeaguePanel() {
             </div>
           </div>
         ) : (
-          /* =========================================================
-              صفحه ۲: جدول دانش‌آموزان و تعیین امتیاز پایه انتخاب‌شده
-             ========================================================= */
           <div className="space-y-6">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
               <div className="flex items-center gap-3">
                 <button
@@ -380,7 +384,6 @@ export default function AdminGradeLeaguePanel() {
               </div>
             </div>
 
-            {/* دکمه انتشار تغییرات */}
             <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -412,7 +415,6 @@ export default function AdminGradeLeaguePanel() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* فرم افزودن دانش‌آموز جدید */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-fit">
                 <div className="flex items-center gap-2 font-bold text-slate-800 mb-4 pb-3 border-b border-slate-100">
                   <UserPlus className="w-5 h-5 text-emerald-600" />
@@ -485,7 +487,6 @@ export default function AdminGradeLeaguePanel() {
                 </form>
               </div>
 
-              {/* جدول دانش‌آموزان */}
               <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2 font-bold text-slate-800">
@@ -586,7 +587,7 @@ export default function AdminGradeLeaguePanel() {
 
       {/* =========================================================
           مودال امتیازات
-         ========================================================= */}
+          ========================================================= */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 md:p-6">
           <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
@@ -713,13 +714,13 @@ export default function AdminGradeLeaguePanel() {
 
       {/* =========================================================
           مودال ویرایش دانش‌آموز
-         ========================================================= */}
+          ========================================================= */}
       {editingStudent && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 md:p-6">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
             <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-100">
-                ویرایش دانش‌آموز
+                ویرایش اطلاعات دانش‌آموز
               </h3>
               <button
                 onClick={() => setEditingStudent(null)}
@@ -728,8 +729,8 @@ export default function AdminGradeLeaguePanel() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
-            <div className="p-6 space-y-4">
+
+            <div className="p-5 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-2 font-[IRANSansXFaNum-Regular]">
                   نام:
@@ -741,7 +742,7 @@ export default function AdminGradeLeaguePanel() {
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-[IRANSansXFaNum-Regular]"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-2 font-[IRANSansXFaNum-Regular]">
                   نام خانوادگی:
@@ -766,21 +767,27 @@ export default function AdminGradeLeaguePanel() {
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-[IRANSansXFaNum-Regular]"
                 />
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  onClick={() => setEditingStudent(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 transition-colors"
-                >
-                  انصراف
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all"
-                >
-                  ذخیره تغییرات
-                </button>
-              </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setEditingStudent(null)}
+                className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 transition-colors font-[IRANSansXFaNum-Regular]"
+              >
+                انصراف
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={editingSave}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2"
+              >
+                {editingSave ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                ذخیره تغییرات
+              </button>
             </div>
           </div>
         </div>
