@@ -152,7 +152,7 @@ export default function StudentRegisterModal({
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm() || status === "loading") return;
 
@@ -175,7 +175,14 @@ export default function StudentRegisterModal({
 
       const data = await res.json();
 
-     if (res.ok && data.success) {
+      // بررسی خطای ۴۰۹ (کد ملی تکراری)
+      if (res.status === 409) {
+        setStatus("error");
+        setErrorMessage("کد ملی از قبل ثبت شده است. لطفاً وارد شوید.");
+        return;
+      }
+
+      if (res.ok && data.success) {
         setStatus("success");
 
         // 🚀 ذخیره اطلاعات کاربر جدید در حافظه مرورگر
@@ -191,13 +198,16 @@ export default function StudentRegisterModal({
           router.push(data.redirectTo || "/student/dashboard");
           router.refresh();
         }, 1200);
+      } else {
+        // برای سایر خطاهای احتمالی سرور
+        setStatus("error");
+        setErrorMessage(data.message || "خطایی در ثبت‌نام رخ داد.");
       }
     } catch (err) {
       setStatus("error");
       setErrorMessage("ارتباط با سرور برقرار نشد.");
     }
   };
-
   return (
     <AnimatePresence>
       {isOpen && (

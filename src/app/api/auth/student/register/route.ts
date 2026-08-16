@@ -1,9 +1,20 @@
-// src/app/api/auth/student/register/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
 import GradeStudent from "./../../../../../../models/GradeStudent";
 import bcrypt from "bcryptjs";
+
+function normalizeNationalId(id: string): string {
+  if (!id) return "";
+  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+  let normalized = id.trim();
+  for (let i = 0; i < 10; i++) {
+    normalized = normalized.replace(persianNumbers[i], i.toString());
+    normalized = normalized.replace(arabicNumbers[i], i.toString());
+  }
+  return normalized;
+}
 
 function isValidNationalId(id: string): boolean {
   if (!/^\d{10}$/.test(id)) return false;
@@ -21,31 +32,34 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { username, nationalId, phone, password, firstName, lastName, grade } = body;
+    const { nationalId, phone, password, firstName, lastName, grade } = body;
 
-    // ۱. اعتبارسنجی فیلدهای ضروری
     if (!nationalId || !phone || !password) {
       return NextResponse.json({ success: false, message: "کد ملی، شماره تماس و رمز عبور الزامی هستند." }, { status: 400 });
     }
 
-    if (!isValidNationalId(nationalId)) {
+    const cleanNationalId = normalizeNationalId(nationalId);
+
+    if (!isValidNationalId(cleanNationalId)) {
       return NextResponse.json({ success: false, message: "کد ملی وارد شده معتبر نیست." }, { status: 400 });
     }
 
-    // ۲. بررسی تکراری نبودن کد ملی یا شماره تماس در جدول دانشجویان
-    const existingStudent = await Student.findOne({
-      $or: [{ phone: phone.trim() }, { nationalId: nationalId.trim() }],
-    });
+    // ۱. چک کنیم آیا قبلاً در Student ثبت‌نام کرده است؟
+    let existingStudent = await Student.findOne({ nationalId: cleanNationalId });
 
     if (existingStudent) {
+      // اگر حساب دارد، بررسی می‌کنیم رمز عبورش ست شده یا باید لاگین کند
       return NextResponse.json(
-        { success: false, message: "این کد ملی یا شماره تماس قبلاً ثبت‌نام کرده است." },
+        { success: false, message: "این کد ملی قبلاً ثبت‌نام کرده است. لطفاً وارد شوید." },
         { status: 409 }
       );
     }
 
-    // ۳. بررسی جدول لیگ (GradeStudent)
-    const gradeStudentRecord = await GradeStudent.findOne({ nationalId: nationalId.trim() });
+    // ۲. بررسی جدول لیگ برای اینکه آیا مسئول علمی او را از قبل وارد کرده است؟
+    const allGradeStudents = await GradeStudent.find({});
+    const gradeStudentRecord = allGradeStudents.find(
+      (gs) => normalizeNationalId(gs.nationalId) === cleanNationalId
+    );
 
     const finalFirstName = gradeStudentRecord?.firstName || firstName?.trim();
     const finalLastName = gradeStudentRecord?.lastName || lastName?.trim();
@@ -58,48 +72,42 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۴. هش کردن امن رمز عبور
+    // ۳. هش کردن رمز عبور
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // ۵. ایجاد حساب کاربری دانش‌آموز
+    // ۴. ساخت حساب کاربری جدید در Student و اتصال به لیگ
     const newStudent = await Student.create({
       firstName: finalFirstName,
       lastName: finalLastName,
-      nationalId: nationalId.trim(),
+      nationalId: cleanNationalId,
       phone: phone.trim(),
       passwordHash,
       grade: finalGrade,
       isActive: true,
-      isVerified: !!gradeStudentRecord,
+      isVerified: true,
       leagueProfile: gradeStudentRecord ? gradeStudentRecord._id : undefined,
     });
 
-    // ۶. بروزرسانی جدول لیگ
+    // ۵. لینک دوطرفه با جدول لیگ
     if (gradeStudentRecord) {
       gradeStudentRecord.studentId = newStudent._id;
       await gradeStudentRecord.save();
     }
 
-    // ۷. ایجاد پاسخ موفقیت‌آمیز همراه با تنظیم کوکی هماهنگ با لاگین (studentToken)
+    // ۶. ست کردن کوکی ورود (StudentToken) و هدایت به داشبورد
     const response = NextResponse.json({
       success: true,
-      message: "ثبت‌نام با موفقیت انجام شد.",
+      message: "ثبت‌نام و اتصال به لیگ با موفقیت انجام شد.",
       redirectTo: "/student/dashboard",
-      data: {
-        phone: newStudent.phone,
-        firstName: newStudent.firstName,
-        lastName: newStudent.lastName,
-      }
     });
 
-    // نام کوکی دقیقاً باید studentToken باشد تا با داشبورد و لاگین همخوانی داشته باشد
     response.cookies.set("studentToken", newStudent._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // ماندگاری ۷ روزه
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return response;
