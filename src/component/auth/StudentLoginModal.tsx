@@ -28,7 +28,7 @@ export default function StudentLoginModal({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleResetAndClose = () => {
+ const handleResetAndClose = () => {
     if (status === "loading") return;
     setPhone("");
     setPassword("");
@@ -36,7 +36,7 @@ export default function StudentLoginModal({
     setPasswordError("");
     setStatus("idle");
     setErrorMessage("");
-    onClose();
+    onClose(); // <-- اینجا حتماً onClose صدا زده شود تا والد (StudentAuthButtons) مطلع شود
   };
 
   useEffect(() => {
@@ -112,6 +112,7 @@ export default function StudentLoginModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
           {/* Overlay */}
           <motion.div
+          
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
