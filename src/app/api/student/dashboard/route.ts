@@ -60,7 +60,6 @@ export async function GET(req: Request) {
       }
     }
 
-    // استخراج اطلاعات نهایی
     const grade = gradeRecord?.grade || student.grade || 6;
     const totalScore = gradeRecord?.totalScore || 0;
     
