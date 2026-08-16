@@ -2,13 +2,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import dbConnect from "./../../../../../lib/dbConnect";
-import Student from "./../../../../../models/Student"; // استفاده از مدل اصلی Student که در لاگین استفاده کردید
+import Student from "./../../../../../models/Student";
+import GradeStudent from "./../../../../../models/GradeStudent";
 
 export async function GET(req: Request) {
   await dbConnect();
 
   try {
-    // خواندن توکن از کوکی
     const cookieStore = await cookies();
     const token = cookieStore.get("studentToken");
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       );
     }
 
-    // جستجوی دانش‌آموز بر اساس آیدی (_id) ذخیره شده در کوکی
+    // ۱. پیدا کردن حساب کاربری دانش‌آموز
     const student = await Student.findById(token.value);
 
     if (!student) {
@@ -29,20 +29,47 @@ export async function GET(req: Request) {
       );
     }
 
-    // ساختار داده کاملاً هماهنگ با فرانت‌اند
+    // ۲. پیدا کردن اطلاعات لیگ از جدول GradeStudent (بر اساس nationalId یا leagueProfile)
+    let gradeRecord = null;
+    if (student.leagueProfile) {
+      gradeRecord = await GradeStudent.findById(student.leagueProfile);
+    }
+    if (!gradeRecord && student.nationalId) {
+      gradeRecord = await GradeStudent.findOne({ nationalId: student.nationalId });
+    }
+
+    // امتیاز و پایه (اولویت با اطلاعات ثبت‌شده در جدول لیگ)
+    const grade = gradeRecord?.grade || student.grade || 7;
+    const totalScore = gradeRecord?.totalScore || student.totalScore || 0;
+
+    // ۳. محاسبه رتبه واقعی در پایه بر اساس امتیازات جدول GradeStudent
+    const sameGradeStudents = await GradeStudent.find({ grade });
+    // مرتب‌سازی نزولی بر اساس امتیاز
+    sameGradeStudents.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+    
+    // پیدا کردن ایندکس کاربر برای تعیین رتبه
+    const userIndex = sameGradeStudents.findIndex(
+      (s) => s.nationalId === student.nationalId || (gradeRecord && s._id.toString() === gradeRecord._id.toString())
+    );
+
+    const gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
+    const totalGradeStudents = sameGradeStudents.length > 0 ? sameGradeStudents.length : 1;
+
+    // ۴. ساختار نهایی پاسخ برای داشبورد
     return NextResponse.json({
       success: true,
       data: {
-        firstName: student.firstName || "",
-        lastName: student.lastName || "",
+        firstName: student.firstName || gradeRecord?.firstName || "",
+        lastName: student.lastName || gradeRecord?.lastName || "",
         phone: student.phone || "",
-        grade: student.grade || 7,
-        totalScore: student.totalScore || 0,
-        gradeRank: student.gradeRank || 1,
-        totalGradeStudents: student.totalGradeStudents || 10,
-        selectedActivities: student.selectedActivities || [],
+        grade: grade,
+        totalScore: totalScore,
+        gradeRank: gradeRank,
+        totalGradeStudents: totalGradeStudents,
+        selectedActivities: gradeRecord?.selectedActivities || student.selectedActivities || [],
       },
     });
+
   } catch (err: any) {
     console.error("Error in student dashboard API:", err);
     return NextResponse.json(
