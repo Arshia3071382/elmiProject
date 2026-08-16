@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X, LockKeyhole, Phone, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthInput } from "./AuthInput";
@@ -16,6 +17,7 @@ export default function StudentLoginModal({
   onClose,
   onSwitchToRegister,
 }: StudentLoginModalProps) {
+  const router = useRouter();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -87,13 +89,13 @@ export default function StudentLoginModal({
 
       if (res.ok && data.success) {
         setStatus("success");
-        // ذخیره شماره تماس یا توکن در صورت نیاز برای داشبورد
-        localStorage.setItem("studentPhone", phone);
         
         setTimeout(() => {
           handleResetAndClose();
-          window.location.href = "/student/dashboard";
-        }, 1200);
+          // استفاده از روتور نکست‌جی‌اس برای انتقال پایدار در موبایل
+          router.push("/student/dashboard");
+          router.refresh();
+        }, 1000);
       } else {
         setStatus("error");
         setErrorMessage(data.error || "خطا در ورود اطلاعات.");

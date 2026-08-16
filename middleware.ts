@@ -4,7 +4,8 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const adminToken = request.cookies.get('admin_token')?.value;
-  const studentToken = request.cookies.get('student_token')?.value;
+  // اصلاح نام کوکی برای هماهنگی کامل با لاگین دانش‌آموز
+  const studentToken = request.cookies.get('studentToken')?.value;
 
   // مدیریت مسیرهای ادمین
   if (pathname === '/admin' || pathname === '/admin/') {
@@ -21,7 +22,7 @@ export function middleware(request: NextRequest) {
   // مدیریت مسیرهای پنل دانش‌آموز
   if (pathname.startsWith('/student/')) {
     if (!studentToken) {
-      const loginUrl = new URL('/', request.url); // یا صفحه ورود دانش‌آموز
+      const loginUrl = new URL('/', request.url); 
       return NextResponse.redirect(loginUrl);
     }
   }

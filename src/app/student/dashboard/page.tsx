@@ -288,25 +288,7 @@ export default function StudentDashboardPage() {
           </div>
         </motion.div>
 
-        {/* فعالیت‌ها و نشان‌ها */}
-        {dashboardData.badges.length > 0 && (
-          <div className="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-3xl p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-500" />
-                <span>فعالیت‌ها و نشان‌های من</span>
-              </h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {dashboardData.badges.map((badge, idx) => (
-                <motion.div key={idx} whileHover={{ scale: 1.03 }} className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 flex flex-col items-center text-center gap-2">
-                  <div className="text-3xl">{badge.icon}</div>
-                  <span className="text-xs font-bold text-slate-800 font-[iranSans-r]">{badge.title}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
+        
 
       </div>
     </div>
