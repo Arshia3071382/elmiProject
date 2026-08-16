@@ -1,47 +1,52 @@
+// src/app/api/student/dashboard/route.ts
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import dbConnect from "./../../../../../lib/dbConnect";
-import GradeStudent from "./../../../../../models/GradeStudent";
+import Student from "./../../../../../models/Student"; // استفاده از مدل اصلی Student که در لاگین استفاده کردید
 
 export async function GET(req: Request) {
   await dbConnect();
 
   try {
-    const { searchParams } = new URL(req.url);
-    let nationalId = searchParams.get("nationalId");
+    // خواندن توکن از کوکی
+    const cookieStore = await cookies();
+    const token = cookieStore.get("studentToken");
 
-    let student = null;
-
-    if (nationalId && nationalId.trim() !== "") {
-      student = await GradeStudent.findOne({ nationalId: nationalId.trim() });
+    if (!token || !token.value) {
+      return NextResponse.json(
+        { success: false, error: "دسترسی غیرمجاز. لطفا وارد شوید." },
+        { status: 401 }
+      );
     }
 
-    // اگر کد ملی ارسال نشده بود یا پیدا نشد، برای تست و جلوگیری از ارور، آخرین دانش‌آموز ثبت‌شده را می‌آوریم
-    if (!student) {
-      student = await GradeStudent.findOne().sort({ createdAt: -1 });
-    }
+    // جستجوی دانش‌آموز بر اساس آیدی (_id) ذخیره شده در کوکی
+    const student = await Student.findById(token.value);
 
     if (!student) {
       return NextResponse.json(
-        { success: false, error: "دانش‌آموزی یافت نشد." },
+        { success: false, error: "دانش‌آموزی با این مشخصات یافت نشد." },
         { status: 404 }
       );
     }
 
+    // ساختار داده کاملاً هماهنگ با فرانت‌اند
     return NextResponse.json({
       success: true,
       data: {
-        firstName: student.firstName,
-        lastName: student.lastName,
-        grade: student.grade,
-        totalScore: student.totalScore,
-        selectedActivities: student.selectedActivities,
-        published: student.published,
+        firstName: student.firstName || "",
+        lastName: student.lastName || "",
+        phone: student.phone || "",
+        grade: student.grade || 7,
+        totalScore: student.totalScore || 0,
+        gradeRank: student.gradeRank || 1,
+        totalGradeStudents: student.totalGradeStudents || 10,
+        selectedActivities: student.selectedActivities || [],
       },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in student dashboard API:", err);
     return NextResponse.json(
-      { success: false, error: "خطایی در دریافت اطلاعات داشبورد رخ داد." },
+      { success: false, error: err.message || "خطایی در دریافت اطلاعات داشبورد رخ داد." },
       { status: 500 }
     );
   }

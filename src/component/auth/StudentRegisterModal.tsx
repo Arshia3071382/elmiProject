@@ -175,16 +175,22 @@ export default function StudentRegisterModal({
 
       const data = await res.json();
 
-      if (res.ok && data.success) {
+     if (res.ok && data.success) {
         setStatus("success");
+
+        // 🚀 ذخیره اطلاعات کاربر جدید در حافظه مرورگر
+        if (nationalId) {
+          localStorage.setItem("studentNationalId", nationalId);
+        }
+        if (phone) {
+          localStorage.setItem("studentPhone", phone);
+        }
+
         setTimeout(() => {
           onClose();
           router.push(data.redirectTo || "/student/dashboard");
           router.refresh();
         }, 1200);
-      } else {
-        setStatus("error");
-        setErrorMessage(data.message || "خطایی در ثبت‌نام رخ داد.");
       }
     } catch (err) {
       setStatus("error");

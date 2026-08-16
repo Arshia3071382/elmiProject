@@ -40,7 +40,15 @@ export default function StudentDashboard() {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch("/api/student/dashboard");
+      // 1. دریافت کدملی از localStorage
+      const nationalId = localStorage.getItem("studentNationalId");
+      
+      // 2. ارسال کدملی به عنوان کوئری استرینگ به API
+      const url = nationalId 
+        ? `/api/student/dashboard?nationalId=${encodeURIComponent(nationalId)}` 
+        : "/api/student/dashboard";
+
+      const res = await fetch(url);
       const json = await res.json();
       if (json.success) {
         setData(json.data);

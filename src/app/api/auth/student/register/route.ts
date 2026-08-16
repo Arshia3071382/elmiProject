@@ -1,11 +1,9 @@
+// src/app/api/auth/student/register/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
 import GradeStudent from "./../../../../../../models/GradeStudent";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-student-secret-key";
 
 function isValidNationalId(id: string): boolean {
   if (!/^\d{10}$/.test(id)) return false;
@@ -36,7 +34,7 @@ export async function POST(req: Request) {
 
     // ۲. بررسی تکراری نبودن کد ملی یا شماره تماس در جدول دانشجویان
     const existingStudent = await Student.findOne({
-      $or: [{ phone }, { nationalId }],
+      $or: [{ phone: phone.trim() }, { nationalId: nationalId.trim() }],
     });
 
     if (existingStudent) {
@@ -46,15 +44,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۳. بررسی اینکه آیا مسئول علمی این کد ملی را در جدول لیگ (GradeStudent) ثبت کرده است یا خیر
-    const gradeStudentRecord = await GradeStudent.findOne({ nationalId });
+    // ۳. بررسی جدول لیگ (GradeStudent)
+    const gradeStudentRecord = await GradeStudent.findOne({ nationalId: nationalId.trim() });
 
-    // تعیین دقیق مقادیر نام، نام خانوادگی و پایه (اولویت با اطلاعات ثبت‌شده توسط مسئول علمی)
     const finalFirstName = gradeStudentRecord?.firstName || firstName?.trim();
     const finalLastName = gradeStudentRecord?.lastName || lastName?.trim();
     const finalGrade = gradeStudentRecord?.grade || Number(grade) || 7;
 
-    // اگر در لیست لیگ نبود و نام/نام خانوادگی هم در فرم وارد نشده بود
     if (!gradeStudentRecord && (!finalFirstName || !finalLastName)) {
       return NextResponse.json(
         { success: false, message: "نام و نام خانوادگی برای ثبت‌نام الزامی است." },
@@ -66,52 +62,49 @@ export async function POST(req: Request) {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // ۵. ایجاد حساب کاربری دانش‌آموز به همراه اتصال به لیگ (در صورت وجود)
+    // ۵. ایجاد حساب کاربری دانش‌آموز
     const newStudent = await Student.create({
       firstName: finalFirstName,
       lastName: finalLastName,
-      nationalId,
+      nationalId: nationalId.trim(),
       phone: phone.trim(),
       passwordHash,
       grade: finalGrade,
       isActive: true,
-      isVerified: !!gradeStudentRecord, // اگر مسئول علمی ثبت کرده باشد تایید شده محسوب می‌شود
+      isVerified: !!gradeStudentRecord,
       leagueProfile: gradeStudentRecord ? gradeStudentRecord._id : undefined,
     });
 
-    // ۶. بروزرسانی جدول لیگ برای اتصال متقابل (StudentId)
+    // ۶. بروزرسانی جدول لیگ
     if (gradeStudentRecord) {
       gradeStudentRecord.studentId = newStudent._id;
       await gradeStudentRecord.save();
     }
 
-    // ۷. تولید توکن JWT
-    const token = jwt.sign(
-      { studentId: newStudent._id.toString(), nationalId: newStudent.nationalId },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // ۸. تنظیم کوکی امن و هدایت به داشبورد
+    // ۷. ایجاد پاسخ موفقیت‌آمیز همراه با تنظیم کوکی هماهنگ با لاگین (studentToken)
     const response = NextResponse.json({
       success: true,
       message: "ثبت‌نام با موفقیت انجام شد.",
       redirectTo: "/student/dashboard",
+      data: {
+        phone: newStudent.phone,
+        firstName: newStudent.firstName,
+        lastName: newStudent.lastName,
+      }
     });
 
-    response.cookies.set({
-      name: "student_token",
-      value: token,
+    // نام کوکی دقیقاً باید studentToken باشد تا با داشبورد و لاگین همخوانی داشته باشد
+    response.cookies.set("studentToken", newStudent._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7, // ماندگاری ۷ روزه
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Student Registration Error:", error);
-    return NextResponse.json({ success: false, message: "خطای سرور داخلی رخ داد." }, { status: 500 });
+    return NextResponse.json({ success: false, message: error.message || "خطای سرور داخلی رخ داد." }, { status: 500 });
   }
 }

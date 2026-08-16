@@ -145,54 +145,49 @@ export default function StudentDashboardPage() {
   const router = useRouter();
 
   const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const nationalId = localStorage.getItem("studentNationalId") || "";
-      const res = await fetch(
-        `/api/student/dashboard?nationalId=${nationalId}`,
-      );
+  setLoading(true);
+  try {
+    // دیگر نیازی به nationalId از localStorage نیست، کوکی به طور خودکار ارسال می‌شود
+    const res = await fetch("/api/student/dashboard");
 
-      if (res.status === 401) {
-        window.location.replace("/");
-        return;
-      }
-      const json = await res.json();
-
-      if (json.success && json.data) {
-        const student = json.data;
-        setData({
-          isComplete: true,
-          profile: {
-            name:
-              `${student.firstName || ""} ${student.lastName || ""}`.trim() ||
-              "دانش‌آموز",
-            grade: student.grade || 7,
-            level: "عضو فعال لیگ",
-            totalScore: student.totalScore || 0,
-            scoreToNextLevel: 1000,
-          },
-          gradeLeague: {
-            score: student.totalScore || 0,
-            rank: student.gradeRank || 1,
-            totalStudents: student.totalGradeStudents || 10,
-            scientificLevelTitle: `پایه ${student.grade || 7}`,
-          },
-          badges:
-            student.selectedActivities?.map((act: string) => ({
-              title: act,
-              icon: "🎖️",
-            })) || [],
-          lastLeagueUpdate: "امروز",
-        });
-      } else {
-        setFallbackData();
-      }
-    } catch (err) {
-      setFallbackData();
-    } finally {
-      setLoading(false);
+    if (res.status === 401) {
+      window.location.replace("/");
+      return;
     }
-  };
+    const json = await res.json();
+
+    if (json.success && json.data) {
+      const student = json.data;
+      setData({
+        isComplete: true,
+        profile: {
+          name: `${student.firstName} ${student.lastName}`.trim() || "دانش‌آموز",
+          grade: student.grade || 7,
+          level: "عضو فعال لیگ",
+          totalScore: student.totalScore || 0,
+          scoreToNextLevel: 1000,
+        },
+        gradeLeague: {
+          score: student.totalScore || 0,
+          rank: student.gradeRank || 1,
+          totalStudents: student.totalGradeStudents || 10,
+          scientificLevelTitle: `پایه ${student.grade || 7}`,
+        },
+        badges: student.selectedActivities?.map((act: string) => ({
+          title: act,
+          icon: "🎖️",
+        })) || [],
+        lastLeagueUpdate: "امروز",
+      });
+    } else {
+      setFallbackData();
+    }
+  } catch (err) {
+    setFallbackData();
+  } finally {
+    setLoading(false);
+  }
+};
 
   const setFallbackData = () => {
     setData({

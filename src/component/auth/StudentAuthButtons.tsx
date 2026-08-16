@@ -11,6 +11,19 @@ export default function StudentAuthButtons() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  // پاکسازی اطلاعات قبلی هنگام باز کردن پنل‌ها برای جلوگیری از تداخل حساب‌ها
+  const handleOpenLogin = () => {
+    localStorage.removeItem("studentNationalId");
+    localStorage.removeItem("studentPhone");
+    setIsLoginOpen(true);
+  };
+
+  const handleOpenRegister = () => {
+    localStorage.removeItem("studentNationalId");
+    localStorage.removeItem("studentPhone");
+    setIsRegisterOpen(true);
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto my-10 px-4" dir="rtl">
@@ -21,7 +34,7 @@ export default function StudentAuthButtons() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          onClick={() => setIsLoginOpen(true)}
+          onClick={handleOpenLogin}
           onMouseEnter={() => setHoveredIndex(0)}
           onMouseLeave={() => setHoveredIndex(null)}
           className="group relative block rounded-3xl p-[1.5px] overflow-hidden cursor-pointer focus-visible:outline-none"
@@ -92,7 +105,7 @@ export default function StudentAuthButtons() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          onClick={() => setIsRegisterOpen(true)}
+          onClick={handleOpenRegister}
           onMouseEnter={() => setHoveredIndex(1)}
           onMouseLeave={() => setHoveredIndex(null)}
           className="group relative block rounded-3xl p-[1.5px] overflow-hidden cursor-pointer focus-visible:outline-none"

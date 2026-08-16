@@ -37,18 +37,25 @@ export async function POST(req: Request) {
       );
     }
 
-    // ایجاد پاسخ موفقیت‌آمیز
+    // ایجاد پاسخ موفقیت‌آمیز همراه با nationalId (برای هماهنگی با localStorage)
     const response = NextResponse.json({
       success: true,
       message: "ورود با موفقیت انجام شد.",
       data: {
         phone: student.phone,
         firstName: student.firstName,
-        lastName: student.lastName
+        lastName: student.lastName,
+        nationalId: student.nationalId || "", // اضافه شد تا در لکال استوریج ذخیره شود
+      },
+      // برای پشتیبانی از ساختارهای احتمالی دیگر که به صورت student.nationalId می‌خوانند:
+      student: {
+        nationalId: student.nationalId || "",
+        firstName: student.firstName,
+        lastName: student.lastName,
       }
     });
 
-    // ست کردن کوکی امن برای جلوگیری از مشکل پریدن لاگین در رفرش‌های موبایل
+    // ست کردن کوکی امن برای جلوگیری از مشکل پریدن لاگین
     response.cookies.set("studentToken", student._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

@@ -28,7 +28,7 @@ export default function StudentLoginModal({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
- const handleResetAndClose = () => {
+  const handleResetAndClose = () => {
     if (status === "loading") return;
     setPhone("");
     setPassword("");
@@ -36,7 +36,7 @@ export default function StudentLoginModal({
     setPasswordError("");
     setStatus("idle");
     setErrorMessage("");
-    onClose(); // <-- اینجا حتماً onClose صدا زده شود تا والد (StudentAuthButtons) مطلع شود
+    onClose();
   };
 
   useEffect(() => {
@@ -90,9 +90,14 @@ export default function StudentLoginModal({
       if (res.ok && data.success) {
         setStatus("success");
         
+        // ذخیره کدملی و مشخصات در localStorage برای استفاده در داشبورد
+        if (data.student?.nationalId) {
+          localStorage.setItem("studentNationalId", data.student.nationalId);
+        }
+        localStorage.setItem("studentPhone", phone);
+
         setTimeout(() => {
           handleResetAndClose();
-          // استفاده از روتور نکست‌جی‌اس برای انتقال پایدار در موبایل
           router.push("/student/dashboard");
           router.refresh();
         }, 1000);
@@ -112,7 +117,6 @@ export default function StudentLoginModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
           {/* Overlay */}
           <motion.div
-          
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
