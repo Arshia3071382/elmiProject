@@ -77,7 +77,7 @@ export default function StudentAuthButtons() {
               </div>
               <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-slate-400 font-medium tracking-wide" style={{ fontFamily: 'iranSans-r' }}>
-                  حساب کاربری دارید؟
+                 حساب کاربری دارم
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-blue-900 group-hover:text-blue-600 transition-colors duration-200" style={{ fontFamily: 'iranBold' }}>
                   ورود
@@ -148,7 +148,7 @@ export default function StudentAuthButtons() {
               </div>
               <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-slate-400 font-medium tracking-wide" style={{ fontFamily: 'iranSans-r' }}>
-                  جدید هستید؟
+                 تازه اومدم
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-900 group-hover:text-emerald-600 transition-colors duration-200" style={{ fontFamily: 'iranBold' }}>
                   ثبت‌نام

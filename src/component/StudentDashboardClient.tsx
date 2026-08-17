@@ -144,50 +144,52 @@ export default function StudentDashboardPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
 
-  const fetchDashboardData = async () => {
-  setLoading(true);
-  try {
-    // دیگر نیازی به nationalId از localStorage نیست، کوکی به طور خودکار ارسال می‌شود
-    const res = await fetch("/api/student/dashboard");
+ const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/student/dashboard");
 
-    if (res.status === 401) {
-      window.location.replace("/");
-      return;
-    }
-    const json = await res.json();
+      if (res.status === 401) {
+        window.location.replace("/");
+        return;
+      }
+      const json = await res.json();
 
-    if (json.success && json.data) {
-      const student = json.data;
-      setData({
-        isComplete: true,
-        profile: {
-          name: `${student.firstName} ${student.lastName}`.trim() || "دانش‌آموز",
-          grade: student.grade || 7,
-          level: "عضو فعال لیگ",
-          totalScore: student.totalScore || 0,
-          scoreToNextLevel: 1000,
-        },
-        gradeLeague: {
-          score: student.totalScore || 0,
-          rank: student.gradeRank || 1,
-          totalStudents: student.totalGradeStudents || 10,
-          scientificLevelTitle: `پایه ${student.grade || 7}`,
-        },
-        badges: student.selectedActivities?.map((act: string) => ({
-          title: act,
-          icon: "🎖️",
-        })) || [],
-        lastLeagueUpdate: "امروز",
-      });
-    } else {
+      if (json.success && json.data) {
+        // چون ساختار API شما تغییر کرده، از داده‌های داخل profile استفاده می‌کنیم
+        const profile = json.data.profile;
+        const league = json.data.gradeLeague;
+
+        setData({
+          isComplete: true,
+          profile: {
+            name: profile.name || "دانش‌آموز عزیز",
+            grade: profile.grade || 7,
+            level: profile.level || "عضو فعال",
+            totalScore: profile.totalScore || 0,
+            scoreToNextLevel: profile.scoreToNextLevel || 1000,
+          },
+          gradeLeague: {
+            score: league.score || 0,
+            rank: league.rank || 1,
+            totalStudents: league.totalStudents || 10,
+            scientificLevelTitle: league.scientificLevelTitle || "پایه",
+          },
+          badges: json.data.recentActivities?.map((act: any) => ({
+            title: act.title,
+            icon: "🎖️",
+          })) || [],
+          lastLeagueUpdate: json.data.lastLeagueUpdate || "امروز",
+        });
+      } else {
+        setFallbackData();
+      }
+    } catch (err) {
       setFallbackData();
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setFallbackData();
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const setFallbackData = () => {
     setData({
@@ -304,7 +306,7 @@ export default function StudentDashboardPage() {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="bg-red-500/80 hover:bg-red-600 text-white px-5 py-3 rounded-2xl backdrop-blur-md transition-all flex items-center gap-2 shadow-lg font-[iranSans-r] text-sm shrink-0 border border-red-400/40 cursor-pointer"
+              className="bg-red-500/85 hover:bg-red-600 text-white px-5 py-3 rounded-2xl backdrop-blur-md transition-all flex items-center gap-2 shadow-lg font-[iranSans-r] text-sm shrink-0 border border-red-400/40 cursor-pointer"
             >
               {isLoggingOut ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -315,9 +317,9 @@ export default function StudentDashboardPage() {
             </button>
           </motion.div>
 
-          {/* رتبه در لیگ پایه (تم سبز) و کارت سطح علمی (رنگ اصلی) */}
+          {/* رتبه در لیگ پایه و کارت سطح علمی */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ۱: رتبه در لیگ پایه (با تم سبز جذاب و رتبه ۱) */}
+            {/* ۱: رتبه در لیگ پایه */}
             {dashboardData.gradeLeague && (
               <motion.div
                 whileHover={{ y: -4 }}
@@ -360,7 +362,7 @@ export default function StudentDashboardPage() {
                       }}
                       className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white drop-shadow-md block"
                     >
-                      1
+                      {dashboardData.gradeLeague.rank}
                     </motion.span>
                   </div>
 
@@ -378,7 +380,7 @@ export default function StudentDashboardPage() {
               </motion.div>
             )}
 
-            {/* ۲: کارت سطح علمی با رنگ و استایل اصلی خودش */}
+            {/* ۲: کارت سطح علمی */}
             <motion.div
               whileHover={{ y: -4 }}
               className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-amber-950 rounded-3xl p-6 text-white shadow-2xl border-[3px] border-amber-400/80 ring-4 ring-amber-500/20 flex flex-col items-center justify-center text-center"
@@ -413,7 +415,7 @@ export default function StudentDashboardPage() {
             </motion.div>
           </div>
 
-          {/* ۳: نوار پیشرفت و مسیر مدال‌ها (تم زرد و طلایی - جهت LTR) */}
+          {/* ۳: نوار پیشرفت و مسیر مدال‌ها */}
           <motion.div
             whileHover={{ y: -2 }}
             className="bg-white/90 backdrop-blur-xl border border-amber-100 rounded-3xl p-6 shadow-xl space-y-6"
@@ -441,7 +443,6 @@ export default function StudentDashboardPage() {
               )}
             </div>
 
-            {/* نوار پیشرفت طلایی (جهت LTR) */}
             <div className="space-y-2">
               <div
                 dir="ltr"
@@ -472,7 +473,6 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            {/* مسیر مدال‌ها به صورت چپ به راست (LTR) بر اساس امتیاز دانش‌آموز */}
             <div
               dir="ltr"
               className="grid grid-cols-4 lg:grid-cols-7 gap-3 pt-4 border-t border-slate-100 text-right"

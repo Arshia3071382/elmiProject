@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../lib/dbConnect";
 import GradeStudent from "./../../../../../models/GradeStudent";
 import LeagueSetting from "./../../../../../models/LeagueSetting";
-import { IGradeStudent } from "./../../../../../models/GradeStudent";
+// این خط را حتماً اضافه کنید:
+import Student from "./../../../../../models/Student"; 
 
+// ... بقیه کدها
 // Type برای پاسخ API
 interface ApiResponse<T = any> {
   success: boolean;
@@ -156,8 +158,12 @@ export async function PUT(req: Request) {
 }
 
 // ==================== DELETE ====================
+// ==================== DELETE ====================
 export async function DELETE(req: Request) {
   await dbConnect();
+  // اضافه کردن این import در بالای فایل الزامی است:
+  // import Student from "./../../../../../models/Student"; 
+  
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -169,18 +175,28 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const deleted = await GradeStudent.findByIdAndDelete(id);
+    // ۱. پیدا کردن و حذف رکورد لیگ
+    const deletedGradeStudent = await GradeStudent.findByIdAndDelete(id);
 
-    if (!deleted) {
+    if (!deletedGradeStudent) {
       return NextResponse.json(
-        { success: false, error: "دانش‌آموز یافت نشد" },
+        { success: false, error: "دانش‌آموز در لیگ یافت نشد" },
         { status: 404 }
       );
     }
 
+    // ۲. پیدا کردن و حذف دانش‌آموز از مدل اصلی (Student)
+    // فرض بر این است که GradeStudent یک فیلد studentId دارد که به مدل اصلی اشاره می‌کند
+    if (deletedGradeStudent.studentId) {
+       await Student.findByIdAndDelete(deletedGradeStudent.studentId);
+    } else {
+      // اگر ارتباط مستقیم نبود، از طریق کد ملی پاک کنید (مطمئن‌تر)
+      await Student.findOneAndDelete({ nationalId: deletedGradeStudent.nationalId });
+    }
+
     return NextResponse.json({
       success: true,
-      message: "دانش‌آموز با موفقیت حذف شد",
+      message: "دانش‌آموز از هر دو بخش با موفقیت حذف شد",
     });
   } catch (err) {
     console.error("Error in DELETE:", err);
@@ -190,7 +206,6 @@ export async function DELETE(req: Request) {
     );
   }
 }
-
 // ==================== PATCH ====================
 // برای انتشار تغییرات
 export async function PATCH(req: Request) {

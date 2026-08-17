@@ -17,7 +17,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // جستجوی دانش‌آموز بر اساس فیلد phone
     const student = await Student.findOne({ phone: phone.trim() });
     
     if (!student || !student.passwordHash) {
@@ -27,7 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // مقایسه رمز عبور با فیلد passwordHash
     const isMatch = await bcrypt.compare(password, student.passwordHash);
     
     if (!isMatch) {
@@ -37,31 +35,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // ایجاد پاسخ موفقیت‌آمیز همراه با nationalId (برای هماهنگی با localStorage)
     const response = NextResponse.json({
       success: true,
       message: "ورود با موفقیت انجام شد.",
-      data: {
-        phone: student.phone,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        nationalId: student.nationalId || "", // اضافه شد تا در لکال استوریج ذخیره شود
-      },
-      // برای پشتیبانی از ساختارهای احتمالی دیگر که به صورت student.nationalId می‌خوانند:
       student: {
         nationalId: student.nationalId || "",
-        firstName: student.firstName,
-        lastName: student.lastName,
+        firstName: student.firstName || "",
+        lastName: student.lastName || "",
+        phone: student.phone || "",
+      },
+      data: {
+        nationalId: student.nationalId || "",
+        firstName: student.firstName || "",
+        lastName: student.lastName || "",
       }
     });
 
-    // ست کردن کوکی امن برای جلوگیری از مشکل پریدن لاگین
     response.cookies.set("studentToken", student._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // ماندگاری ۷ روزه
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return response;

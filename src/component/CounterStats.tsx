@@ -91,7 +91,7 @@ function CounterItem({
 export default function CounterStats() {
   const stats = [
     {
-      target: 1000,
+      target: 800,
       label: "دانش آموختگان",
       prefix: "+",
       icon: <GraduationCap className="w-8 h-8 text-blue-600" />,
@@ -105,14 +105,14 @@ export default function CounterStats() {
       bgColor: "#F0FDF4",
     },
     {
-      target: 100,
+      target: 70,
       label: "دوره‌های مجازی",
       suffix: "جلسه",
       icon: <Laptop className="w-8 h-8 text-cyan-600" />,
       bgColor: "#ECFEFF",
     },
     {
-      target: 35,
+      target: 25,
       label: "تعداد اساتید مجموعه",
       suffix: "",
       icon: <BookOpen className="w-8 h-8 text-amber-600" />,
