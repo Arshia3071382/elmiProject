@@ -77,12 +77,22 @@ export async function GET(req: Request) {
     const grade = gradeRecord?.grade || student.grade || 6;
     const totalScore = gradeRecord?.totalScore || 0;
     
-    // ۴. محاسبه دقیق و استاندارد رتبه در پایه بر اساس امتیاز
+    // ۴. محاسبه دقیق و استاندارد رتبه در پایه بر اساس امتیاز (با استفاده از شناسه _id و fallback به کد ملی)
     const sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
     
-    const userIndex = sameGradeStudents.findIndex(
-      (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
-    );
+    let userIndex = -1;
+    if (gradeRecord) {
+      userIndex = sameGradeStudents.findIndex(
+        (s) => s._id.toString() === gradeRecord._id.toString()
+      );
+    }
+    
+    if (userIndex === -1 && cleanStudentNationalId) {
+      userIndex = sameGradeStudents.findIndex(
+        (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
+      );
+    }
+    
     const gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
 
     // ۵. دریافت تاریخ آخرین به‌روزرسانی لیگ
