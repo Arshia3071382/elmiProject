@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Trophy, Trash2, Edit3, Plus, X } from "lucide-react";
+import { Trophy, Trash2, Edit3, Plus, X, CheckCircle2 } from "lucide-react";
 
 interface AdminEliteLeaguePanelProps {
   onShowMessage: (type: "success" | "error", text: string) => void;
@@ -11,6 +11,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   const [category, setCategory] = useState<"elementary" | "highschool">("elementary");
   const [students, setStudents] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   
   const [formData, setFormData] = useState({
     id: "",
@@ -21,7 +22,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
 
   const fetchStudents = useCallback(async () => {
     try {
-      const res = await fetch(`/api/elite?category=${category}`).then((r) => r.json());
+      const res = await fetch(`/api/elite?category=${category}&admin=true`).then((r) => r.json());
       if (Array.isArray(res)) {
         setStudents(res);
       }
@@ -69,7 +70,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
       }).then((r) => r.json());
 
       if (!res.error) {
-        onShowMessage("success", isEditing ? "امتیاز با موفقیت بروزرسانی شد" : "دانش‌آموز جدید به لیگ اضافه شد");
+        onShowMessage("success", isEditing ? "امتیاز با موفقیت بروزرسانی شد" : "دانش‌آموز به لیست اضافه شد");
         setFormData({ id: "", name: "", grade: category === "elementary" ? "دوم" : "هفتم", score: "" });
         setIsEditing(false);
         fetchStudents();
@@ -92,7 +93,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("آیا از حذف این دانش‌آموز از جدول نخبگان اطمینان دارید؟")) return;
+    if (!confirm("آیا از حذف این دانش‌آموز اطمینان دارید؟")) return;
     try {
       const res = await fetch(`/api/elite?id=${id}`, { method: "DELETE" }).then((r) => r.json());
       if (!res.error) {
@@ -106,28 +107,73 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
     }
   };
 
+  // تایید نهایی و انتشار جدول ۱۵ نفر برتر مقطع
+  const handlePublishTable = async () => {
+    if (students.length === 0) {
+      return onShowMessage("error", "دانش‌آموزی برای انتشار در این مقطع وجود ندارد");
+    }
+    if (!confirm(`آیا از تایید نهایی و انتشار ۱۵ نفر برتر مقطع ${category === "elementary" ? "ابتدایی" : "راهنمایی"} برای مشاهده کاربران اطمینان دارید؟`)) return;
+
+    setIsPublishing(true);
+    try {
+      const res = await fetch("/api/elite", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      }).then((r) => r.json());
+
+      if (!res.error) {
+        onShowMessage("success", "نفرات برتر با موفقیت تایید و در سایت منتشر شدند!");
+        fetchStudents();
+      } else {
+        onShowMessage("error", "خطا در انتشار لیست");
+      }
+    } catch {
+      onShowMessage("error", "خطا در ارتباط با سرور");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // مرتب‌سازی کل دانش‌آموزان این مقطع و انتخاب ۱۵ نفر برتر بر اساس امتیاز
+  const topFifteenStudents = [...students]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 15);
+
   return (
     <div dir="rtl" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 font-sans">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 pb-4 mb-6 gap-4">
         <div className="flex items-center gap-2">
           <Trophy className="w-6 h-6 text-amber-500" />
-          <h2 className="text-xl font-bold text-gray-800">مدیریت لیگ نخبگان علمی (۲۰ نفر برتر)</h2>
+          <h2 className="text-xl font-bold text-gray-800">لیگ نخبگان علمی (۱۵ نفر برتر ماهانه)</h2>
         </div>
         
-        <div className="flex bg-gray-100 p-1 rounded-xl">
+        <div className="flex items-center gap-3">
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => handleCategoryChange("elementary")}
+              className={`px-4 py-2 text-xs md:text-sm font-bold rounded-lg transition-all ${category === "elementary" ? "bg-amber-500 text-white shadow" : "text-gray-600 hover:text-gray-900"}`}
+            >
+              ابتدایی (دوم تا ششم)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCategoryChange("highschool")}
+              className={`px-4 py-2 text-xs md:text-sm font-bold rounded-lg transition-all ${category === "highschool" ? "bg-indigo-600 text-white shadow" : "text-gray-600 hover:text-gray-900"}`}
+            >
+              راهنمایی (هفتم تا نهم)
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => handleCategoryChange("elementary")}
-            className={`px-4 py-2 text-xs md:text-sm font-bold rounded-lg transition-all ${category === "elementary" ? "bg-amber-500 text-white shadow" : "text-gray-600 hover:text-gray-900"}`}
+            onClick={handlePublishTable}
+            disabled={isPublishing}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
           >
-            ابتدایی (دوم تا ششم)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleCategoryChange("highschool")}
-            className={`px-4 py-2 text-xs md:text-sm font-bold rounded-lg transition-all ${category === "highschool" ? "bg-indigo-600 text-white shadow" : "text-gray-600 hover:text-gray-900"}`}
-          >
-            راهنمایی (هفتم تا نهم)
+            <CheckCircle2 className="w-4 h-4" />
+            {isPublishing ? "در حال انتشار..." : "تایید نهایی و انتشار در سایت"}
           </button>
         </div>
       </div>
@@ -188,7 +234,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
             className={`flex-1 text-white p-2.5 rounded-lg font-bold transition flex items-center justify-center gap-1 ${isEditing ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
           >
             {isEditing ? <Edit3 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {isEditing ? "ثبت ویرایش" : "افزودن به لیگ"}
+            {isEditing ? "ثبت ویرایش" : "افزودن به لیست"}
           </button>
           
           {isEditing && (
@@ -214,16 +260,17 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
               <th className="p-3 text-right">نام دانش‌آموز</th>
               <th className="p-3 text-right">پایه تحصیلی</th>
               <th className="p-3 text-right">امتیاز</th>
-              <th className="p-3 text-center w-24">عملیات ادمین</th>
+              <th className="p-3 text-center w-32">وضعیت انتشار</th>
+              <th className="p-3 text-center w-24">عملیات</th>
             </tr>
           </thead>
           <tbody>
-            {students.length === 0 ? (
+            {topFifteenStudents.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-gray-400 font-medium">هیچ داده‌ای ثبت نشده است. اولین دانش‌آموز را اضافه کنید.</td>
+                <td colSpan={6} className="p-8 text-center text-gray-400 font-medium">هیچ رکوردی در این مقطع ثبت نشده است.</td>
               </tr>
             ) : (
-              students.map((student, index) => (
+              topFifteenStudents.map((student, index) => (
                 <tr key={student._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
                   <td className="p-3 text-right font-bold text-gray-500">
                     <span className="text-amber-600">#</span>{index + 1}
@@ -231,6 +278,11 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
                   <td className="p-3 font-semibold text-gray-800">{student.name}</td>
                   <td className="p-3 text-right text-gray-600">{student.grade}</td>
                   <td className="p-3 text-right font-bold text-emerald-600">{student.score.toLocaleString()}</td>
+                  <td className="p-3 text-center">
+                    <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${student.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                      {student.isPublished ? "منتشر شده" : "پیش‌نویس ادمین"}
+                    </span>
+                  </td>
                   <td className="p-3">
                     <div className="flex items-center justify-center gap-2">
                       <button

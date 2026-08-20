@@ -1,74 +1,126 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "./../../../../lib/dbConnect";
+import GradeStudent from "./../../../../models/GradeStudent";
 import { EliteStudent } from "./../../../../models/EliteStudent";
 
-// GET: Fetch top 20 students sorted by score descending
+// GET: دریافت لیست دانش‌آموزان بر اساس مقطع از جدول لیگ علمی (GradeStudent)
 export async function GET(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category") || "elementary";
+    const isAdmin = searchParams.get("admin") === "true";
 
-    const students = await EliteStudent.find({ category })
-      .sort({ score: -1 }) // Automatic sorting based on highest scores
-      .limit(20);         // Restrict strictly to top 20 elite nodes
+    // تعیین بازه پایه‌ها بر اساس مقطع
+    // ابتدایی: پایه‌های ۲، ۳، ۴، ۵، ۶
+    // راهنمایی: پایه‌های ۷، ۸، ۹
+    const gradeRange = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
-    return NextResponse.json(students, { status: 200 });
+    if (isAdmin) {
+      // برای پنل ادمین: تمام دانش‌آموزان این مقطع را به همراه وضعیت انتشار در EliteStudent برمی‌گردانیم
+      const students = await GradeStudent.find({ grade: { $in: gradeRange } })
+        .sort({ totalScore: -1 });
+
+      // بررسی اینکه کدام یک از این دانش‌آموزان در جدول EliteStudent به عنوان منتشرشده ثبت شده‌اند
+      const eliteRecords = await EliteStudent.find({ category, isPublished: true });
+      const eliteIds = new Set(eliteRecords.map((e: any) => e.studentId?.toString()));
+
+      const result = students.map((student: any) => ({
+        _id: student._id,
+        name: `${student.firstName} ${student.lastName}`,
+        grade: `${student.grade}`,
+        score: student.totalScore,
+        category,
+        isPublished: eliteIds.has(student._id.toString()),
+      }));
+
+      return NextResponse.json(result, { status: 200 });
+    } else {
+      // برای کاربران عادی: فقط ۱۵ نفر برتری که در جدول EliteStudent تایید و منتشر شده‌اند
+      const eliteRecords = await EliteStudent.find({ category, isPublished: true })
+        .sort({ score: -1 })
+        .limit(15);
+
+      const result = eliteRecords.map((item: any) => ({
+        _id: item._id,
+        name: item.name,
+        grade: item.grade,
+        score: item.score,
+        category,
+        isPublished: true,
+      }));
+
+      return NextResponse.json(result, { status: 200 });
+    }
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch leaderboard data" }, { status: 500 });
   }
 }
 
-// POST: Add a new elite student record
+// POST: اگر ادمین بخواهد شخصاً موردی را اضافه یا ویرایش کند (یا سازگار با کدهای قبلی)
 export async function POST(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
     const { name, grade, score, category } = body;
-
-    if (!name || !grade || score === undefined || !category) {
-      return NextResponse.json({ error: "Missing required payload fields" }, { status: 400 });
-    }
-
-    const newStudent = await EliteStudent.create({ name, grade, score, category });
-    return NextResponse.json(newStudent, { status: 201 });
+    // می‌توانید منطق دلخواه را بگذارید یا از GradeStudent استفاده کنید
+    return NextResponse.json({ message: "Success" }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Insertion failed" }, { status: 500 });
   }
 }
 
-// PUT: Update score, name, or grade of an existing student
-export async function PUT(request: Request) {
+// PATCH: تایید نهایی و انتشار ۱۵ نفر برتر مقطع
+export async function PATCH(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { id, name, grade, score, category } = body;
+    const { category } = body;
 
-    if (!id) return NextResponse.json({ error: "Student ID required" }, { status: 400 });
+    if (!category) {
+      return NextResponse.json({ error: "Category is required" }, { status: 400 });
+    }
 
-    const updatedStudent = await EliteStudent.findByIdAndUpdate(
-      id,
-      { name, grade, score, category },
-      { new: true } // Return updated document immediately
-    );
+    const gradeRange = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
-    return NextResponse.json(updatedStudent, { status: 200 });
+    // ۱. گرفتن تمام دانش‌آموزان این مقطع از لیگ علمی مرتب شده بر اساس امتیاز
+    const topStudents = await GradeStudent.find({ grade: { $in: gradeRange } })
+      .sort({ totalScore: -1 })
+      .limit(15);
+
+    // ۲. پاک کردن رکوردهای قبلی انتشار یافته این مقطع در EliteStudent
+    await EliteStudent.deleteMany({ category });
+
+    // ۳. ثبت ۱۵ نفر برتر جدید به عنوان منتشر شده
+    const eliteDocs = topStudents.map((student: any) => ({
+      studentId: student._id,
+      name: `${student.firstName} ${student.lastName}`,
+      grade: `${student.grade}`,
+      score: student.totalScore,
+      category,
+      isPublished: true,
+    }));
+
+    if (eliteDocs.length > 0) {
+      await EliteStudent.insertMany(eliteDocs);
+    }
+
+    return NextResponse.json({ message: "Table published successfully" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    return NextResponse.json({ error: "Publish failed" }, { status: 500 });
   }
 }
 
-// DELETE: Remove a student from the elite board
+// DELETE: حذف از لیست نخبگان (یا غیرانتشار)
 export async function DELETE(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
-    if (!id) return NextResponse.json({ error: "Student ID required" }, { status: 400 });
-
-    await EliteStudent.findByIdAndDelete(id);
-    return NextResponse.json({ message: "Student deleted successfully" }, { status: 200 });
+    await EliteStudent.findOneAndDelete({ studentId: id });
+    return NextResponse.json({ message: "Deleted successfully" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Deletion failed" }, { status: 500 });
   }

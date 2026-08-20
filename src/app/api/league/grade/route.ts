@@ -2,10 +2,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../lib/dbConnect";
 import GradeStudent from "./../../../../../models/GradeStudent";
 import LeagueSetting from "./../../../../../models/LeagueSetting";
-// این خط را حتماً اضافه کنید:
 import Student from "./../../../../../models/Student"; 
 
-// ... بقیه کدها
 // Type برای پاسخ API
 interface ApiResponse<T = any> {
   success: boolean;
@@ -59,10 +57,21 @@ export async function POST(req: Request) {
       );
     }
 
+    const trimmedNationalId = nationalId.trim();
+
+    // بررسی وجود کد ملی تکراری در مدل لیگ
+    const existingGradeStudent = await GradeStudent.findOne({ nationalId: trimmedNationalId });
+    if (existingGradeStudent) {
+      return NextResponse.json(
+        { success: false, error: "دانش‌آموزی با این کد ملی از قبل در سیستم ثبت شده است." },
+        { status: 400 }
+      );
+    }
+
     const newStudent = await GradeStudent.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      nationalId: nationalId.trim(),
+      nationalId: trimmedNationalId,
       grade: Number(grade),
       totalScore: 0,
       selectedActivities: [],
@@ -73,8 +82,15 @@ export async function POST(req: Request) {
       success: true,
       data: newStudent,
     }, { status: 201 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in POST:", err);
+    // اگر خطای خط قید یکتا (Duplicate Key) از سمت MongoDB رخ داد
+    if (err.code === 11000) {
+      return NextResponse.json(
+        { success: false, error: "دانش‌آموزی با این کد ملی از قبل در سیستم ثبت شده است." },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: "خطا در ثبت دانش‌آموز" },
       { status: 500 }
@@ -110,7 +126,20 @@ export async function PUT(req: Request) {
     // ویرایش اطلاعات
     if (firstName !== undefined) updateData.firstName = firstName.trim();
     if (lastName !== undefined) updateData.lastName = lastName.trim();
-    if (nationalId !== undefined) updateData.nationalId = nationalId.trim();
+    if (nationalId !== undefined) {
+      const trimmedId = nationalId.trim();
+      // بررسی تکراری نبودن کد ملی در صورت تغییر
+      if (trimmedId !== student.nationalId) {
+        const duplicateCheck = await GradeStudent.findOne({ nationalId: trimmedId });
+        if (duplicateCheck) {
+          return NextResponse.json(
+            { success: false, error: "این کد ملی متعلق به دانش‌آموز دیگری است." },
+            { status: 400 }
+          );
+        }
+      }
+      updateData.nationalId = trimmedId;
+    }
     if (grade !== undefined) updateData.grade = Number(grade);
 
     // افزودن فعالیت‌های جدید (بدون جایگزینی)
@@ -148,8 +177,14 @@ export async function PUT(req: Request) {
       success: true,
       data: updated,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in PUT:", err);
+    if (err.code === 11000) {
+      return NextResponse.json(
+        { success: false, error: "این کد ملی تکراری است و قبلاً ثبت شده است." },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: "خطا در به‌روزرسانی" },
       { status: 500 }
@@ -158,11 +193,8 @@ export async function PUT(req: Request) {
 }
 
 // ==================== DELETE ====================
-// ==================== DELETE ====================
 export async function DELETE(req: Request) {
   await dbConnect();
-  // اضافه کردن این import در بالای فایل الزامی است:
-  // import Student from "./../../../../../models/Student"; 
   
   try {
     const { searchParams } = new URL(req.url);
@@ -186,11 +218,9 @@ export async function DELETE(req: Request) {
     }
 
     // ۲. پیدا کردن و حذف دانش‌آموز از مدل اصلی (Student)
-    // فرض بر این است که GradeStudent یک فیلد studentId دارد که به مدل اصلی اشاره می‌کند
     if (deletedGradeStudent.studentId) {
        await Student.findByIdAndDelete(deletedGradeStudent.studentId);
     } else {
-      // اگر ارتباط مستقیم نبود، از طریق کد ملی پاک کنید (مطمئن‌تر)
       await Student.findOneAndDelete({ nationalId: deletedGradeStudent.nationalId });
     }
 
@@ -206,18 +236,16 @@ export async function DELETE(req: Request) {
     );
   }
 }
+
 // ==================== PATCH ====================
-// برای انتشار تغییرات
 export async function PATCH(req: Request) {
   await dbConnect();
   try {
-    // 1. همه دانش‌آموزان را published: true کن
     await GradeStudent.updateMany(
       {},
       { $set: { published: true } }
     );
 
-    // 2. زمان انتشار را در LeagueSetting ذخیره کن
     const now = new Date();
     await LeagueSetting.findOneAndUpdate(
       {},
