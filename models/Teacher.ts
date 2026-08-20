@@ -90,6 +90,7 @@ const TeacherSchema = new Schema(
       type: String,
       default: "",
       trim: true,
+      required:true,
     },
 
     // لینک نمونه تدریس
