@@ -17,11 +17,10 @@ export async function GET(request: Request) {
     const gradeRange = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
     if (isAdmin) {
-      // برای پنل ادمین: تمام دانش‌آموزان این مقطع را به همراه وضعیت انتشار در EliteStudent برمی‌گردانیم
+      // برای پنل ادمین: تمام دانش‌آموزان این مقطع را به همراه وضعیت انتشار برمی‌گردانیم
       const students = await GradeStudent.find({ grade: { $in: gradeRange } })
         .sort({ totalScore: -1 });
 
-      // بررسی اینکه کدام یک از این دانش‌آموزان در جدول EliteStudent به عنوان منتشرشده ثبت شده‌اند
       const eliteRecords = await EliteStudent.find({ category, isPublished: true });
       const eliteIds = new Set(eliteRecords.map((e: any) => e.studentId?.toString()));
 
@@ -36,10 +35,10 @@ export async function GET(request: Request) {
 
       return NextResponse.json(result, { status: 200 });
     } else {
-      // برای کاربران عادی: فقط ۱۵ نفر برتری که در جدول EliteStudent تایید و منتشر شده‌اند
+      // برای کاربران عادی: فقط ۲۰ نفر برتری که در جدول EliteStudent تایید و منتشر شده‌اند
       const eliteRecords = await EliteStudent.find({ category, isPublished: true })
         .sort({ score: -1 })
-        .limit(15);
+        .limit(20); // تغییر به ۲۰ نفر برتر
 
       const result = eliteRecords.map((item: any) => ({
         _id: item._id,
@@ -57,20 +56,17 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: اگر ادمین بخواهد شخصاً موردی را اضافه یا ویرایش کند (یا سازگار با کدهای قبلی)
+// POST: افزودن (در صورت نیاز)
 export async function POST(request: Request) {
   try {
     await dbConnect();
-    const body = await request.json();
-    const { name, grade, score, category } = body;
-    // می‌توانید منطق دلخواه را بگذارید یا از GradeStudent استفاده کنید
     return NextResponse.json({ message: "Success" }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Insertion failed" }, { status: 500 });
   }
 }
 
-// PATCH: تایید نهایی و انتشار ۱۵ نفر برتر مقطع
+// PATCH: تایید نهایی و انتشار ۲۰ نفر برتر مقطع
 export async function PATCH(request: Request) {
   try {
     await dbConnect();
@@ -83,15 +79,15 @@ export async function PATCH(request: Request) {
 
     const gradeRange = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
-    // ۱. گرفتن تمام دانش‌آموزان این مقطع از لیگ علمی مرتب شده بر اساس امتیاز
+    // ۱. گرفتن تمام دانش‌آموزان این مقطع مرتب شده بر اساس امتیاز و محدود به ۲۰ نفر
     const topStudents = await GradeStudent.find({ grade: { $in: gradeRange } })
       .sort({ totalScore: -1 })
-      .limit(15);
+      .limit(20); // تغییر به ۲۰ نفر برتر
 
-    // ۲. پاک کردن رکوردهای قبلی انتشار یافته این مقطع در EliteStudent
+    // ۲. پاک کردن رکوردهای قبلی انتشار یافته این مقطع
     await EliteStudent.deleteMany({ category });
 
-    // ۳. ثبت ۱۵ نفر برتر جدید به عنوان منتشر شده
+    // ۳. ثبت ۲۰ نفر برتر جدید به عنوان منتشر شده
     const eliteDocs = topStudents.map((student: any) => ({
       studentId: student._id,
       name: `${student.firstName} ${student.lastName}`,
@@ -111,7 +107,7 @@ export async function PATCH(request: Request) {
   }
 }
 
-// DELETE: حذف از لیست نخبگان (یا غیرانتشار)
+// DELETE: حذف از لیست نخبگان
 export async function DELETE(request: Request) {
   try {
     await dbConnect();
