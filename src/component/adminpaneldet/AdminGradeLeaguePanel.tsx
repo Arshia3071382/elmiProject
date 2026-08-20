@@ -49,6 +49,9 @@ export default function AdminGradeLeaguePanel() {
   const [saving, setSaving] = useState<boolean>(false);
   const [searchActivity, setSearchActivity] = useState<string>("");
 
+  // لیست پایه‌ها برای نوار ناوبری بالا
+  const allGrades = [2, 3, 4, 5, 6, 7, 8, 9];
+
   // Fetch students
   const fetchStudents = useCallback(async () => {
     if (activeGrade === null) return;
@@ -228,18 +231,41 @@ export default function AdminGradeLeaguePanel() {
     }
   };
 
-  // Grade selection handlers
-  const handleSelectGrade = (gradeId: number) => setActiveGrade(gradeId);
-  const handleBack = () => setActiveGrade(null);
-
   return (
     <div dir="rtl" className="w-full bg-slate-50 min-h-screen p-4 md:p-8 font-[IRANSansXFaNum-Bold] text-slate-800">
       <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* نوار ناوبری سریع پایه‌ها (نمایش در صورت انتخاب یک پایه) */}
+        {activeGrade !== null && (
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2 overflow-x-auto">
+            <span className="text-sm font-bold text-slate-500 pl-4 border-l ml-2">تغییر سریع پایه:</span>
+            {allGrades.map((g) => (
+              <button
+                key={g}
+                onClick={() => setActiveGrade(g)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition whitespace-nowrap ${
+                  activeGrade === g 
+                    ? "bg-blue-600 text-white shadow-md" 
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                پایه {g}
+              </button>
+            ))}
+            <button
+              onClick={() => setActiveGrade(null)}
+              className="mr-auto px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 whitespace-nowrap border border-red-100"
+            >
+              بازگشت به منوی اصلی
+            </button>
+          </div>
+        )}
+
         {activeGrade === null ? (
-          <GradeSelector onSelectGrade={handleSelectGrade} />
+          <GradeSelector onSelectGrade={setActiveGrade} />
         ) : (
           <>
-            <GradeHeader gradeId={activeGrade} onBack={handleBack} />
+            <GradeHeader gradeId={activeGrade} onBack={() => setActiveGrade(null)} />
             <PublishBar 
               lastUpdate={lastUpdate} 
               isPublishing={isPublishing} 

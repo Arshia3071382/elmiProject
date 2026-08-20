@@ -1,13 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
 import {
   FileText,
   CheckCircle2,
   LogOut,
   Loader2,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  CheckCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Container from "./Container";
@@ -96,7 +100,7 @@ const getScientificBadgeInfo = (score: number) => {
   if (score <= 500) {
     return {
       title: "باید بیشتر تلاش کنی",
-      imageUrl: "/images/levels/start.png",
+      imageUrl: "/image/hero11.png",
       levelIndex: 0,
     };
   } else if (score <= 2500) {
@@ -144,7 +148,10 @@ export default function StudentDashboardPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
 
- const fetchDashboardData = async () => {
+  // استیت برای کنترل ایندکس اسلایدر تک‌کارت سطوح علمی
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/student/dashboard");
@@ -156,17 +163,17 @@ export default function StudentDashboardPage() {
       const json = await res.json();
 
       if (json.success && json.data) {
-        // چون ساختار API شما تغییر کرده، از داده‌های داخل profile استفاده می‌کنیم
         const profile = json.data.profile;
         const league = json.data.gradeLeague;
 
+        const totalScore = profile.totalScore || 0;
         setData({
           isComplete: true,
           profile: {
             name: profile.name || "دانش‌آموز عزیز",
             grade: profile.grade || 7,
             level: profile.level || "عضو فعال",
-            totalScore: profile.totalScore || 0,
+            totalScore: totalScore,
             scoreToNextLevel: profile.scoreToNextLevel || 1000,
           },
           gradeLeague: {
@@ -181,6 +188,9 @@ export default function StudentDashboardPage() {
           })) || [],
           lastLeagueUpdate: json.data.lastLeagueUpdate || "امروز",
         });
+
+        const userLevelIdx = getScientificBadgeInfo(totalScore).levelIndex;
+        setCurrentLevelIndex(userLevelIdx);
       } else {
         setFallbackData();
       }
@@ -210,6 +220,7 @@ export default function StudentDashboardPage() {
       badges: [],
       lastLeagueUpdate: "امروز",
     });
+    setCurrentLevelIndex(1);
   };
 
   const handleLogout = async () => {
@@ -228,6 +239,15 @@ export default function StudentDashboardPage() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // توابع ناوبری اسلایدر
+  const handleNextLevel = () => {
+    setCurrentLevelIndex((prev) => (prev + 1) % SCIENTIFIC_LEVELS.length);
+  };
+
+  const handlePrevLevel = () => {
+    setCurrentLevelIndex((prev) => (prev - 1 + SCIENTIFIC_LEVELS.length) % SCIENTIFIC_LEVELS.length);
+  };
 
   if (loading) {
     return (
@@ -272,6 +292,10 @@ export default function StudentDashboardPage() {
         100,
       )
     : 100;
+
+  const activeLevelItem = SCIENTIFIC_LEVELS[currentLevelIndex];
+  const isUserCurrentLevel = scientificInfo.levelIndex === currentLevelIndex;
+  const isUserUnlocked = currentScore >= activeLevelItem.minScore;
 
   return (
     <Container>
@@ -319,7 +343,6 @@ export default function StudentDashboardPage() {
 
           {/* رتبه در لیگ پایه و کارت سطح علمی */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ۱: رتبه در لیگ پایه */}
             {dashboardData.gradeLeague && (
               <motion.div
                 whileHover={{ y: -4 }}
@@ -380,7 +403,6 @@ export default function StudentDashboardPage() {
               </motion.div>
             )}
 
-            {/* ۲: کارت سطح علمی */}
             <motion.div
               whileHover={{ y: -4 }}
               className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-amber-950 rounded-3xl p-6 text-white shadow-2xl border-[3px] border-amber-400/80 ring-4 ring-amber-500/20 flex flex-col items-center justify-center text-center"
@@ -415,7 +437,7 @@ export default function StudentDashboardPage() {
             </motion.div>
           </div>
 
-          {/* ۳: نوار پیشرفت و مسیر مدال‌ها */}
+          {/* ۳: نوار پیشرفت و اسلایدر کشیدنی (Swipeable) سطوح علمی */}
           <motion.div
             whileHover={{ y: -2 }}
             className="bg-white/90 backdrop-blur-xl border border-amber-100 rounded-3xl p-6 shadow-xl space-y-6"
@@ -473,39 +495,114 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            <div
-              dir="ltr"
-              className="grid grid-cols-4 lg:grid-cols-7 gap-3 pt-4 border-t border-slate-100 text-right"
-            >
-              {SCIENTIFIC_LEVELS.map((lvl, index) => {
-                const isUnlocked = currentScore >= lvl.minScore;
-                const isCurrent = scientificInfo.levelIndex === index;
+            {/* بخش اسلایدر کشیدنی (Swipeable Slider) سطوح علمی */}
+            <div className="pt-6 border-t border-slate-100">
+              <div className="text-center mb-4">
+                <span className="text-xs font-bold text-slate-700 font-[iranSans-r]">
+                  برای مشاهده سایر سطوح، کارت را بکشید یا از دکمه‌ها استفاده کنید:
+                </span>
+              </div>
 
-                return (
-                  <div
-                    key={index}
-                    className={`flex flex-col items-center text-center p-3 rounded-2xl border transition-all ${
-                      isCurrent
-                        ? "bg-amber-50 border-amber-500 shadow-md ring-2 ring-amber-500/20 scale-105 opacity-100"
-                        : isUnlocked
-                          ? "bg-slate-50 border-amber-200 opacity-90"
-                          : "bg-slate-50/50 border-slate-100 opacity-40 grayscale"
-                    }`}
-                  >
-                    <img
-                      src={lvl.icon}
-                      alt={lvl.title}
-                      className="w-10 h-10 object-contain mb-2 drop-shadow"
-                    />
-                    <span className="text-[11px] font-bold text-slate-800 line-clamp-1 font-[iranSans-r]">
-                      {lvl.title}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono mt-1">
-                      {lvl.minScore} امتیاز
-                    </span>
+              <div className="w-full max-w-xl mx-auto relative z-10">
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x > 50) handlePrevLevel();
+                    else if (info.offset.x < -50) handleNextLevel();
+                  }}
+                  className="cursor-grab active:cursor-grabbing"
+                >
+                  <div className="relative min-h-[320px] flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={currentLevelIndex}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                        className={`relative w-full bg-white border-2 rounded-3xl shadow-xl p-8 flex flex-col items-center text-center transition-all duration-500 ${
+                          !isUserUnlocked
+                            ? "border-slate-200 grayscale opacity-75 bg-slate-50/50"
+                            : isUserCurrentLevel
+                            ? "border-amber-500 ring-4 ring-amber-500/10 bg-amber-50/20"
+                            : "border-slate-200"
+                        }`}
+                      >
+                        {/* آیکون وضعیت (قفل یا تیک بزرگ سبز) */}
+                        <div className="absolute top-6 right-6">
+                          {!isUserUnlocked ? (
+                            <div className="bg-slate-200 p-2.5 rounded-2xl text-slate-500 shadow-sm">
+                              <Lock className="w-6 h-6" />
+                            </div>
+                          ) : (
+                            <div className="bg-emerald-100 p-2.5 rounded-2xl text-emerald-600 shadow-sm">
+                              <CheckCircle className="w-7 h-7" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* مدال خیلی بزرگ‌تر و واضح‌تر */}
+                        <div className="w-36 h-36 bg-amber-50/60 rounded-3xl flex items-center justify-center mb-5 shadow-inner border border-amber-100/50">
+                          <img
+                            src={activeLevelItem.icon}
+                            alt={activeLevelItem.title}
+                            className="w-28 h-28 object-contain drop-shadow-md"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
+
+                        <h3 className="font-[iranBold] text-slate-900 text-xl mb-2">
+                          {activeLevelItem.title}
+                        </h3>
+
+                        <span className="text-xs text-amber-700 font-mono bg-amber-100/70 px-4 py-1.5 rounded-full mb-5 font-bold">
+                          حداقل {activeLevelItem.minScore.toLocaleString("fa-IR")} امتیاز
+                        </span>
+
+                        {isUserCurrentLevel && (
+                          <span className="px-4 py-1.5 bg-amber-600 text-white rounded-xl text-xs font-bold font-[iranSans-r] shadow-md animate-pulse">
+                            سطح فعلی شما
+                          </span>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
-                );
-              })}
+                </motion.div>
+
+                {/* دکمه‌های ناوبری اسلایدر و نشانگرها (Pagination Dots) */}
+                <div className="flex justify-between items-center mt-6 px-2">
+                  <button
+                    onClick={handlePrevLevel}
+                    className="w-11 h-11 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 flex items-center justify-center shadow-md cursor-pointer transition-all"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  <div className="flex gap-1.5 items-center">
+                    {SCIENTIFIC_LEVELS.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentLevelIndex(i)}
+                        className={`h-2 rounded-full transition-all cursor-pointer ${
+                          i === currentLevelIndex
+                            ? "w-6 bg-amber-500"
+                            : "w-2 bg-slate-200 hover:bg-slate-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleNextLevel}
+                    className="w-11 h-11 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 flex items-center justify-center shadow-md cursor-pointer transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
 
