@@ -1,4 +1,3 @@
-// src/app/api/auth/student/login/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
@@ -8,7 +7,8 @@ export async function POST(req: Request) {
   await dbConnect();
   
   try {
-    const { phone, password } = await req.json();
+    const body = await req.json();
+    const { phone, password } = body;
 
     if (!phone || !password) {
       return NextResponse.json(
@@ -17,20 +17,36 @@ export async function POST(req: Request) {
       );
     }
 
-    const student = await Student.findOne({ phone: phone.trim() });
+    const cleanPhone = phone.trim();
+    const cleanPassword = password.trim();
+
+    const student = await Student.findOne({
+      $or: [
+        { phone: cleanPhone },
+        { username: cleanPhone }
+      ]
+    });
     
-    if (!student || !student.passwordHash) {
+    if (!student) {
       return NextResponse.json(
-        { success: false, error: "شماره تماس یا رمز عبور اشتباه است." },
+        { success: false, error: "کاربری با این مشخصات یافت نشد." },
         { status: 401 }
       );
     }
 
-    const isMatch = await bcrypt.compare(password, student.passwordHash);
+    if (!student.passwordHash) {
+      return NextResponse.json(
+        { success: false, error: "حساب کاربری فاقد رمز عبور است." },
+        { status: 401 }
+      );
+    }
+
+    // مقایسه امن رمز عبور با هش ذخیره شده
+    const isMatch = await bcrypt.compare(cleanPassword, student.passwordHash);
     
     if (!isMatch) {
       return NextResponse.json(
-        { success: false, error: "شماره تماس یا رمز عبور اشتباه است." },
+        { success: false, error: "رمز عبور اشتباه است." },
         { status: 401 }
       );
     }
@@ -43,11 +59,6 @@ export async function POST(req: Request) {
         firstName: student.firstName || "",
         lastName: student.lastName || "",
         phone: student.phone || "",
-      },
-      data: {
-        nationalId: student.nationalId || "",
-        firstName: student.firstName || "",
-        lastName: student.lastName || "",
       }
     });
 
@@ -62,9 +73,9 @@ export async function POST(req: Request) {
     return response;
 
   } catch (err: any) {
-    console.error("Detailed Login Error:", err);
+    console.error("Login Error:", err);
     return NextResponse.json(
-      { success: false, error: err.message || "خطای سرور در پردازش درخواست." },
+      { success: false, error: err.message || "خطای سرور." },
       { status: 500 }
     );
   }

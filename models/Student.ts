@@ -2,6 +2,7 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 export interface IStudent {
   _id?: string;
+  username: string;
   firstName: string;
   lastName: string;
   nationalId: string;
@@ -10,7 +11,7 @@ export interface IStudent {
   grade: number;
   isActive: boolean;
   isVerified: boolean;
-  leagueProfile?: mongoose.Types.ObjectId; // اضافه شده برای ارتباط با لیگ
+  leagueProfile?: mongoose.Types.ObjectId;
   lastLoginAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -18,6 +19,15 @@ export interface IStudent {
 
 const StudentSchema = new Schema<IStudent>(
   {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      index: true,
+      minlength: 3,
+      maxlength: 30,
+    },
     firstName: {
       type: String,
       required: true,
@@ -63,7 +73,6 @@ const StudentSchema = new Schema<IStudent>(
       type: Boolean,
       default: false,
     },
-    // اتصال هوشمند و امن به رکورد لیگ نخبگان
     leagueProfile: {
       type: Schema.Types.ObjectId,
       ref: "GradeStudent",

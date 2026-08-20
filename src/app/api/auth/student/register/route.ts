@@ -32,30 +32,64 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { nationalId, phone, password, firstName, lastName, grade } = body;
+    const { username, nationalId, phone, password, firstName, lastName, grade } = body;
 
-    if (!nationalId || !phone || !password) {
-      return NextResponse.json({ success: false, message: "کد ملی، شماره تماس و رمز عبور الزامی هستند." }, { status: 400 });
+    // بررسی فیلدهای اجباری شامل نام کاربری
+    if (!username || !nationalId || !phone || !password) {
+      return NextResponse.json(
+        { success: false, message: "نام کاربری، کد ملی، شماره تماس و رمز عبور الزامی هستند." },
+        { status: 400 }
+      );
     }
 
     const cleanNationalId = normalizeNationalId(nationalId);
+    const cleanUsername = username.trim();
+    const cleanPhone = phone.trim();
 
     if (!isValidNationalId(cleanNationalId)) {
       return NextResponse.json({ success: false, message: "کد ملی وارد شده معتبر نیست." }, { status: 400 });
     }
 
-    // ۱. چک کنیم آیا قبلاً در Student ثبت‌نام کرده است؟
-    let existingStudent = await Student.findOne({ nationalId: cleanNationalId });
-
-    if (existingStudent) {
-      // اگر حساب دارد، بررسی می‌کنیم رمز عبورش ست شده یا باید لاگین کند
+    // ۱. بررسی تکراری نبودن کد ملی
+    const existingStudentByNationalId = await Student.findOne({ nationalId: cleanNationalId });
+    if (existingStudentByNationalId) {
       return NextResponse.json(
-        { success: false, message: "این کد ملی قبلاً ثبت‌نام کرده است. لطفاً وارد شوید." },
+        { 
+          success: false, 
+          field: "nationalId", 
+          message: "این کد ملی قبلاً ثبت‌نام کرده است. لطفاً وارد شوید." 
+        },
         { status: 409 }
       );
     }
 
-    // ۲. بررسی جدول لیگ برای اینکه آیا مسئول علمی او را از قبل وارد کرده است؟
+    // ۲. بررسی تکراری نبودن نام کاربری
+    const existingStudentByUsername = await Student.findOne({ username: cleanUsername });
+    if (existingStudentByUsername) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          field: "username", 
+          message: "این نام کاربری قبلاً انتخاب شده است." 
+        },
+        { status: 409 }
+      );
+    }
+
+    // ۳. بررسی تکراری نبودن شماره تماس
+    const existingStudentByPhone = await Student.findOne({ phone: cleanPhone });
+    if (existingStudentByPhone) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          field: "phone", 
+          message: "این شماره تماس قبلاً ثبت‌نام کرده است. هر شماره تنها مجاز به یک حساب است." 
+        },
+        { status: 409 }
+      );
+    }
+
+    // ۴. بررسی جدول لیگ
     const allGradeStudents = await GradeStudent.find({});
     const gradeStudentRecord = allGradeStudents.find(
       (gs) => normalizeNationalId(gs.nationalId) === cleanNationalId
@@ -72,16 +106,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۳. هش کردن رمز عبور
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
+    // ۵. هش کردن ایمن رمز عبور
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    // ۴. ساخت حساب کاربری جدید در Student و اتصال به لیگ
+    // ۶. ساخت حساب کاربری جدید
     const newStudent = await Student.create({
+      username: cleanUsername,
       firstName: finalFirstName,
       lastName: finalLastName,
       nationalId: cleanNationalId,
-      phone: phone.trim(),
+      phone: cleanPhone,
       passwordHash,
       grade: finalGrade,
       isActive: true,
@@ -89,16 +123,14 @@ export async function POST(req: Request) {
       leagueProfile: gradeStudentRecord ? gradeStudentRecord._id : undefined,
     });
 
-    // ۵. لینک دوطرفه با جدول لیگ
     if (gradeStudentRecord) {
       gradeStudentRecord.studentId = newStudent._id;
       await gradeStudentRecord.save();
     }
 
-    // ۶. ست کردن کوکی ورود (StudentToken) و هدایت به داشبورد
     const response = NextResponse.json({
       success: true,
-      message: "ثبت‌نام و اتصال به لیگ با موفقیت انجام شد.",
+      message: "ثبت‌نام با موفقیت انجام شد.",
       redirectTo: "/student/dashboard",
     });
 
