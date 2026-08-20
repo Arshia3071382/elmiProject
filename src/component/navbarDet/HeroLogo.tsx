@@ -20,7 +20,7 @@ interface HeroLogoProps {
 export default function HeroLogo({ logo }: HeroLogoProps) {
   const { scrollY } = useScroll();
 
-  const [showTypography, setShowTypography] = useState(true);
+  const [showTypography, setShowTypography] = useState(false);
 
   // =========================================================
   // اندازه لوگو هنگام Scroll
@@ -35,7 +35,7 @@ export default function HeroLogo({ logo }: HeroLogoProps) {
   });
 
   // =========================================================
-  // Typography → Logo
+  // چرخه زمانی جدید: لوگو (۷ ثانیه) → تایپوگرافی (۴ ثانیه)
   // =========================================================
 
   useEffect(() => {
@@ -43,17 +43,17 @@ export default function HeroLogo({ logo }: HeroLogoProps) {
     let cycleTimer: ReturnType<typeof setTimeout>;
 
     const startCycle = () => {
-      setShowTypography(true);
+      setShowTypography(false);
 
-      // نمایش تایپوگرافی
+      // پس از ۷ ثانیه ماندگاری لوگو، رفتن به تایپوگرافی
       logoTimer = setTimeout(() => {
-        setShowTypography(false);
+        setShowTypography(true);
 
-        // نمایش لوگو
+        // پس از ۴ ثانیه ماندگاری تایپوگرافی، تکرار چرخه
         cycleTimer = setTimeout(() => {
           startCycle();
-        }, 5000);
-      }, 5500);
+        }, 4000); // ۴ ثانیه ماندگاری تایپوگرافی
+      }, 7000); // ۷ ثانیه ماندگاری لوگو
     };
 
     startCycle();
@@ -90,7 +90,107 @@ export default function HeroLogo({ logo }: HeroLogoProps) {
       >
         <AnimatePresence mode="wait">
           {/* =====================================================
-              TYPOGRAPHY
+              MAIN LOGO (نمایش ۷ ثانیه با چرخش سریع در ثانیه دوم)
+          ===================================================== */}
+
+          {!showTypography && (
+            <motion.div
+              key="main-logo"
+              initial={{
+                opacity: 0,
+                scale: 0.72,
+                filter: "blur(8px)",
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                filter: "blur(0px)",
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.9,
+                filter: "blur(5px)",
+              }}
+              transition={{
+                duration: 0.9,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                relative
+                flex
+                items-center
+                justify-center
+                [perspective:1000px]
+              "
+            >
+              {/* Glow بسیار ظریف پشت لوگو */}
+              <motion.div
+                animate={{
+                  opacity: [0.12, 0.24, 0.12],
+                  scale: [0.9, 1.04, 0.9],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="
+                  absolute
+                  inset-0
+                  rounded-full
+                  bg-blue-400/20
+                  blur-xl
+                "
+              />
+
+              {/* لوگوی اصلی */}
+              <motion.div
+                style={{
+                  width: logoSize,
+                  height: logoSize,
+                }}
+                animate={{
+                  y: [0, -3, 0, 2, 0],
+                  // چرخش سریع در ثانیه دوم
+                  rotateY: [0, 0, 360, 360],
+                }}
+                transition={{
+                  y: {
+                    duration: 5.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                  rotateY: {
+                    duration: 2.7,
+                    times: [0, 0.7, 0.95, 1],
+                    ease: [0.25, 1, 0.5, 1],
+                  },
+                }}
+                className="
+                  relative
+                  flex
+                  items-center
+                  justify-center
+                  [transform-style:preserve-3d]
+                "
+              >
+                <Image
+                  src={logo}
+                  alt="لوگوی علمی منتظران"
+                  fill
+                  sizes="76px"
+                  priority
+                  className="
+                    object-contain
+                    drop-shadow-[0_4px_12px_rgba(0,0,0,0.12)]
+                  "
+                />
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* =====================================================
+              TYPOGRAPHY (نمایش ۴ ثانیه)
           ===================================================== */}
 
           {showTypography && (
@@ -127,12 +227,6 @@ export default function HeroLogo({ logo }: HeroLogoProps) {
                 sm:w-[220px]
               "
             >
-              {/* =================================================
-                  فقط خود تایپوگرافی
-                  خط زیرین هم داخل همین تصویر است
-                  هیچ خط دیگری توسط کد اضافه نمی‌شود
-                  ================================================= */}
-
               <motion.div
                 initial={{
                   clipPath: "inset(0 100% 0 0)",
@@ -141,8 +235,8 @@ export default function HeroLogo({ logo }: HeroLogoProps) {
                   clipPath: "inset(0 0% 0 0)",
                 }}
                 transition={{
-                  duration: 2.4,
-                  delay: 0.2,
+                  duration: 2.0,
+                  delay: 0.1,
                   ease: [0.16, 1, 0.3, 1],
                 }}
                 className="
@@ -162,100 +256,6 @@ export default function HeroLogo({ logo }: HeroLogoProps) {
                   className="
                     object-contain
                     drop-shadow-[0_3px_10px_rgba(37,99,235,0.12)]
-                  "
-                />
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* =====================================================
-              MAIN LOGO
-          ===================================================== */}
-
-          {!showTypography && (
-            <motion.div
-              key="main-logo"
-              initial={{
-                opacity: 0,
-                scale: 0.72,
-                filter: "blur(8px)",
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                filter: "blur(0px)",
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.9,
-                filter: "blur(5px)",
-              }}
-              transition={{
-                duration: 0.9,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="
-                relative
-                flex
-                items-center
-                justify-center
-                [perspective:1000px]
-              "
-            >
-              {/* Glow بسیار ظریف پشت لوگو */}
-
-              <motion.div
-                animate={{
-                  opacity: [0.12, 0.24, 0.12],
-                  scale: [0.9, 1.04, 0.9],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="
-                  absolute
-                  inset-0
-                  rounded-full
-                  bg-blue-400/20
-                  blur-xl
-                "
-              />
-
-              {/* لوگوی اصلی */}
-
-              <motion.div
-                style={{
-                  width: logoSize,
-                  height: logoSize,
-                }}
-                animate={{
-                  y: [0, -3, 0, 2, 0],
-                  rotateY: [0, 2, -2, 0],
-                }}
-                transition={{
-                  duration: 5.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="
-                  relative
-                  flex
-                  items-center
-                  justify-center
-                  [transform-style:preserve-3d]
-                "
-              >
-                <Image
-                  src={logo}
-                  alt="لوگوی علمی منتظران"
-                  fill
-                  sizes="76px"
-                  priority
-                  className="
-                    object-contain
-                    drop-shadow-[0_4px_12px_rgba(0,0,0,0.12)]
                   "
                 />
               </motion.div>
