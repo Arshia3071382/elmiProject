@@ -15,8 +15,7 @@ export function StepPenalties({ onNext }: { onNext: () => void }) {
         description="این امتیازها برای تنبیه نیستن؛ فقط کمک می‌کنن رقابت برای همه عادلانه بمونه."
       />
 
-      <ScoreTable title="موارد کسر امتیاز" rows={penalties} accent="orange" />
-
+      <ScoreTable title="موارد کسر امتیاز" rows={penalties} accent="red" />
       <div className="mt-6 rounded-[2rem] bg-white p-7 shadow-sm">
         <h3 className="font-[iranBold] text-lg">چند قانون مهم</h3>
 

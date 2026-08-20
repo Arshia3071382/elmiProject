@@ -9,8 +9,8 @@ interface LevelSliderProps {
   currentIndex: number;
   userLevelIndex: number;
   userScore: number;
-  onNext: () => void;    // رفتن به سطح بعدی (به راست)
-  onPrev: () => void;    // رفتن به سطح قبلی (به چپ)
+  onNext: () => void;
+  onPrev: () => void;
   onSelect: (index: number) => void;
 }
 
@@ -38,28 +38,29 @@ export default function LevelSlider({
         <motion.div
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
           onDragEnd={(_, info) => {
-            // Natural swipe behavior like flipping a book
-            // Swipe right → go to previous (left)
+            // اصلاح جهت اسوایپ بر اساس درخواست شما:
+            // کشیدن به راست (offset مثبت) -> رفتن به سطح بعدی
             if (info.offset.x > 50) {
-              onPrev(); // رفتن به چپ
+              onNext();
             } 
-            // Swipe left → go to next (right)
+            // کشیدن به چپ (offset منفی) -> رفتن به سطح قبلی
             else if (info.offset.x < -50) {
-              onNext(); // رفتن به راست
+              onPrev();
             }
           }}
-          className="cursor-grab active:cursor-grabbing"
+          className="cursor-grab active:cursor-grabbing touch-pan-y"
         >
-          <div className="relative min-h-[320px] flex items-center justify-center">
-            <AnimatePresence mode="wait">
+          <div className="relative min-h-[320px] flex items-center justify-center overflow-hidden">
+            <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={currentIndex}
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                className={`relative w-full bg-white border-2 rounded-3xl shadow-xl p-8 flex flex-col items-center text-center transition-all duration-500 ${
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className={`relative w-full bg-white border-2 rounded-3xl shadow-xl p-8 flex flex-col items-center text-center transition-colors duration-300 ${
                   !isUserUnlocked
                     ? "border-slate-200 grayscale opacity-75 bg-slate-50/50"
                     : isUserCurrentLevel
