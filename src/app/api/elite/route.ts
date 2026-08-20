@@ -3,7 +3,7 @@ import { dbConnect } from "./../../../../lib/dbConnect";
 import GradeStudent from "./../../../../models/GradeStudent";
 import { EliteStudent } from "./../../../../models/EliteStudent";
 
-// GET: دریافت لیست دانش‌آموزان بر اساس مقطع از جدول لیگ علمی (GradeStudent)
+// GET: دریافت لیست دانش‌آموزان به تفکیک دسته‌بندی و مقطع
 export async function GET(request: Request) {
   try {
     await dbConnect();
@@ -11,14 +11,13 @@ export async function GET(request: Request) {
     const category = searchParams.get("category") || "elementary";
     const isAdmin = searchParams.get("admin") === "true";
 
-    // تعیین بازه پایه‌ها بر اساس مقطع
-    // ابتدایی: پایه‌های ۲، ۳، ۴، ۵، ۶
-    // راهنمایی: پایه‌های ۷، ۸، ۹
-    const gradeRange = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
+    // تفکیک دقیق پایه‌ها بر اساس دسته
+    // ابتدایی: 2 تا 6 | راهنمایی: 7 تا 9
+    const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
     if (isAdmin) {
-      // برای پنل ادمین: تمام دانش‌آموزان این مقطع را به همراه وضعیت انتشار برمی‌گردانیم
-      const students = await GradeStudent.find({ grade: { $in: gradeRange } })
+      // برای ادمین: تمام دانش‌آموزان این پایه‌ها را می‌آوریم
+      const students = await GradeStudent.find({ grade: { $in: targetGrades } })
         .sort({ totalScore: -1 });
 
       const eliteRecords = await EliteStudent.find({ category, isPublished: true });
@@ -35,10 +34,10 @@ export async function GET(request: Request) {
 
       return NextResponse.json(result, { status: 200 });
     } else {
-      // برای کاربران عادی: فقط ۲۰ نفر برتری که در جدول EliteStudent تایید و منتشر شده‌اند
+      // برای کاربران عادی: فقط 20 نفر برتر منتشر شده همان مقطع
       const eliteRecords = await EliteStudent.find({ category, isPublished: true })
         .sort({ score: -1 })
-        .limit(20); // تغییر به ۲۰ نفر برتر
+        .limit(20);
 
       const result = eliteRecords.map((item: any) => ({
         _id: item._id,
@@ -56,7 +55,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: افزودن (در صورت نیاز)
+// POST: خالی یا فرمت پایه
 export async function POST(request: Request) {
   try {
     await dbConnect();
@@ -66,7 +65,7 @@ export async function POST(request: Request) {
   }
 }
 
-// PATCH: تایید نهایی و انتشار ۲۰ نفر برتر مقطع
+// PATCH: تایید نهایی و انتشار 20 نفر برتر مقطع انتخابی (ابتدایی یا راهنمایی به صورت جداگانه)
 export async function PATCH(request: Request) {
   try {
     await dbConnect();
@@ -77,17 +76,17 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Category is required" }, { status: 400 });
     }
 
-    const gradeRange = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
+    const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
-    // ۱. گرفتن تمام دانش‌آموزان این مقطع مرتب شده بر اساس امتیاز و محدود به ۲۰ نفر
-    const topStudents = await GradeStudent.find({ grade: { $in: gradeRange } })
+    // استخراج 20 نفر برتر از پایه‌های همان مقطع
+    const topStudents = await GradeStudent.find({ grade: { $in: targetGrades } })
       .sort({ totalScore: -1 })
-      .limit(20); // تغییر به ۲۰ نفر برتر
+      .limit(20);
 
-    // ۲. پاک کردن رکوردهای قبلی انتشار یافته این مقطع
+    // پاک کردن رکوردهای منتشر شده قبلی فقط برای همین مقطع
     await EliteStudent.deleteMany({ category });
 
-    // ۳. ثبت ۲۰ نفر برتر جدید به عنوان منتشر شده
+    // ثبت 20 نفر برتر جدید این مقطع
     const eliteDocs = topStudents.map((student: any) => ({
       studentId: student._id,
       name: `${student.firstName} ${student.lastName}`,
