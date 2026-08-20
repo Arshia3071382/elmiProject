@@ -4,6 +4,7 @@ import dbConnect from "./../../../../../lib/dbConnect";
 import Student from "./../../../../../models/Student";
 import GradeStudent from "./../../../../../models/GradeStudent";
 import LeagueSetting from "./../../../../../models/LeagueSetting";
+import { EliteStudent } from "./../../../../../models/EliteStudent"; // اضافه شده برای لیگ نخبگان
 
 function normalizeNationalId(id: string): string {
   if (!id) return "";
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
 
     let student = null;
 
-    // ۱. پیدا کردن دانش‌آموز از طریق کوکی معتبر (توکن شامل _id کاربر است)
+    // ۱. پیدا کردن دانش‌آموز از طریق کوکی معتبر
     if (token && token.value) {
       try {
         student = await Student.findById(token.value);
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
 
     const cleanStudentNationalId = normalizeNationalId(student.nationalId);
 
-    // ۳. پیدا کردن یا متصل کردن رکورد لیگ (GradeStudent)
+    // ۳. پیدا کردن یا متصل کردن رکورد لیگ پایه (GradeStudent)
     let gradeRecord = null;
     if (student.leagueProfile) {
       gradeRecord = await GradeStudent.findById(student.leagueProfile);
@@ -77,7 +78,7 @@ export async function GET(req: Request) {
     const grade = gradeRecord?.grade || student.grade || 6;
     const totalScore = gradeRecord?.totalScore || 0;
     
-    // ۴. محاسبه دقیق و استاندارد رتبه در پایه بر اساس امتیاز (با استفاده از شناسه _id و fallback به کد ملی)
+    // ۴. محاسبه دقیق رتبه در لیگ پایه
     const sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
     
     let userIndex = -1;
@@ -95,14 +96,45 @@ export async function GET(req: Request) {
     
     const gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
 
-    // ۵. دریافت تاریخ آخرین به‌روزرسانی لیگ
-    const setting = await LeagueSetting.findOne();
-    const lastLeagueUpdate = setting?.lastUpdate ? new Date(setting.lastUpdate).toLocaleDateString('fa-IR') : "نامشخص";
-
-    // استخراج دقیق نام و نام خانوادگی از مدل اصلی Student با fallback به GradeStudent
+    // ۵. استخراج دقیق نام و نام خانوادگی
     const firstName = student.firstName || gradeRecord?.firstName || "";
     const lastName = student.lastName || gradeRecord?.lastName || "";
     const fullName = `${firstName} ${lastName}`.trim() || "دانش‌آموز";
+
+    // ۶. محاسبه رتبه و امتیاز در لیگ نخبگان (EliteStudent)
+    let eliteLeagueData = null;
+    try {
+      // جستجوی دانش‌آموز بر اساس نام در لیست نخبگان منتشر شده
+      const eliteRecord = await EliteStudent.findOne({
+        name: { $regex: new RegExp(fullName, "i") },
+        isPublished: true,
+      });
+
+      if (eliteRecord) {
+        const sameCategoryElite = await EliteStudent.find({ 
+          category: eliteRecord.category, 
+          isPublished: true 
+        }).sort({ score: -1 });
+
+        const eliteIndex = sameCategoryElite.findIndex(
+          (e) => e._id.toString() === eliteRecord._id.toString()
+        );
+
+        const eliteRank = eliteIndex !== -1 ? eliteIndex + 1 : 0;
+
+        eliteLeagueData = {
+          score: eliteRecord.score,
+          rank: eliteRank,
+          category: eliteRecord.category,
+        };
+      }
+    } catch (e) {
+      console.error("Elite League fetch error:", e);
+    }
+
+    // ۷. دریافت تاریخ آخرین به‌روزرسانی لیگ
+    const setting = await LeagueSetting.findOne();
+    const lastLeagueUpdate = setting?.lastUpdate ? new Date(setting.lastUpdate).toLocaleDateString('fa-IR') : "نامشخص";
 
     return NextResponse.json({
       success: true,
@@ -120,7 +152,7 @@ export async function GET(req: Request) {
           totalStudents: sameGradeStudents.length || 1,
           scientificLevelTitle: `پایه ${grade}`,
         },
-        eliteLeague: null,
+        eliteLeague: eliteLeagueData, // مقداردهی شد
         badges: [
           { title: "عضو فعال", icon: "⭐" },
           { title: "پیشگام", icon: "🚀" }

@@ -6,14 +6,29 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function EliteLeaguePublicPage() {
-  // مدیریت حالت نمای فعال: null (صفحه انتخاب اولیه) | "elite" (جدول نخبگان)
   const [activeLeague, setActiveLeague] = useState<"elite" | null>(null);
-
-  const [category, setCategory] = useState<"elementary" | "highschool">(
-    "elementary"
-  );
+  const [category, setCategory] = useState<"elementary" | "highschool">("elementary");
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // تابع تبدیل عدد پایه به حروف فارسی
+  const getGradeTitle = (gradeNum: number) => {
+    const map: { [key: number]: string } = {
+      1: "اول",
+      2: "دوم",
+      3: "سوم",
+      4: "چهارم",
+      5: "پنجم",
+      6: "ششم",
+      7: "هفتم",
+      8: "هشتم",
+      9: "نهم",
+      10: "دهم",
+      11: "یازدهم",
+      12: "دوازدهم",
+    };
+    return map[gradeNum] || `${gradeNum}`;
+  };
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -41,9 +56,6 @@ export default function EliteLeaguePublicPage() {
     <div dir="rtl" className="max-w-5xl mx-auto px-4 py-12 font-[iranBold] mt-16 md:mt-20">
       <AnimatePresence mode="wait">
         {activeLeague === null ? (
-          /* =========================================================
-             صفحه اول: انتخاب نوع لیگ (دو باکس جذاب و هم‌تراز)
-             ========================================================= */
           <motion.div
             key="league-selection"
             initial={{ opacity: 0, y: 15 }}
@@ -51,7 +63,6 @@ export default function EliteLeaguePublicPage() {
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
           >
-            {/* عنوان و توضیحات اصلی */}
             <div className="text-center mb-12">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-white mb-4 shadow-lg shadow-amber-500/20">
                 <Trophy className="w-8 h-8" />
@@ -64,9 +75,7 @@ export default function EliteLeaguePublicPage() {
               </p>
             </div>
 
-            {/* گرید دو باکس اصلی */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {/* باکس ۱: لیگ نخبگان (تم طلایی درخشان) */}
               <motion.div
                 whileHover={{ y: -6, scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
@@ -106,7 +115,6 @@ export default function EliteLeaguePublicPage() {
                 </div>
               </motion.div>
 
-              {/* باکس ۲: لیگ علمی پایه (تم فیروزه‌ای/زمردی نوین - هم‌تراز با طلایی) */}
               <Link href="/league/grade" className="block">
                 <motion.div
                   whileHover={{ y: -6, scale: 1.01 }}
@@ -149,9 +157,6 @@ export default function EliteLeaguePublicPage() {
             </div>
           </motion.div>
         ) : (
-          /* =========================================================
-             صفحه دوم: جدول رتبه‌بندی لیگ نخبگان (کد قبلی شما)
-             ========================================================= */
           <motion.div
             key="elite-table"
             initial={{ opacity: 0, y: 15 }}
@@ -159,7 +164,6 @@ export default function EliteLeaguePublicPage() {
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.3 }}
           >
-            {/* دکمه بازگشت به صفحه انتخاب لیگ */}
             <div className="mb-6">
               <button
                 type="button"
@@ -183,7 +187,6 @@ export default function EliteLeaguePublicPage() {
               </p>
             </div>
 
-            {/* سوئیچ مقاطع */}
             <div className="flex justify-center mb-8">
               <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200/50 shadow-inner">
                 <button
@@ -211,7 +214,6 @@ export default function EliteLeaguePublicPage() {
               </div>
             </div>
 
-            {/* جدول داده‌ها */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-right border-collapse text-sm md:text-base">
@@ -252,39 +254,54 @@ export default function EliteLeaguePublicPage() {
                         </td>
                       </tr>
                     ) : (
-                      students.map((student, index) => (
-                        <tr
-                          key={student._id}
-                          className="border-b border-gray-100 hover:bg-gray-50/80 transition duration-150"
-                        >
-                          <td className="p-4 text-right font-black">
-                            {index === 0 && <span className="text-xl ml-1">🥇</span>}
-                            {index === 1 && <span className="text-xl ml-1">🥈</span>}
-                            {index === 2 && <span className="text-xl ml-1">🥉</span>}
-                            {index > 2 && (
-                              <span className="text-gray-400 font-mono text-sm ml-2">
-                                #
-                              </span>
-                            )}
-                            {index > 2 ? index + 1 : ""}
-                          </td>
-                          <td className="p-4 font-bold text-gray-800">
-                            {student.name}
-                          </td>
-                          <td className="p-4 text-right text-gray-600 font-medium">
-                            {student.grade}
-                          </td>
-                          <td
-                            className={`p-4 text-right font-black ${
-                              category === "elementary"
-                                ? "text-amber-600"
-                                : "text-indigo-600"
-                            }`}
+                      students.map((student, index) => {
+                        // تفکیک نام و نام خانوادگی (فرض بر این است که با فاصله جدا شده‌اند)
+                        const nameParts = student.name ? student.name.trim().split(" ") : ["", ""];
+                        const firstName = nameParts[0] || "";
+                        const lastName = nameParts.slice(1).join(" ") || "";
+
+                        return (
+                          <tr
+                            key={student._id}
+                            className="border-b border-gray-100 hover:bg-gray-50/80 transition duration-150"
                           >
-                            {student.score.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))
+                            <td className="p-4 text-right font-black">
+                              {index === 0 && <span className="text-xl ml-1">🥇</span>}
+                              {index === 1 && <span className="text-xl ml-1">🥈</span>}
+                              {index === 2 && <span className="text-xl ml-1">🥉</span>}
+                              {index > 2 && (
+                                <span className="text-gray-400 font-mono text-sm ml-2">
+                                  #
+                                </span>
+                              )}
+                              {index > 2 ? index + 1 : ""}
+                            </td>
+
+                            {/* نام و نام خانوادگی: در موبایل زیر هم (flex-col)، در دسکتاپ کنار هم (md:inline یا md:space-x-reverse) */}
+                            <td className="p-4 font-bold text-gray-800">
+                              <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-1.5">
+                                <span>{firstName}</span>
+                                <span>{lastName}</span>
+                              </div>
+                            </td>
+
+                            {/* پایه تحصیلی به صورت حروف (مثلا چهارم، هفتم و...) */}
+                            <td className="p-4 text-right text-gray-600 font-medium">
+                              {getGradeTitle(Number(student.grade))}
+                            </td>
+
+                            <td
+                              className={`p-4 text-right font-black ${
+                                category === "elementary"
+                                  ? "text-amber-600"
+                                  : "text-indigo-600"
+                              }`}
+                            >
+                              {student.score.toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>

@@ -27,16 +27,14 @@ export async function POST(req: Request) {
       ]
     });
     
-    if (!student) {
-      return NextResponse.json(
-        { success: false, error: "کاربری با این مشخصات یافت نشد." },
-        { status: 401 }
-      );
-    }
+    // پیام خطای واحد و امن برای جلوگیری از سوءاستفاده
+    const genericErrorMessage = "شماره تماس یا رمز عبور اشتباه است.";
 
-    if (!student.passwordHash) {
+    if (!student || !student.passwordHash) {
+      // اجرای هش صوری برای جلوگیری از Timing Attack و یکسان‌سازی زمان پاسخ سرور
+      await bcrypt.compare(cleanPassword, "$2a$10$invalidhashvaluetomatchtiming123456789");
       return NextResponse.json(
-        { success: false, error: "حساب کاربری فاقد رمز عبور است." },
+        { success: false, error: genericErrorMessage },
         { status: 401 }
       );
     }
@@ -46,7 +44,7 @@ export async function POST(req: Request) {
     
     if (!isMatch) {
       return NextResponse.json(
-        { success: false, error: "رمز عبور اشتباه است." },
+        { success: false, error: genericErrorMessage },
         { status: 401 }
       );
     }
@@ -75,7 +73,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("Login Error:", err);
     return NextResponse.json(
-      { success: false, error: err.message || "خطای سرور." },
+      { success: false, error: "خطای سرور. لطفاً دوباره تلاش کنید." },
       { status: 500 }
     );
   }

@@ -36,6 +36,11 @@ export interface DashboardData {
     totalStudents: number;
     scientificLevelTitle: string;
   } | null;
+  eliteLeague?: {
+    score: number;
+    rank: number;
+    category: string;
+  } | null; // اضافه شده برای لیگ نخبگان
   badges: Array<{ title: string; icon: string }>;
   lastLeagueUpdate: string;
 }

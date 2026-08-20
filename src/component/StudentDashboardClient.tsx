@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Container from "@/component/Container";
 import DashboardHeader from "@/component/student-dashboard/DashboardHeader";
 import GradeLeagueCard from "@/component/student-dashboard/GradeLeagueCard";
+import EliteLeagueCard from "@/component/student-dashboard/EliteLeagueCard"; // اضافه شده برای لیگ نخبگان
 import ScientificLevelCard from "@/component/student-dashboard/ScientificLevelCard";
 import ProgressBar from "@/component/student-dashboard/ProgressBar";
 import LevelSlider from "@/component/student-dashboard/LevelSlider";
@@ -32,6 +33,7 @@ export default function StudentDashboardPage() {
       if (json.success && json.data) {
         const profile = json.data.profile;
         const league = json.data.gradeLeague;
+        const eliteLeague = json.data.eliteLeague; // اطلاعات لیگ نخبگان
         const totalScore = profile.totalScore || 0;
 
         setData({
@@ -49,6 +51,11 @@ export default function StudentDashboardPage() {
             totalStudents: league.totalStudents || 10,
             scientificLevelTitle: league.scientificLevelTitle || "پایه",
           },
+          eliteLeague: eliteLeague ? {
+            score: eliteLeague.score || 0,
+            rank: eliteLeague.rank || 0,
+            category: eliteLeague.category || "elementary",
+          } : null,
           badges: json.data.recentActivities?.map((act: any) => ({
             title: act.title,
             icon: "🎖️",
@@ -84,6 +91,7 @@ export default function StudentDashboardPage() {
         totalStudents: 20,
         scientificLevelTitle: "پایه هفتم",
       },
+      eliteLeague: null,
       badges: [],
       lastLeagueUpdate: "امروز",
     });
@@ -129,6 +137,7 @@ export default function StudentDashboardPage() {
       totalScore: 0,
       scoreToNextLevel: 1000,
     },
+    eliteLeague: null,
     badges: [],
     lastLeagueUpdate: "امروز",
   };
@@ -146,8 +155,9 @@ export default function StudentDashboardPage() {
 
   return (
     <Container>
-      <div dir="rtl" className="min-h-screen bg-gradient-to-br mt-10 sm:mt-30 from-slate-50 via-blue-50/20 to-slate-100 p-4 sm:p-6 lg:p-8 pb-20 font-[iranBold]">
+      <div dir="rtl" className="min-h-screen bg-gradient-to-br mt-10 sm:mt-15 from-slate-50 via-blue-50/20 to-slate-100 p-4 sm:p-6 lg:p-8 pb-20 font-[iranBold]">
         <div className="max-w-7xl mx-auto space-y-6">
+      {/* بخش سلام و خوش‌آمدگویی */}
           <DashboardHeader
             name={dashboardData.profile.name}
             grade={dashboardData.profile.grade}
@@ -156,6 +166,15 @@ export default function StudentDashboardPage() {
             onLogout={handleLogout}
           />
 
+          {/* کارت طلایی و جشن لیگ نخبگان (فقط اگر رتبه داشته باشد بلافاصله بعد از سلام نمایش داده می‌شود) */}
+          {dashboardData.eliteLeague && dashboardData.eliteLeague.rank > 0 && (
+            <EliteLeagueCard
+              rank={dashboardData.eliteLeague.rank}
+              category={dashboardData.eliteLeague.category}
+            />
+          )}
+
+          {/* بقیه کارت‌ها و گریدها */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {dashboardData.gradeLeague && (
               <GradeLeagueCard
@@ -172,7 +191,6 @@ export default function StudentDashboardPage() {
               title={scientificInfo.title}
             />
           </div>
-
           <div className="bg-white/90 backdrop-blur-xl border border-amber-100 rounded-3xl p-6 shadow-xl space-y-6">
             <ProgressBar
               currentScore={currentScore}
