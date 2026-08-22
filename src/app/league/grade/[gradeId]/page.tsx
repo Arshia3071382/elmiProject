@@ -159,13 +159,13 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
               <table className="w-full text-right border-collapse text-xs sm:text-base table-auto">
                 <thead>
                   <tr className="bg-emerald-700 text-white font-[iranSans-r]">
-                    <th className="p-2 sm:p-4 text-right w-12 sm:w-20 font-bold">رتبه</th>
-                    <th className="p-2 sm:p-4 text-center w-12 sm:w-24 font-bold">روند</th>
-                    <th className="p-2 text-right sm:hidden font-bold">نام و نام خانوادگی</th>
+                    <th className="p-2 sm:p-4 text-right w-10 sm:w-16 font-bold">رتبه</th>
+                    <th className="p-2 sm:p-4 text-center w-8 sm:w-20 font-bold">روند</th>
+                    <th className="p-2 text-right sm:hidden font-bold">نام و خانوادگی</th>
                     <th className="p-4 text-right hidden sm:table-cell font-bold">نام</th>
                     <th className="p-4 text-right hidden sm:table-cell font-bold">نام خانوادگی</th>
                     <th className="p-2 sm:p-4 text-center font-bold">سطح</th>
-                    <th className="py-2 pr-2 pl-3 sm:py-4 sm:pr-4 sm:pl-8 text-left font-bold">امتیاز</th>
+                    <th className="py-2 pr-1 pl-2 sm:py-4 sm:pr-4 sm:pl-8 text-left font-bold">امتیاز</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-emerald-50">
@@ -175,9 +175,9 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                     let rankBadge = null;
                     let rowBg = "hover:bg-emerald-50/50";
 
-                    if (currentRank === 1) { rankBadge = <span className="text-base sm:text-xl ml-1">🥇</span>; rowBg = "bg-emerald-100/60 border-r-4 border-emerald-600 hover:bg-emerald-100/80"; }
-                    else if (currentRank === 2) { rankBadge = <span className="text-base sm:text-xl ml-1">🥈</span>; rowBg = "bg-emerald-50/80 border-r-4 border-emerald-400 hover:bg-emerald-100/50"; }
-                    else if (currentRank === 3) { rankBadge = <span className="text-base sm:text-xl ml-1">🥉</span>; rowBg = "bg-emerald-50/40 border-r-4 border-emerald-300 hover:bg-emerald-50/70"; }
+                    if (currentRank === 1) { rankBadge = <span className="text-sm sm:text-xl ml-0.5">🥇</span>; rowBg = "bg-emerald-100/60 border-r-4 border-emerald-600 hover:bg-emerald-100/80"; }
+                    else if (currentRank === 2) { rankBadge = <span className="text-sm sm:text-xl ml-0.5">🥈</span>; rowBg = "bg-emerald-50/80 border-r-4 border-emerald-400 hover:bg-emerald-100/50"; }
+                    else if (currentRank === 3) { rankBadge = <span className="text-sm sm:text-xl ml-0.5">🥉</span>; rowBg = "bg-emerald-50/40 border-r-4 border-emerald-300 hover:bg-emerald-50/70"; }
 
                     const prevRank = student.previousRank && student.previousRank > 0 
                       ? student.previousRank 
@@ -190,23 +190,23 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                         {/* رتبه */}
                         <td className="p-2 sm:p-4 text-right font-black">
                           <div className="flex items-center gap-1">
-                            {rankBadge || (<span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[11px] sm:text-xs font-mono text-emerald-800">{toPersianDigits(currentRank)}</span>)}
+                            {rankBadge || (<span className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[10px] sm:text-xs font-mono text-emerald-800">{toPersianDigits(currentRank)}</span>)}
                           </div>
                         </td>
 
-                        {/* ستون روند (فقط فلش در موبایل، فلش + عدد در دسکتاپ) */}
+                        {/* ستون روند (فلش مینیمال بدون پس‌زمینه اضافه در موبایل) */}
                         <td className="p-2 sm:p-4 text-center">
                           <div className="flex items-center justify-center">
                             {rankDiff > 0 ? (
-                              <span className="text-emerald-600 text-xs font-bold flex items-center justify-center gap-0.5 bg-emerald-50 px-1.5 sm:px-2 py-1 rounded-lg border border-emerald-200" title={`صعود ${rankDiff} پله‌ای`}>
-                                ▲ <span className="hidden sm:inline">{toPersianDigits(rankDiff)}</span>
+                              <span className="text-emerald-600 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 sm:bg-emerald-50 sm:px-2 sm:py-1 sm:rounded-lg sm:border sm:border-emerald-200" title={`صعود ${rankDiff} پله‌ای`}>
+                                ▲ <span className="hidden sm:inline font-mono">{toPersianDigits(rankDiff)}</span>
                               </span>
                             ) : rankDiff < 0 ? (
-                              <span className="text-rose-600 text-xs font-bold flex items-center justify-center gap-0.5 bg-rose-50 px-1.5 sm:px-2 py-1 rounded-lg border border-rose-200" title={`سقوط ${Math.abs(rankDiff)} پله‌ای`}>
-                                ▼ <span className="hidden sm:inline">{toPersianDigits(Math.abs(rankDiff))}</span>
+                              <span className="text-rose-600 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 sm:bg-rose-50 sm:px-2 sm:py-1 sm:rounded-lg sm:border sm:border-rose-200" title={`سقوط ${Math.abs(rankDiff)} پله‌ای`}>
+                                ▼ <span className="hidden sm:inline font-mono">{toPersianDigits(Math.abs(rankDiff))}</span>
                               </span>
                             ) : (
-                              <span className="text-slate-400 text-xs font-bold">-</span>
+                              <span className="text-slate-300 text-xs">-</span>
                             )}
                           </div>
                         </td>
@@ -214,8 +214,8 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                         {/* موبایل: نام و نام خانوادگی */}
                         <td className="p-2 font-bold text-slate-800 sm:hidden">
                           <div className="flex flex-col">
-                            <span className="text-slate-900">{student.firstName || "نامشخص"}</span>
-                            <span className="text-slate-600 font-medium text-[11px]">{student.lastName || "نامشخص"}</span>
+                            <span className="text-slate-900 text-xs">{student.firstName || "نامشخص"}</span>
+                            <span className="text-slate-500 font-medium text-[10px]">{student.lastName || "نامشخص"}</span>
                           </div>
                         </td>
 
@@ -229,15 +229,15 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
 
                         {/* سطح */}
                         <td className="p-2 sm:p-4 text-center">
-                          <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border ${studentLevel.color} shadow-xs font-[iranSans-r]`}>
-                            <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 hidden sm:inline-block" />
+                          <span className={`inline-flex items-center gap-1 px-1.5 sm:px-3 py-1 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-bold border ${studentLevel.color} shadow-xs font-[iranSans-r]`}>
+                            <ShieldCheck className="w-3 h-3 hidden sm:inline-block" />
                             <span className="sm:hidden">{studentLevel.short}</span>
                             <span className="hidden sm:inline">{studentLevel.full}</span>
                           </span>
                         </td>
 
                         {/* امتیاز کل */}
-                        <td className="py-2 pr-2 pl-3 sm:py-4 sm:pr-4 sm:pl-8 text-left font-black text-emerald-700 font-mono text-xs sm:text-base">
+                        <td className="py-2 pr-1 pl-2 sm:py-4 sm:pr-4 sm:pl-8 text-left font-black text-emerald-700 font-mono text-[11px] sm:text-base">
                           {toPersianDigits(student.totalScore?.toLocaleString() || 0)}
                         </td>
                       </tr>

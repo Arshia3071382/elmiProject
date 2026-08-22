@@ -1,5 +1,5 @@
-// Welcome header with logout
-import { LogOut, Loader2 } from "lucide-react";
+// Welcome header with edit profile and logout buttons side by side
+import { LogOut, Loader2, UserCog } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DashboardHeaderProps {
@@ -8,6 +8,7 @@ interface DashboardHeaderProps {
   level: string;
   isLoggingOut: boolean;
   onLogout: () => void;
+  onEditProfile: () => void;
 }
 
 export default function DashboardHeader({
@@ -16,6 +17,7 @@ export default function DashboardHeader({
   level,
   isLoggingOut,
   onLogout,
+  onEditProfile,
 }: DashboardHeaderProps) {
   return (
     <motion.div
@@ -40,18 +42,29 @@ export default function DashboardHeader({
         </p>
       </div>
 
-      <button
-        onClick={onLogout}
-        disabled={isLoggingOut}
-        className="bg-red-500/85 hover:bg-red-600 text-white px-5 py-3 rounded-2xl backdrop-blur-md transition-all flex items-center gap-2 shadow-lg font-[iranSans-r] text-sm shrink-0 border border-red-400/40 cursor-pointer"
-      >
-        {isLoggingOut ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <LogOut className="w-4 h-4" />
-        )}
-        <span>خروج از حساب کاربری</span>
-      </button>
+      {/* دکمه‌های ویرایش اطلاعات و خروج در کنار هم (حتی در موبایل) */}
+      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+        <button
+          onClick={onEditProfile}
+          className="flex-1 sm:flex-none bg-white/15 hover:bg-white/25 text-white px-3 sm:px-4 py-2.5 rounded-2xl backdrop-blur-md transition-all flex items-center justify-center gap-1.5 shadow-lg font-[iranSans-r] text-xs sm:text-sm border border-white/20 cursor-pointer"
+        >
+          <UserCog className="w-4 h-4" />
+          <span>ویرایش اطلاعات</span>
+        </button>
+
+        <button
+          onClick={onLogout}
+          disabled={isLoggingOut}
+          className="flex-1 sm:flex-none bg-red-500/85 hover:bg-red-600 text-white px-3 sm:px-4 py-2.5 rounded-2xl backdrop-blur-md transition-all flex items-center justify-center gap-1.5 shadow-lg font-[iranSans-r] text-xs sm:text-sm border border-red-400/40 cursor-pointer"
+        >
+          {isLoggingOut ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <LogOut className="w-4 h-4" />
+          )}
+          <span>{isLoggingOut ? "در حال خروج..." : "خروج"}</span>
+        </button>
+      </div>
     </motion.div>
   );
 }

@@ -112,74 +112,61 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
       <header
         dir="rtl"
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 lg:hidden ${
-          isScrolled ? "pt-2" : "pt-3"
+          isScrolled ? "pt-1.5" : "pt-2"
         }`}
       >
         <Container>
           <div className="flex flex-col items-center">
             {/* Navbar */}
-            <nav className="relative flex h-16 w-full items-center justify-between rounded-2xl border border-white/80 bg-white/75 px-3.5 backdrop-blur-2xl transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.8)]">
+            <nav className="relative flex h-14 w-full items-center justify-between rounded-2xl border border-white/80 bg-white/80 px-3.5 backdrop-blur-xl transition-all duration-500 shadow-[0_4px_20px_rgb(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.9)]">
               <div className="relative z-10 flex items-center">
                 <motion.button
-                  whileTap={{ scale: 0.9 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setIsOpen(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-100/70 text-slate-800 backdrop-blur-md active:bg-slate-200 shadow-sm"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/70 text-slate-800 backdrop-blur-md active:bg-slate-100 shadow-2xs"
                   aria-label="باز کردن منو"
                 >
                   <div className="flex flex-col gap-1 items-center justify-center">
-                    <span className="h-0.5 w-4.5 rounded-full bg-slate-800" />
-                    <span className="h-0.5 w-3 rounded-full bg-slate-600 self-start" />
-                    <span className="h-0.5 w-4.5 rounded-full bg-slate-800" />
+                    <span className="h-0.5 w-4 rounded-full bg-slate-800" />
+                    <span className="h-0.5 w-2.5 rounded-full bg-slate-600 self-start mr-0.5" />
+                    <span className="h-0.5 w-4 rounded-full bg-slate-800" />
                   </div>
                 </motion.button>
               </div>
 
-              <HeroLogo logo={logo} />
+              {/* لوگو دقیقاً در مرکز صفحه با پوزیشن مطلق */}
+              <div className="absolute left-1/2 -translate-x-1/2 z-10 flex items-center justify-center pointer-events-auto">
+                <HeroLogo logo={logo} />
+              </div>
 
               <div className="relative z-10 flex items-center">
                 <Link href="/notices" aria-label="اعلانات">
                   <motion.div
-                    whileTap={{ scale: 0.9 }}
-                    animate={
-                      hasUnread
-                        ? {
-                            rotate: [0, -15, 15, -15, 15, 0],
-                            scale: [1, 1.08, 1],
-                          }
-                        : {}
-                    }
-                    transition={{
-                      duration: 1.2,
-                      repeat: hasUnread ? Infinity : 0,
-                      repeatDelay: 8,
-                      ease: "easeInOut",
-                    }}
-                    className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-100/70 text-slate-700 backdrop-blur-md active:bg-slate-200 shadow-sm"
+                    whileTap={{ scale: 0.95 }}
+                    className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/70 text-slate-700 backdrop-blur-md active:bg-slate-100 shadow-2xs"
                   >
-                    <Bell className="h-4.5 w-4.5 text-slate-700" />
+                    <Bell className="h-4 w-4 text-slate-700" />
 
                     {hasUnread && (
-                      <>
-                        <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.6)]">
-                          {unreadCount > 99 ? "99+" : unreadCount}
-                        </span>
-                        <span className="absolute top-0 right-0 flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
-                        </span>
-                      </>
+                      <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.7)]" />
+                      </span>
                     )}
                   </motion.div>
                 </Link>
               </div>
             </nav>
 
-            <FloatingActionDock />
+            {/* کاهش فاصله اکشن ایسلند با ناوبر */}
+            <div className="-mt-1 w-full">
+              <FloatingActionDock />
+            </div>
           </div>
         </Container>
       </header>
 
-      <div className="h-32 lg:hidden" />
+      <div className="h-28 lg:hidden" />
 
       {/* Drawer Navigation */}
       <AnimatePresence>
@@ -189,52 +176,52 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-slate-950/35 backdrop-blur-md"
+              className="fixed inset-0 bg-slate-950/30 backdrop-blur-xs"
             />
 
             <motion.div
               initial={{ x: "100%", opacity: 0.5 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed inset-y-0 right-0 w-[88%] max-w-sm border-l border-white/60 bg-white/95 p-5 shadow-2xl backdrop-blur-2xl flex flex-col justify-between overflow-y-auto"
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="fixed inset-y-0 right-0 w-[85%] max-w-xs border-l border-white/60 bg-white/95 p-4 shadow-2xl backdrop-blur-2xl flex flex-col justify-between overflow-y-auto"
             >
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-100">
-                      <Sparkles className="h-4 w-4 text-blue-600" />
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 border border-blue-100">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-['iranBold'] text-sm text-slate-900">
+                      <h3 className="font-['iranBold'] text-xs text-slate-900">
                         علمی منتظران
                       </h3>
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-[9px] text-slate-400">
                         پلتفرم آموزشی هوشمند
                       </p>
                     </div>
                   </div>
 
                   <motion.button
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setIsOpen(false)}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-100/80 text-slate-600"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/80 bg-slate-100/80 text-slate-600"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </motion.button>
                 </div>
 
                 {/* بخش دکمه‌های ورود و ثبت‌نام با بورد متحرک */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-3.5 grid grid-cols-2 gap-2.5">
                   {/* دکمه ورود */}
                   <div
                     onClick={() => {
                       setIsOpen(false);
                       setIsLoginOpen(true);
                     }}
-                    className="group relative block rounded-2xl p-[1px] overflow-hidden cursor-pointer"
+                    className="group relative block rounded-xl p-[1px] overflow-hidden cursor-pointer"
                   >
                     <div className="absolute -inset-[100%] pointer-events-none">
                       <motion.div
@@ -246,8 +233,8 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                         }}
                       />
                     </div>
-                    <div className="relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-[15px] bg-sky-50/90 text-blue-900 font-bold text-xs transition-all duration-300 group-hover:bg-sky-100">
-                      <LogIn className="h-4 w-4 text-blue-600" />
+                    <div className="relative flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-[11px] bg-sky-50/90 text-blue-900 font-bold text-xs transition-all duration-300 group-hover:bg-sky-100">
+                      <LogIn className="h-3.5 w-3.5 text-blue-600" />
                       <span>ورود</span>
                     </div>
                   </div>
@@ -258,7 +245,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                       setIsOpen(false);
                       setIsRegisterOpen(true);
                     }}
-                    className="group relative block rounded-2xl p-[1px] overflow-hidden cursor-pointer"
+                    className="group relative block rounded-xl p-[1px] overflow-hidden cursor-pointer"
                   >
                     <div className="absolute -inset-[100%] pointer-events-none">
                       <motion.div
@@ -270,15 +257,15 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                         }}
                       />
                     </div>
-                    <div className="relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-[15px] bg-emerald-50/90 text-emerald-900 font-bold text-xs transition-all duration-300 group-hover:bg-emerald-100">
-                      <UserPlus className="h-4 w-4 text-emerald-600" />
+                    <div className="relative flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-[11px] bg-emerald-50/90 text-emerald-900 font-bold text-xs transition-all duration-300 group-hover:bg-emerald-100">
+                      <UserPlus className="h-3.5 w-3.5 text-emerald-600" />
                       <span>ثبت‌نام</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-slate-400 px-2 mb-1">
+                <div className="mt-4 flex flex-col gap-1">
+                  <span className="text-[9px] font-bold text-slate-400 px-2 mb-1">
                     صفحات اصلی
                   </span>
 
@@ -287,19 +274,19 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                     return (
                       <motion.div
                         key={link.href}
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.04 * (idx + 1), type: "spring" }}
+                        transition={{ delay: 0.03 * (idx + 1), type: "spring" }}
                       >
                         <Link
                           href={link.href}
-                          className="flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold text-slate-700 hover:bg-blue-50/80 hover:text-blue-600 transition-all active:scale-[0.98]"
+                          className="flex items-center justify-between rounded-xl p-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/80 hover:text-blue-600 transition-all active:scale-[0.98]"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <Icon className="h-4 w-4 text-slate-400" />
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-3.5 w-3.5 text-slate-400" />
                             <span>{link.label}</span>
                           </div>
-                          <ChevronLeft className="h-3.5 w-3.5 text-slate-300" />
+                          <ChevronLeft className="h-3 w-3 text-slate-300" />
                         </Link>
                       </motion.div>
                     );
@@ -308,11 +295,11 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
               </div>
 
               {/* پنل مدیریت در پایین منو */}
-              <div className="pt-4 border-t border-slate-100 mt-4">
+              <div className="pt-3 border-t border-slate-100 mt-3">
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={handleOpenLoginModal}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
                 >
                   <ShieldCheck className="h-4 w-4 text-slate-500" />
                   <span>ورود به پنل مدیریت</span>
