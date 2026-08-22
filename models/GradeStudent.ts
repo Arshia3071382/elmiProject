@@ -7,6 +7,7 @@ export interface IGradeStudent extends Document {
   grade: number;
   selectedActivities: string[];
   totalScore: number;
+  previousRank?: number; // اضافه شده برای ذخیره رتبه قبلی
   published: boolean;
   studentId?: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -21,6 +22,7 @@ const GradeStudentSchema = new Schema<IGradeStudent>(
     grade: { type: Number, required: true },
     selectedActivities: { type: [String], default: [] },
     totalScore: { type: Number, default: 0 },
+    previousRank: { type: Number, default: 0 }, // مقدار پیش‌فرض
     published: { type: Boolean, default: true },
     studentId: { type: Schema.Types.ObjectId, ref: "Student" },
   },

@@ -19,9 +19,9 @@ interface IStudent {
   grade: number;
   selectedActivities: string[];
   totalScore: number;
+  previousRank?: number; // اضافه شده
   published: boolean;
 }
-
 export default function AdminGradeLeaguePanel() {
   // States
   const [activeGrade, setActiveGrade] = useState<number | null>(null);
@@ -77,7 +77,13 @@ export default function AdminGradeLeaguePanel() {
   // Create student
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFirstName.trim() || !newLastName.trim() || !newNationalId.trim() || activeGrade === null) return;
+    if (
+      !newFirstName.trim() ||
+      !newLastName.trim() ||
+      !newNationalId.trim() ||
+      activeGrade === null
+    )
+      return;
 
     setCreating(true);
     try {
@@ -112,7 +118,9 @@ export default function AdminGradeLeaguePanel() {
   const handleDeleteStudent = async (id: string) => {
     if (!confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`/api/league/grade?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/league/grade?id=${id}`, {
+        method: "DELETE",
+      });
       const data = await res.json();
       if (data.success) {
         await fetchStudents();
@@ -171,7 +179,7 @@ export default function AdminGradeLeaguePanel() {
 
   const toggleActivity = (id: string) => {
     setActiveCheckboxes((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -232,20 +240,24 @@ export default function AdminGradeLeaguePanel() {
   };
 
   return (
-    <div dir="rtl" className="w-full bg-slate-50 min-h-screen p-4 md:p-8 font-[IRANSansXFaNum-Bold] text-slate-800">
+    <div
+      dir="rtl"
+      className="w-full bg-slate-50 min-h-screen p-4 md:p-8 font-[IRANSansXFaNum-Bold] text-slate-800"
+    >
       <div className="max-w-6xl mx-auto space-y-6">
-        
         {/* نوار ناوبری سریع پایه‌ها (نمایش در صورت انتخاب یک پایه) */}
         {activeGrade !== null && (
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2 overflow-x-auto">
-            <span className="text-sm font-bold text-slate-500 pl-4 border-l ml-2">تغییر سریع پایه:</span>
+            <span className="text-sm font-bold text-slate-500 pl-4 border-l ml-2">
+              تغییر سریع پایه:
+            </span>
             {allGrades.map((g) => (
               <button
                 key={g}
                 onClick={() => setActiveGrade(g)}
                 className={`px-4 py-2 rounded-xl text-sm font-bold transition whitespace-nowrap ${
-                  activeGrade === g 
-                    ? "bg-blue-600 text-white shadow-md" 
+                  activeGrade === g
+                    ? "bg-blue-600 text-white shadow-md"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
@@ -265,13 +277,16 @@ export default function AdminGradeLeaguePanel() {
           <GradeSelector onSelectGrade={setActiveGrade} />
         ) : (
           <>
-            <GradeHeader gradeId={activeGrade} onBack={() => setActiveGrade(null)} />
-            <PublishBar 
-              lastUpdate={lastUpdate} 
-              isPublishing={isPublishing} 
-              onPublish={handlePublishChanges} 
+            <GradeHeader
+              gradeId={activeGrade}
+              onBack={() => setActiveGrade(null)}
             />
-            
+            <PublishBar
+              lastUpdate={lastUpdate}
+              isPublishing={isPublishing}
+              onPublish={handlePublishChanges}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <StudentForm
                 gradeId={activeGrade}
@@ -284,7 +299,7 @@ export default function AdminGradeLeaguePanel() {
                 onNationalIdChange={setNewNationalId}
                 onSubmit={handleCreateStudent}
               />
-              
+
               <StudentTable
                 students={students}
                 gradeId={activeGrade}

@@ -241,11 +241,28 @@ export async function DELETE(req: Request) {
 export async function PATCH(req: Request) {
   await dbConnect();
   try {
-    await GradeStudent.updateMany(
-      {},
-      { $set: { published: true } }
-    );
+    // ۱. ابتدا برای هر پایه، دانش‌آموزان را بر اساس امتیاز مرتب می‌کنیم تا رتبه فعلی آن‌ها مشخص شود
+    const grades = [2, 3, 4, 5, 6, 7, 8, 9];
+    
+    for (const gradeNum of grades) {
+      const studentsInGrade = await GradeStudent.find({ grade: gradeNum }).sort({ totalScore: -1 });
+      
+      // رتبه فعلی هر دانش‌آموز را به عنوان رتبه قبلی (previousRank) ذخیره می‌کنیم
+      for (let i = 0; i < studentsInGrade.length; i++) {
+        const student = studentsInGrade[i];
+        const currentCalculatedRank = i + 1;
+        
+        // اگر هنوز previousRank تنظیم نشده، رتبه فعلی را به آن بدهیم تا اختلاف ناگهانی ایجاد نشود
+        const oldRank = student.totalScore > 0 && student.previousRank ? student.previousRank : currentCalculatedRank;
+        
+        await GradeStudent.findByIdAndUpdate(student._id, {
+          previousRank: oldRank, // ذخیره رتبه پیشین
+          published: true
+        });
+      }
+    }
 
+    // ۲. ثبت زمان آخرین بروزرسانی در تنظیمات لیگ
     const now = new Date();
     await LeagueSetting.findOneAndUpdate(
       {},
@@ -255,7 +272,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "تمامی تغییرات با موفقیت منتشر شد",
+      message: "تمامی تغییرات با موفقیت منتشر شد و رتبه‌ها بروز شدند",
       lastUpdate: now.toISOString(),
     });
   } catch (err) {

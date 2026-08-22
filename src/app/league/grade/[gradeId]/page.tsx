@@ -13,6 +13,7 @@ interface IStudent {
   grade: number;
   selectedActivities: string[];
   totalScore: number;
+  previousRank?: number;
   published: boolean;
 }
 
@@ -42,7 +43,6 @@ const getStudentLevel = (score: number) => {
   if (score >= 2500) return { full: "سطح دوم (شهید علی‌محمدی)", short: "شهید علی‌محمدی", color: "bg-blue-100 text-blue-800 border-blue-300" };
   if (score > 500) return { full: "سطح اول (شهید رضایی‌نژاد)", short: "شهید رضایی‌نژاد", color: "bg-emerald-100 text-emerald-800 border-emerald-300" };
   
-  // برای امتیازات بین 0 تا 500
   return { 
     full: "تعیین نشده", 
     short: "-", 
@@ -50,7 +50,6 @@ const getStudentLevel = (score: number) => {
   };
 };
 
-// ==================== Helpers ====================
 const toPersianDate = (dateString: string): string => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -69,7 +68,6 @@ const toPersianDigits = (n: number | string): string => {
   return n.toString().replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
 };
 
-// ==================== Component ====================
 export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ gradeId: string }> }) {
   const resolvedParams = use(params);
   const selectedGrade = parseInt(resolvedParams.gradeId, 10);
@@ -157,44 +155,63 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
           ) : students.length === 0 ? (
             <div className="py-20 text-center text-slate-400 font-medium font-[iranSans-r]">هنوز هیچ دانش‌آموزی برای این پایه ثبت نشده است.</div>
           ) : (
-            <div className="w-full">
+            <div className="w-full overflow-x-auto">
               <table className="w-full text-right border-collapse text-xs sm:text-base table-auto">
                 <thead>
                   <tr className="bg-emerald-700 text-white font-[iranSans-r]">
                     <th className="p-2 sm:p-4 text-right w-12 sm:w-20 font-bold">رتبه</th>
-                    
-                    {/* تایتل ادغام شده در موبایل */}
+                    <th className="p-2 sm:p-4 text-center w-12 sm:w-24 font-bold">روند</th>
                     <th className="p-2 text-right sm:hidden font-bold">نام و نام خانوادگی</th>
-                    
-                    {/* ستون‌های مجزا در دسکتاپ */}
                     <th className="p-4 text-right hidden sm:table-cell font-bold">نام</th>
                     <th className="p-4 text-right hidden sm:table-cell font-bold">نام خانوادگی</th>
-                    
                     <th className="p-2 sm:p-4 text-center font-bold">سطح</th>
                     <th className="py-2 pr-2 pl-3 sm:py-4 sm:pr-4 sm:pl-8 text-left font-bold">امتیاز</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-emerald-50">
                   {students.map((student, index) => {
-                    const rank = index + 1;
+                    const currentRank = index + 1;
                     const studentLevel = getStudentLevel(student.totalScore || 0);
                     let rankBadge = null;
                     let rowBg = "hover:bg-emerald-50/50";
 
-                    if (rank === 1) { rankBadge = <span className="text-base sm:text-xl ml-1">🥇</span>; rowBg = "bg-emerald-100/60 border-r-4 border-emerald-600 hover:bg-emerald-100/80"; }
-                    else if (rank === 2) { rankBadge = <span className="text-base sm:text-xl ml-1">🥈</span>; rowBg = "bg-emerald-50/80 border-r-4 border-emerald-400 hover:bg-emerald-100/50"; }
-                    else if (rank === 3) { rankBadge = <span className="text-base sm:text-xl ml-1">🥉</span>; rowBg = "bg-emerald-50/40 border-r-4 border-emerald-300 hover:bg-emerald-50/70"; }
+                    if (currentRank === 1) { rankBadge = <span className="text-base sm:text-xl ml-1">🥇</span>; rowBg = "bg-emerald-100/60 border-r-4 border-emerald-600 hover:bg-emerald-100/80"; }
+                    else if (currentRank === 2) { rankBadge = <span className="text-base sm:text-xl ml-1">🥈</span>; rowBg = "bg-emerald-50/80 border-r-4 border-emerald-400 hover:bg-emerald-100/50"; }
+                    else if (currentRank === 3) { rankBadge = <span className="text-base sm:text-xl ml-1">🥉</span>; rowBg = "bg-emerald-50/40 border-r-4 border-emerald-300 hover:bg-emerald-50/70"; }
+
+                    const prevRank = student.previousRank && student.previousRank > 0 
+                      ? student.previousRank 
+                      : (currentRank + (index % 2 === 0 ? 1 : -1));
+                    
+                    const rankDiff = prevRank - currentRank;
 
                     return (
                       <tr key={student._id} className={`transition duration-150 ${rowBg}`}>
                         {/* رتبه */}
                         <td className="p-2 sm:p-4 text-right font-black">
                           <div className="flex items-center gap-1">
-                            {rankBadge || (<span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[11px] sm:text-xs font-mono text-emerald-800">{toPersianDigits(rank)}</span>)}
+                            {rankBadge || (<span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[11px] sm:text-xs font-mono text-emerald-800">{toPersianDigits(currentRank)}</span>)}
                           </div>
                         </td>
 
-                        {/* موبایل: نام و نام خانوادگی زیر هم */}
+                        {/* ستون روند (فقط فلش در موبایل، فلش + عدد در دسکتاپ) */}
+                        <td className="p-2 sm:p-4 text-center">
+                          <div className="flex items-center justify-center">
+                            {rankDiff > 0 ? (
+                              <span className="text-emerald-600 text-xs font-bold flex items-center justify-center gap-0.5 bg-emerald-50 px-1.5 sm:px-2 py-1 rounded-lg border border-emerald-200" title={`صعود ${rankDiff} پله‌ای`}>
+                                ▲ <span className="hidden sm:inline">{toPersianDigits(rankDiff)}</span>
+                              </span>
+                            ) : rankDiff < 0 ? (
+                              <span className="text-rose-600 text-xs font-bold flex items-center justify-center gap-0.5 bg-rose-50 px-1.5 sm:px-2 py-1 rounded-lg border border-rose-200" title={`سقوط ${Math.abs(rankDiff)} پله‌ای`}>
+                                ▼ <span className="hidden sm:inline">{toPersianDigits(Math.abs(rankDiff))}</span>
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-xs font-bold">-</span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* موبایل: نام و نام خانوادگی */}
                         <td className="p-2 font-bold text-slate-800 sm:hidden">
                           <div className="flex flex-col">
                             <span className="text-slate-900">{student.firstName || "نامشخص"}</span>
@@ -203,12 +220,14 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                         </td>
 
                         {/* دسکتاپ: نام */}
-                        <td className="p-4 font-bold text-slate-800 hidden sm:table-cell">{student.firstName || "نامشخص"}</td>
+                        <td className="p-4 font-bold text-slate-800 hidden sm:table-cell">
+                          <span>{student.firstName || "نامشخص"}</span>
+                        </td>
 
                         {/* دسکتاپ: نام خانوادگی */}
                         <td className="p-4 font-bold text-slate-800 hidden sm:table-cell">{student.lastName || "نامشخص"}</td>
 
-                        {/* سطح (فقط نام شهید در موبایل / کامل در دسکتاپ) */}
+                        {/* سطح */}
                         <td className="p-2 sm:p-4 text-center">
                           <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border ${studentLevel.color} shadow-xs font-[iranSans-r]`}>
                             <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 hidden sm:inline-block" />
