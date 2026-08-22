@@ -179,10 +179,10 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                     else if (currentRank === 2) { rankBadge = <span className="text-sm sm:text-xl ml-0.5">🥈</span>; rowBg = "bg-emerald-50/80 border-r-4 border-emerald-400 hover:bg-emerald-100/50"; }
                     else if (currentRank === 3) { rankBadge = <span className="text-sm sm:text-xl ml-0.5">🥉</span>; rowBg = "bg-emerald-50/40 border-r-4 border-emerald-300 hover:bg-emerald-50/70"; }
 
-                    const prevRank = student.previousRank && student.previousRank > 0 
-                      ? student.previousRank 
-                      : (currentRank + (index % 2 === 0 ? 1 : -1));
-                    
+                    // اگر رتبه قبلی وجود داشته باشد، صعود یعنی (رتبه قبلی > رتبه فعلی)
+                    // فرمول دقیق اختلاف رتبه: رتبه قبلی منهای رتبه فعلی
+                    // اگر مثبت شود یعنی صعود کرده (چون رتبه عددی کمتر شده)
+                    const prevRank = student.previousRank && student.previousRank > 0 ? student.previousRank : currentRank;
                     const rankDiff = prevRank - currentRank;
 
                     return (
@@ -194,7 +194,7 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                           </div>
                         </td>
 
-                        {/* ستون روند (فلش مینیمال بدون پس‌زمینه اضافه در موبایل) */}
+                        {/* ستون روند صعود/نزول */}
                         <td className="p-2 sm:p-4 text-center">
                           <div className="flex items-center justify-center">
                             {rankDiff > 0 ? (

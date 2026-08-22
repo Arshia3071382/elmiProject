@@ -85,7 +85,7 @@ const GRADES = [
   { 
     id: 9, 
     label: "پایه نهم", 
-    description: "قله موفقیت و نبرد پایانی", 
+    description: "گروه شهید بکائی", 
     icon: Flame,
     titleColor: "text-green-950",
     descColor: "text-green-600",
