@@ -105,8 +105,7 @@ export async function GET(req: Request) {
     const grade = gradeRecord?.grade || student.grade || 6;
     const totalScore = gradeRecord?.totalScore || 0;
 
-    // ۴. محاسبه دقیق رتبه در لیگ پایه
-  // ۴. محاسبه دقیق رتبه در لیگ پایه بر اساس امتیاز
+    // ۴. محاسبه دقیق رتبه در لیگ پایه بر اساس امتیاز
     const sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
     
     let userIndex = -1;
@@ -146,6 +145,8 @@ export async function GET(req: Request) {
           name: `${higher.firstName || ""} ${higher.lastName || ""}`.trim() || "دانش‌آموز برتر",
           score: higher.totalScore || 0,
         };
+      } else {
+        higherStudent = null; // اگر کاربر در صدر جدول باشد
       }
       
       // نفر پایینی (index + 1) - یعنی رتبه پایین‌تر (امتیاز کمتر)
@@ -155,6 +156,8 @@ export async function GET(req: Request) {
           name: `${lower.firstName || ""} ${lower.lastName || ""}`.trim() || "دانش‌آموز",
           score: lower.totalScore || 0,
         };
+      } else {
+        lowerStudent = null; // اگر کاربر در انتهای جدول باشد
       }
     }
 
@@ -214,8 +217,8 @@ export async function GET(req: Request) {
           rank: gradeRank,
           totalStudents: sameGradeStudents.length || 1,
           scientificLevelTitle: `پایه ${grade}`,
-          higherStudent: higherStudent, // ارسال داده نفر بالا
-          lowerStudent: lowerStudent, // ارسال داده نفر پایین
+          higherStudent: higherStudent, 
+          lowerStudent: lowerStudent, 
         },
         eliteLeague: eliteLeagueData,
         badges: [
