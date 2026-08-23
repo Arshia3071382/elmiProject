@@ -196,6 +196,10 @@ export async function GET(req: Request) {
           level: "فعال",
           totalScore: totalScore,
           scoreToNextLevel: 100 - (totalScore % 100),
+          // اصلاح مقدار آواتار برای پشتیبانی از مسیرهای جدید و جلوگیری از خطای شناسه‌های قدیمی
+          avatar: student.avatar && student.avatar.startsWith("/") 
+            ? student.avatar 
+            : "/image/profile/p2.png",
         },
         gradeLeague: {
           score: totalScore,

@@ -9,6 +9,7 @@ export interface IStudent {
   phone?: string;
   passwordHash: string;
   grade: number;
+  avatar?: string; // ✅ اضافه شدن فیلد آواتار به اینترفیس
   isActive: boolean;
   isVerified: boolean;
   leagueProfile?: mongoose.Types.ObjectId;
@@ -63,6 +64,10 @@ const StudentSchema = new Schema<IStudent>(
       required: true,
       min: 2,
       max: 9,
+    },
+    avatar: {
+      type: String,
+      default: "/image/profile/p1.png", // ✅ اضافه شدن فیلد آواتار به اسکیما
     },
     isActive: {
       type: Boolean,

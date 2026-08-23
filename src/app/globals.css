@@ -6,19 +6,25 @@
   100% { background-position: 0% 50%; }
 }
 
+/* کلاس اختصاصی برای افکت متحرک شفق قطبی روی متن */
+.aurora-text {
+  background: linear-gradient(270deg, #38BDF8, #818CF8, #C084FC, #34D399, #38BDF8);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textGradient 6s ease infinite;
+}
+
 @theme {
+  --color-primary: #1F3A5F;    
+  --color-secondary: #2563EB;   
+  --color-accent: #38BDF8;      
+  --color-success: #22C55E;     
   
-  --color-primary: #1F3A5F;     /* آبی تیره (اصلی) */
-  --color-secondary: #2563EB;   /* آبی برند */
-  --color-accent: #38BDF8;      /* آبی روشن */
-  --color-success: #22C55E;     /* سبز علمی */
+  --color-bg: #F8FAFC;          
+  --color-surface: #FFFFFF;     
+  --color-border: #E5E7EB;      
   
-  /* Neutral */
-  --color-bg: #F8FAFC;          /* پس‌زمینه */
-  --color-surface: #FFFFFF;     /* کارت‌ها */
-  --color-border: #E5E7EB;      /* خطوط */
-  
-  /* Text */
   --color-text-primary: #0F172A;
   --color-text-secondary: #475569;
   --color-text-invert: #FFFFFF;

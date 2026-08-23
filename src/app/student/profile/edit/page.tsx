@@ -15,17 +15,18 @@ import {
   Camera,
   Eye,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const AVATAR_OPTIONS = [
-  { id: "avatar-1", emoji: "👦", bg: "from-blue-400 to-indigo-600", label: "پسرانه ۱" },
-  { id: "avatar-2", emoji: "👧", bg: "from-pink-400 to-rose-600", label: "دخترانه ۱" },
-  { id: "avatar-3", emoji: "🚀", bg: "from-amber-400 to-orange-600", label: "فضایی" },
-  { id: "avatar-4", emoji: "🏆", bg: "from-emerald-400 to-teal-600", label: "قهرمان" },
-  { id: "avatar-5", emoji: "💡", bg: "from-purple-400 to-indigo-600", label: "متخلف" },
-  { id: "avatar-6", emoji: "🌟", bg: "from-yellow-400 to-amber-600", label: "ستاره" },
+  { id: "avatar-1", imageUrl: "/image/profile/p1.png", label: "پسرانه ۱" },
+  { id: "avatar-2", imageUrl: "/image/profile/p2.png", label: "دخترانه ۱" },
+  { id: "avatar-3", imageUrl: "/image/profile/p3.png", label: "فضایی" },
+  { id: "avatar-4", imageUrl: "/image/profile/p4.png", label: "قهرمان" },
+  { id: "avatar-5", imageUrl: "/image/profile/p5.png", label: "متخلف" },
+  { id: "avatar-6", imageUrl: "/image/profile/p6.png", label: "ستاره" },
 ];
 
 export default function EditProfilePage() {
@@ -33,19 +34,17 @@ export default function EditProfilePage() {
   
   const [loading, setLoading] = useState(true);
   
-  // Loading & Messages for each section separately
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPhone, setSavingPhone] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
-  // پیام‌ها و وضعیت‌های مجزا برای هر بخش
   const [profileMessage, setProfileMessage] = useState({ success: "", error: "" });
   const [phoneMessage, setPhoneMessage] = useState({ success: "", error: "" });
   const [passwordMessage, setPasswordMessage] = useState({ success: "", error: "" });
 
-  // Fields
   const [name, setName] = useState("");
-  const [selectedAvatar, setSelectedAvatar] = useState("avatar-1");
+  // مقدار پیش‌فرض را روی URL اولین عکس تنظیم می‌کنیم
+  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0].imageUrl);
   const [phone, setPhone] = useState("");
   
   const [currentPassword, setCurrentPassword] = useState("");
@@ -55,6 +54,8 @@ export default function EditProfilePage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -69,6 +70,7 @@ export default function EditProfilePage() {
           setName(json.data.profile.name || "");
           setPhone(json.data.profile.phone || "");
           if (json.data.profile.avatar) {
+            // تنظیم URL دریافت شده از دیتابیس
             setSelectedAvatar(json.data.profile.avatar);
           }
         }
@@ -81,7 +83,6 @@ export default function EditProfilePage() {
     fetchProfile();
   }, [router]);
 
-  // ۱. هندلر ذخیره مشخصات و آواتار
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileMessage({ success: "", error: "" });
@@ -91,6 +92,7 @@ export default function EditProfilePage() {
       const res = await fetch("/api/student/profile/update", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        // ارسال URL عکس به جای شناسه
         body: JSON.stringify({ name, avatar: selectedAvatar }),
       });
       const json = await res.json();
@@ -106,7 +108,6 @@ export default function EditProfilePage() {
     }
   };
 
-  // ۲. هندلر تغییر شماره موبایل
   const handleUpdatePhone = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneMessage({ success: "", error: "" });
@@ -136,7 +137,6 @@ export default function EditProfilePage() {
     }
   };
 
-  // ۳. هندلر تغییر رمز عبور
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordMessage({ success: "", error: "" });
@@ -146,7 +146,6 @@ export default function EditProfilePage() {
       return;
     }
 
-    // بررسی قوانین جدید: بین ۶ تا ۸ کاراکتر، شامل حرف بزرگ، حرف کوچک و عدد
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,8}$/;
     if (!passwordRegex.test(newPassword)) {
       setPasswordMessage({ 
@@ -192,14 +191,15 @@ export default function EditProfilePage() {
     );
   }
 
-  const activeAvatarObj = AVATAR_OPTIONS.find(a => a.id === selectedAvatar) || AVATAR_OPTIONS[0];
+  // پیدا کردن آواتار فعال بر اساس URL
+  const activeAvatarObj = AVATAR_OPTIONS.find(a => a.imageUrl === selectedAvatar) || AVATAR_OPTIONS[0];
 
   return (
     <Container>
       <div dir="rtl" className="min-h-screen bg-gradient-to-br mt-10 sm:mt-20 from-slate-50 via-blue-50/20 to-slate-100 p-4 sm:p-6 lg:p-8 pb-24 font-[iranBold]">
         <div className="max-w-3xl mx-auto space-y-6">
           
-          <div className="flex items-center justify-between bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between bg-white/85 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 shadow-sm">
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">ویرایش اطلاعات حساب کاربری</h1>
               <p className="text-xs sm:text-sm text-slate-500 font-[iranSans-r] mt-1">
@@ -222,26 +222,43 @@ export default function EditProfilePage() {
                 <Camera className="w-5 h-5 text-blue-600" />
                 <span>مشخصات و تصویر پروفایل</span>
               </div>
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${activeAvatarObj.bg} flex items-center justify-center text-xl shadow-sm`}>
-                {activeAvatarObj.emoji}
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shadow-sm">
+                <img src={activeAvatarObj.imageUrl} alt={activeAvatarObj.label} className="w-full h-full object-cover" />
               </div>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {AVATAR_OPTIONS.map((avatar) => {
-                const isSelected = selectedAvatar === avatar.id;
+                const isSelected = selectedAvatar === avatar.imageUrl;
                 return (
                   <div
                     key={avatar.id}
-                    onClick={() => setSelectedAvatar(avatar.id)}
-                    className={`relative flex flex-col items-center justify-center p-3 rounded-2xl cursor-pointer transition-all border-2 ${
-                      isSelected ? "border-blue-600 bg-blue-50/60 shadow-md scale-105" : "border-slate-100 bg-slate-50 hover:bg-slate-100/80"
+                    className={`relative flex flex-col items-center justify-between p-3 rounded-2xl transition-all border-2 ${
+                      isSelected ? "border-blue-600 bg-blue-50/60 shadow-md" : "border-slate-100 bg-slate-50 hover:bg-slate-100/80"
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${avatar.bg} flex items-center justify-center text-2xl shadow-sm mb-1`}>
-                      {avatar.emoji}
+                    <div 
+                      onClick={() => setPreviewImage(avatar.imageUrl)}
+                      className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shadow-sm mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                      title="کلیک برای بزرگ‌نمایی"
+                    >
+                      <img src={avatar.imageUrl} alt={avatar.label} className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-[10px] text-slate-600 font-[iranSans-r]">{avatar.label}</span>
+                    <span className="text-xs text-slate-700 font-bold mb-2">{avatar.label}</span>
+
+                    <button
+                      type="button"
+                      // ذخیره مستقیم URL عکس در استیت
+                      onClick={() => setSelectedAvatar(avatar.imageUrl)}
+                      className={`w-full py-1.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        isSelected 
+                          ? "bg-blue-600 text-white shadow-sm" 
+                          : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-slate-400"}`} />
+                      <span>{isSelected ? "انتخاب‌شده" : "انتخاب"}</span>
+                    </button>
                   </div>
                 );
               })}
@@ -393,7 +410,6 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-            {/* پیام‌های اختصاصی بخش تغییر رمز عبور */}
             {passwordMessage.success && (
               <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-2xl flex items-center gap-2 text-xs font-[iranSans-r]">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -421,6 +437,38 @@ export default function EditProfilePage() {
 
         </div>
       </div>
+
+      {/* مودال بزرگ‌نمایی تصویر (Preview Modal) */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            onClick={() => setPreviewImage(null)}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9 }} 
+              animate={{ scale: 1 }} 
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-white p-4 rounded-3xl shadow-2xl max-w-sm w-full flex flex-col items-center"
+            >
+              <button 
+                onClick={() => setPreviewImage(null)}
+                className="absolute top-3 left-3 bg-slate-100 hover:bg-slate-200 p-2 rounded-full text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="w-48 h-48 rounded-2xl overflow-hidden shadow-inner border border-slate-100 mt-4 mb-2">
+                <img src={previewImage} alt="Large Preview" className="w-full h-full object-cover" />
+              </div>
+              <p className="text-xs text-slate-500 font-bold">پیش‌نمایش آواتار</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Container>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { Trophy, FileText } from "lucide-react";
 
 export default function StudentDashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -53,7 +54,8 @@ export default function StudentDashboardPage() {
             level: profile.level || "عضو فعال",
             totalScore: totalScore,
             scoreToNextLevel: profile.scoreToNextLevel || 1000,
-          },
+            avatar: profile.avatar || "/image/profile/p1.png",
+          } as any,
           gradeLeague: {
             score: league.score || 0,
             rank: league.rank || 1,
@@ -98,13 +100,14 @@ export default function StudentDashboardPage() {
         level: "عضو جدید",
         totalScore: 750,
         scoreToNextLevel: 1000,
-      },
+        avatar: "/image/profile/p1.png",
+      } as any,
       gradeLeague: {
         score: 750,
         rank: 1,
         totalStudents: 20,
         scientificLevelTitle: "پایه هفتم",
-      },
+      } as any,
       eliteLeague: null,
       badges: [],
       lastLeagueUpdate: "امروز",
@@ -126,9 +129,9 @@ export default function StudentDashboardPage() {
     }
   };
 
-  // Edit profile handler (مسیریابی به صفحه ویرایش اطلاعات)
+  // Edit profile handler
   const handleEditProfile = () => {
-    window.location.href = "/student/profile/edit"; // یا استفاده از useRouter
+    router.push("/student/profile/edit");
   };
 
   useEffect(() => {
@@ -157,6 +160,13 @@ export default function StudentDashboardPage() {
       level: "عضو جدید",
       totalScore: 0,
       scoreToNextLevel: 1000,
+      avatar: "/image/profile/p1.png",
+    },
+    gradeLeague: {
+      score: 0,
+      rank: 1,
+      totalStudents: 1,
+      scientificLevelTitle: "پایه",
     },
     eliteLeague: null,
     badges: [],
@@ -186,11 +196,12 @@ export default function StudentDashboardPage() {
       >
         <div className="max-w-7xl mx-auto space-y-6">
           
-          {/* بخش سلام و خوش‌آمدگویی (شامل Dropdown خروج و ویرایش پروفایل) */}
+          {/* ارسال مقدار avatar به هدر داشبورد */}
           <DashboardHeader
             name={dashboardData.profile.name}
             grade={dashboardData.profile.grade}
             level={dashboardData.profile.level}
+            avatar={(dashboardData.profile as any).avatar}
             isLoggingOut={isLoggingOut}
             onLogout={handleLogout}
             onEditProfile={handleEditProfile}
@@ -226,7 +237,6 @@ export default function StudentDashboardPage() {
           {/* محتوای تب اول: لیگ علمی */}
           {activeTab === "league" && (
             <div className="space-y-6 animate-fadeIn">
-              {/* کارت طلایی لیگ نخبگان */}
               {dashboardData.eliteLeague && dashboardData.eliteLeague.rank > 0 && (
                 <EliteLeagueCard
                   rank={dashboardData.eliteLeague.rank}
