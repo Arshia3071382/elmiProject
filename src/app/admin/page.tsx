@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Star,
-  Headphones // ایمپورت آیکون هدفون برای پادکست‌ها
+  Headphones,
+  FileCheck // 📝 ایمپورت آیکون برای بخش آزمون‌ها
 } from "lucide-react";
 
 import StatsCards from "./../../component/adminpaneldet/StatsCards";
@@ -36,7 +37,8 @@ import SeniorPermissionManager from "@/component/adminpaneldet/SeniorPermissionM
 import AdminNoticePanel from "@/component/adminpaneldet/AdminNoticePanel";
 import AdminTeachersPanel from "@/component/adminpaneldet/AdminTeachersPanel";
 import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel";
-import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel"; // ایمپورت پنل مدیریت پادکست‌ها که ساختیم
+import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel";
+import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel"; // 📝 ایمپورت پنل مدیریت آزمون‌ها
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -51,7 +53,7 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   
-  // مدیریت تب‌ها و منوی موبایل (اضافه شدن "podcasts" به لیست تب‌ها)
+  // مدیریت تب‌ها و منوی موبایل (اضافه شدن "exams" به لیست تب‌ها)
   const [activeMainTab, setActiveMainTab] = useState<
     | "dashboard"
     | "courses"
@@ -66,6 +68,7 @@ export default function AdminPage() {
     | "permissions"
     | "comments"
     | "podcasts"
+    | "exams" // 📝 اضافه شدن تب آزمون‌ها
   >("dashboard");
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -259,7 +262,8 @@ export default function AdminPage() {
     { id: "calendar", label: "تقویم", icon: Calendar },
     { id: "showcase", label: "ویترین", icon: Sparkles },
     { id: "comments", label: "نظرات دانشجویان", icon: Star },
-    { id: "podcasts", label: "پادکست‌های آموزشی", icon: Headphones }, // اضافه شدن تب پادکست‌ها به منو
+    { id: "podcasts", label: "پادکست‌های آموزشی", icon: Headphones },
+    { id: "exams", label: "مدیریت آزمون‌ها", icon: FileCheck }, // 📝 اضافه شدن تب آزمون‌ها به منو
     { id: "permissions", label: "سطح دسترسی ارشد", icon: ShieldCheck },
   ];
 
@@ -291,7 +295,7 @@ export default function AdminPage() {
                 </span>
               </div>
               <p className="text-blue-100/80 text-xs sm:text-sm font-medium">
-                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها، اساتید و پادکست‌های علمی
+                مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها، آزمون‌ها و پادکست‌های علمی
               </p>
             </div>
           </div>
@@ -519,10 +523,16 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* پنل مدیریت پادکست‌ها */}
           {activeMainTab === "podcasts" && (
             <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
               <AdminPodcastPanel />
+            </div>
+          )}
+
+          {/* 📝 پنل مدیریت آزمون‌ها */}
+          {activeMainTab === "exams" && (
+            <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
+              <AdminExamsPanel />
             </div>
           )}
 

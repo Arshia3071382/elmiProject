@@ -1,4 +1,3 @@
-
 export const PERMISSIONS = {
   CALENDAR: "calendar",
   NOTICES: "notices",
@@ -8,6 +7,7 @@ export const PERMISSIONS = {
   COURSES: "courses",
   SHOWCASE: "showcase",
   ARTICLES: "articles",
+  EXAMS: "exams", 
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -21,6 +21,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [PERMISSIONS.COURSES]: "مدیریت دوره‌ها",
   [PERMISSIONS.SHOWCASE]: "نمایشگاه",
   [PERMISSIONS.ARTICLES]: "مدیریت مقالات",
+  [PERMISSIONS.EXAMS]: "مدیریت آزمون‌ها و کارنامه‌ها", 
 };
 
 export const ALL_PERMISSIONS = Object.values(PERMISSIONS);

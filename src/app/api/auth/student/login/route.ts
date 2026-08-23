@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
 import bcrypt from "bcryptjs";
+import { SignJWT } from "jose";
 
 export async function POST(req: Request) {
   await dbConnect();
@@ -27,11 +28,9 @@ export async function POST(req: Request) {
       ]
     });
     
-    // پیام خطای واحد و امن برای جلوگیری از سوءاستفاده
     const genericErrorMessage = "شماره تماس یا رمز عبور اشتباه است.";
 
     if (!student || !student.passwordHash) {
-      // اجرای هش صوری برای جلوگیری از Timing Attack و یکسان‌سازی زمان پاسخ سرور
       await bcrypt.compare(cleanPassword, "$2a$10$invalidhashvaluetomatchtiming123456789");
       return NextResponse.json(
         { success: false, error: genericErrorMessage },
@@ -39,7 +38,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // مقایسه امن رمز عبور با هش ذخیره شده
     const isMatch = await bcrypt.compare(cleanPassword, student.passwordHash);
     
     if (!isMatch) {
@@ -48,6 +46,16 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
+
+    // 🔒 ساخت توکن JWT امن با jose
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
+    );
+    
+    const token = await new SignJWT({ userId: student._id.toString() })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("7d")
+      .sign(secret);
 
     const response = NextResponse.json({
       success: true,
@@ -60,7 +68,8 @@ export async function POST(req: Request) {
       }
     });
 
-    response.cookies.set("studentToken", student._id.toString(), {
+    // قرار دادن توکن امن در کوکی
+    response.cookies.set("studentToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

@@ -3,6 +3,7 @@ import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
 import GradeStudent from "./../../../../../../models/GradeStudent";
 import bcrypt from "bcryptjs";
+import { SignJWT } from "jose"; // 🔒 ایمپورت پکیج ساخت توکن امن
 
 function normalizeNationalId(id: string): string {
   if (!id) return "";
@@ -128,13 +129,24 @@ export async function POST(req: Request) {
       await gradeStudentRecord.save();
     }
 
+    // 🔒 ۷. ساخت توکن JWT امن برای ورود خودکار پس از ثبت‌نام
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+    );
+    
+    const token = await new SignJWT({ userId: newStudent._id.toString() })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("7d")
+      .sign(secret);
+
     const response = NextResponse.json({
       success: true,
       message: "ثبت‌نام با موفقیت انجام شد.",
       redirectTo: "/student/dashboard",
     });
 
-    response.cookies.set("studentToken", newStudent._id.toString(), {
+    // ست کردن کوکی با توکن امن JWT
+    response.cookies.set("studentToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

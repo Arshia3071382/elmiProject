@@ -1,16 +1,29 @@
-// src/app/api/senior-admin/manage-permissions/route.ts
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import dbConnect from "./../../../../../lib/dbConnect";
 import SeniorAdmin from "./../../../../../models/SeniorAdmin";
+import { jwtVerify } from "jose"; // 🔒 در صورت نیاز به بررسی امنیتی توکن ادمین
+
+// کمکی برای اعتبارسنجی ادمین اصلی
+async function verifyAdminAuth(token: string) {
+  try {
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+    );
+    await jwtVerify(token, secret);
+    return true;
+  } catch (e) {
+    // اگر توکن ساختار JWT داشت و نامعتبر بود خطا می‌دهد، 
+    // اگر ادمین اصلی از روش دیگری (مثل Base64 یا سشن) استفاده می‌کند می‌توانید این بخش را تطبیق دهید.
+    return false;
+  }
+}
 
 // GET - دریافت لیست معین‌ها
 export async function GET() {
   try {
     const cookieStore = await cookies();
-
-    // ورود از پنل اصلی ادمین
     const token = cookieStore.get("admin_token")?.value;
 
     if (!token) {
@@ -21,7 +34,7 @@ export async function GET() {
         },
         {
           status: 401,
-        },
+        }
       );
     }
 
@@ -57,7 +70,7 @@ export async function GET() {
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }
@@ -66,8 +79,6 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const cookieStore = await cookies();
-
-    // ورود از پنل اصلی ادمین
     const token = cookieStore.get("admin_token")?.value;
 
     if (!token) {
@@ -78,14 +89,13 @@ export async function PUT(req: Request) {
         },
         {
           status: 401,
-        },
+        }
       );
     }
 
     await dbConnect();
 
     const body = await req.json();
-
     const { username, permissions } = body;
 
     if (!username || typeof username !== "string") {
@@ -96,7 +106,7 @@ export async function PUT(req: Request) {
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -108,7 +118,7 @@ export async function PUT(req: Request) {
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -126,7 +136,7 @@ export async function PUT(req: Request) {
       },
       {
         new: true,
-      },
+      }
     )
       .select("-passwordHash -__v")
       .lean();
@@ -139,18 +149,16 @@ export async function PUT(req: Request) {
         },
         {
           status: 404,
-        },
+        }
       );
     }
 
     return NextResponse.json({
       success: true,
-
       admin: {
         ...updatedAdmin,
         _id: updatedAdmin._id.toString(),
       },
-
       message: "دسترسی‌ها با موفقیت بروزرسانی شد",
     });
   } catch (error) {
@@ -163,7 +171,7 @@ export async function PUT(req: Request) {
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }

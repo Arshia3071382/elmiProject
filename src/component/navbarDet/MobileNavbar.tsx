@@ -34,6 +34,7 @@ import StudentRegisterModal from "@/component/auth/StudentRegisterModal";
 interface Notice {
   _id: string;
   isRead: boolean;
+  createdAt?: string; // اضافه شدن فیلد تاریخ ساخت برای مقایسه
 }
 
 interface MobileNavbarProps {
@@ -45,7 +46,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasUnread, setHasUnread] = useState(false);
-  
+
   // استیت‌های مودال‌های دانش‌آموزی
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -67,8 +68,23 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
         if (response.ok) {
           const data = await response.json();
           const unread = data.notices.filter((n: Notice) => !n.isRead);
+          
           setUnreadCount(unread.length);
-          setHasUnread(unread.length > 0);
+
+          if (unread.length > 0) {
+            // خواندن زمان آخرین کلیک روی زنگوله از localStorage
+            const lastCheckedTime = localStorage.getItem("last_bell_click_time");
+
+            // بررسی اینکه آیا اعلانی جدیدتر از آخرین کلیک کاربر وجود دارد یا خیر
+            const hasNewerNotice = unread.some((n: Notice) => {
+              if (!n.createdAt) return true;
+              return !lastCheckedTime || new Date(n.createdAt).getTime() > Number(lastCheckedTime);
+            });
+
+            setHasUnread(hasNewerNotice);
+          } else {
+            setHasUnread(false);
+          }
         }
       } catch (error) {
         console.error("Error fetching notices:", error);
@@ -140,7 +156,17 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
               </div>
 
               <div className="relative z-10 flex items-center">
-                <Link href="/notices" aria-label="اعلانات">
+                <Link
+                  href="/notices"
+                  aria-label="اعلانات"
+                  onClick={() => {
+                    // محو کردن فوری دایره قرمز و صفر کردن تعداد
+                    setHasUnread(false);
+                    setUnreadCount(0);
+                    // ذخیره زمان فعلی در لوکال‌استوری تا با رفرش هم دایره برنگردد
+                    localStorage.setItem("last_bell_click_time", Date.now().toString());
+                  }}
+                >
                   <motion.div
                     whileTap={{ scale: 0.95 }}
                     className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/70 text-slate-700 backdrop-blur-md active:bg-slate-100 shadow-2xs"
@@ -149,7 +175,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
 
                     {hasUnread && (
                       <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75 [animation-duration:2s]" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.7)]" />
                       </span>
                     )}
@@ -226,10 +252,15 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                     <div className="absolute -inset-[100%] pointer-events-none">
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 6,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                         className="absolute inset-0"
                         style={{
-                          background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 240deg, #38BDF8 300deg, #2563EB 330deg, transparent 360deg)",
+                          background:
+                            "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 240deg, #38BDF8 300deg, #2563EB 330deg, transparent 360deg)",
                         }}
                       />
                     </div>
@@ -250,10 +281,15 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                     <div className="absolute -inset-[100%] pointer-events-none">
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 6,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                         className="absolute inset-0"
                         style={{
-                          background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 240deg, #22C55E 300deg, #16A34A 330deg, transparent 360deg)",
+                          background:
+                            "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 240deg, #22C55E 300deg, #16A34A 330deg, transparent 360deg)",
                         }}
                       />
                     </div>

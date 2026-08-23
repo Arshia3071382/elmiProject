@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { SignJWT } from "jose"; // 🔒 ایمپورت برای ساخت توکن امن JWT
 
 import dbConnect from "./../../../../../lib/dbConnect";
 import SeniorAdmin from "./../../../../../models/SeniorAdmin";
@@ -193,15 +194,18 @@ export async function POST(req: Request) {
   }
 }
 
+// 🔒 تابع تنظیم کوکی با توکن امن JWT و امضای دیجیتال
 async function setAuthCookie(username: string) {
   const cookieStore = await cookies();
 
-  const token = Buffer.from(
-    JSON.stringify({
-      username,
-      createdAt: Date.now(),
-    })
-  ).toString("base64");
+  const secret = new TextEncoder().encode(
+    process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+  );
+
+  const token = await new SignJWT({ username })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(secret);
 
   cookieStore.set("senior_admin_token", token, {
     httpOnly: true,

@@ -5,33 +5,12 @@ import Student from "./../../../../../models/Student";
 import GradeStudent from "./../../../../../models/GradeStudent";
 import LeagueSetting from "./../../../../../models/LeagueSetting";
 import { EliteStudent } from "./../../../../../models/EliteStudent";
+import { jwtVerify } from "jose"; 
 
 function normalizeNationalId(id: string): string {
   if (!id) return "";
-  const persianNumbers = [
-    /۰/g,
-    /۱/g,
-    /۲/g,
-    /۳/g,
-    /۴/g,
-    /۵/g,
-    /۶/g,
-    /۷/g,
-    /۸/g,
-    /۹/g,
-  ];
-  const arabicNumbers = [
-    /٠/g,
-    /١/g,
-    /٢/g,
-    /٣/g,
-    /٤/g,
-    /٥/g,
-    /٦/g,
-    /٧/g,
-    /٨/g,
-    /٩/g,
-  ];
+  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
 
   let normalized = id.trim();
   for (let i = 0; i < 10; i++) {
@@ -53,12 +32,20 @@ export async function GET(req: Request) {
 
     let student = null;
 
-    // ۱. پیدا کردن دانش‌آموز از طریق کوکی معتبر
+    // ۱. پیدا کردن دانش‌آموز از طریق توکن JWT امن
     if (token && token.value) {
       try {
-        student = await Student.findById(token.value);
+        const secret = new TextEncoder().encode(
+          process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+        );
+        const { payload } = await jwtVerify(token.value, secret);
+        const studentId = payload.userId as string;
+        
+        if (studentId) {
+          student = await Student.findById(studentId);
+        }
       } catch (e) {
-        // اگر توکن معتبر نبود ادامه می‌دهیم
+        // اگر توکن نامعتبر یا منقضی بود ادامه می‌دهیم تا بررسی کوئری پارامتر انجام شود
       }
     }
 
@@ -138,7 +125,6 @@ export async function GET(req: Request) {
     let lowerStudent = null;
 
     if (userIndex !== -1) {
-      // نفر بالایی (index - 1) - یعنی رتبه بهتر (امتیاز بالاتر)
       if (userIndex > 0) {
         const higher = sameGradeStudents[userIndex - 1];
         higherStudent = {
@@ -146,10 +132,9 @@ export async function GET(req: Request) {
           score: higher.totalScore || 0,
         };
       } else {
-        higherStudent = null; // اگر کاربر در صدر جدول باشد
+        higherStudent = null;
       }
       
-      // نفر پایینی (index + 1) - یعنی رتبه پایین‌تر (امتیاز کمتر)
       if (userIndex < sameGradeStudents.length - 1) {
         const lower = sameGradeStudents[userIndex + 1];
         lowerStudent = {
@@ -157,7 +142,7 @@ export async function GET(req: Request) {
           score: lower.totalScore || 0,
         };
       } else {
-        lowerStudent = null; // اگر کاربر در انتهای جدول باشد
+        lowerStudent = null;
       }
     }
 

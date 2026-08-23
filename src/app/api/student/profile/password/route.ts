@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
+import { jwtVerify } from "jose"; // 🔒 ایمپورت برای اعتبارسنجی توکن امن
 
 export async function PUT(req: Request) {
   await dbConnect();
@@ -18,7 +19,23 @@ export async function PUT(req: Request) {
       );
     }
 
-    const student = await Student.findById(token.value);
+    // 🔒 رمزگشایی و اعتبارسنجی توکن JWT امن
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+    );
+
+    let studentId = "";
+    try {
+      const { payload } = await jwtVerify(token.value, secret);
+      studentId = payload.userId as string;
+    } catch (e) {
+      return NextResponse.json(
+        { success: false, message: "توکن نامعتبر یا منقضی شده است. لطفاً دوباره وارد شوید." },
+        { status: 401 }
+      );
+    }
+
+    const student = await Student.findById(studentId);
     if (!student) {
       return NextResponse.json(
         { success: false, message: "دانش‌آموز یافت نشد." },

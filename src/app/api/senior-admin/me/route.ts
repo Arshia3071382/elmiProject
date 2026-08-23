@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { jwtVerify } from "jose"; // 🔒 ایمپورت برای اعتبارسنجی توکن امن JWT
 
 import dbConnect from "./../../../../../lib/dbConnect";
 import SeniorAdmin from "./../../../../../models/SeniorAdmin";
@@ -9,7 +10,6 @@ export async function GET() {
     await dbConnect();
 
     const cookieStore = await cookies();
-
     const token = cookieStore.get("senior_admin_token")?.value;
 
     if (!token) {
@@ -19,28 +19,28 @@ export async function GET() {
         },
         {
           status: 401,
-        },
+        }
       );
     }
 
-    // باز کردن Token
-
-    let session;
-
+    // 🔒 اعتبارسنجی و رمزگشایی توکن JWT امن
+    let username = "";
     try {
-      session = JSON.parse(Buffer.from(token, "base64").toString());
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+      );
+      const { payload } = await jwtVerify(token, secret);
+      username = payload.username as string;
     } catch {
       return NextResponse.json(
         {
-          error: "توکن نامعتبر است",
+          error: "توکن نامعتبر یا منقضی شده است",
         },
         {
           status: 401,
-        },
+        }
       );
     }
-
-    const username = session.username;
 
     if (!username) {
       return NextResponse.json(
@@ -49,13 +49,12 @@ export async function GET() {
         },
         {
           status: 401,
-        },
+        }
       );
     }
 
     const admin = await SeniorAdmin.findOne({
       username,
-
       isActive: true,
     }).select("-passwordHash -__v");
 
@@ -66,20 +65,16 @@ export async function GET() {
         },
         {
           status: 404,
-        },
+        }
       );
     }
 
     return NextResponse.json({
       user: {
         username: admin.username,
-
         name: admin.name,
-
         role: admin.role,
-
         permissions: admin.permissions,
-
         isFirstLogin: admin.isFirstLogin,
       },
     });
@@ -92,7 +87,7 @@ export async function GET() {
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }
