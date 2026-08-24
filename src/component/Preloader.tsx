@@ -32,7 +32,7 @@ export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
         if (typeof prev === "number" && prev > 1) {
           return prev - 1;
         } else if (prev === 1) {
-          return "حرکت!";
+          return "!حرکت";
         }
         return prev;
       });
