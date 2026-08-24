@@ -40,7 +40,7 @@ export interface DashboardData {
     score: number;
     rank: number;
     category: string;
-  } | null; // اضافه شده برای لیگ نخبگان
+  } | null; 
   badges: Array<{ title: string; icon: string }>;
   lastLeagueUpdate: string;
 }
