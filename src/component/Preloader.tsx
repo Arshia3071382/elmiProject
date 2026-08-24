@@ -2,13 +2,15 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface PreloaderRocketProps {
   onComplete?: () => void;
 }
 
 export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
-  const [loading, setLoading] = useState(false); // پیش‌فرض روی false تا در SSR مشکلی پیش نیاد
+  // پیش‌فرض روی true قرار گرفت تا از همان اولین فریم رندر، صفحه سفید پریلودر باشد و سایت اصلی دیده نشود
+  const [loading, setLoading] = useState(true); 
   const [count, setCount] = useState<number | string>(3);
   const [isLaunching, setIsLaunching] = useState(false);
 
@@ -22,8 +24,7 @@ export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
       return;
     }
 
-    // اگر اولین بار است، لودر فعال شود و در سشن ثبت گردد
-    setLoading(true);
+    // اگر اولین بار است، در سشن ثبت گردد
     sessionStorage.setItem("hasVisitedBefore", "true");
 
     // شمارش معکوس 3، 2، 1
@@ -86,10 +87,14 @@ export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
           className="relative flex flex-col items-center mb-6"
         >
           <div className="w-40 h-40 relative flex items-center justify-center">
-            <img
+            {/* استفاده از کامپوننت Image نکست همراه با priority برای لود آنی عکس موشک در ورسل */}
+            <Image
               src="/image/preloader.png"
               alt="Rocket"
-              className="w-full h-full object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,0.2)]"
+              width={160}
+              height={160}
+              priority
+              className="w-full h-full object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,0.2)] select-none"
             />
           </div>
 
