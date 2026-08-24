@@ -21,9 +21,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 const AVATAR_OPTIONS = [
-  { id: "avatar-1", imageUrl: "/image/profile/p1.png", label: "پسرانه ۱" },
-  { id: "avatar-2", imageUrl: "/image/profile/p2.png", label: "دخترانه ۱" },
-  { id: "avatar-3", imageUrl: "/image/profile/p3.png", label: "فضایی" },
+  { id: "avatar-1", imageUrl: "/image/profile/p1.png", label: "جیمی نوترون" },
+  { id: "avatar-2", imageUrl: "/image/profile/p2.png", label: "فیلینت لاک وود" },
+  { id: "avatar-3", imageUrl: "/image/profile/p3.jpg", label: "والاس و گرومیت" },
   { id: "avatar-4", imageUrl: "/image/profile/p4.png", label: "قهرمان" },
   { id: "avatar-5", imageUrl: "/image/profile/p5.png", label: "متخلف" },
   { id: "avatar-6", imageUrl: "/image/profile/p6.png", label: "ستاره" },

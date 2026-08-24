@@ -18,7 +18,11 @@ const images: string[] = [
   "/image/hero23.png"
 ]
 
-function HeroSec() {
+interface HeroSecProps {
+  isLoaded?: boolean; // اضافه کردن این پروپ برای کنترل شروع تایمر
+}
+
+function HeroSec({ isLoaded = true }: HeroSecProps) {
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [isPaused, setIsPaused] = useState<boolean>(false)
   
@@ -26,14 +30,15 @@ function HeroSec() {
   const touchEndX = useRef<number>(0)
 
   useEffect(() => {
-    if (isPaused) return
+    // تا زمانی که پریلودر تمام نشده یا موس روی آن است، تایمر روشن نمی‌شود
+    if (!isLoaded || isPaused) return
 
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length)
-    }, 3000)
+    }, 4000) 
 
     return () => clearInterval(timer)
-  }, [isPaused])
+  }, [isPaused, isLoaded])
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setIsPaused(true)
@@ -64,7 +69,6 @@ function HeroSec() {
 
   return (
     <Container>
-      {/* اعمال عرض کمتر با max-w-4xl (می‌توانید به max-w-3xl یا max-w-5xl هم تغییر دهید) */}
       <div 
         className='w-full max-w-4xl mx-auto mt-10 sm:mt-10 lg:mt-30 h-[230px] sm:h-[320px] lg:h-[400px] relative overflow-hidden rounded-2xl group shadow-2xl touch-pan-y'
         onMouseEnter={() => setIsPaused(true)}

@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Preloader from "@/component/Preloader"; // مسیر کامپوننت پری‌لودر
 import PopularClasses from "@/component/classBox/PopularClasses";
 import Container from "@/component/Container";
 import HeroSec from "@/component/HeroSec";
@@ -7,50 +10,51 @@ import Questions from "@/component/Questions";
 import ScrollAnimation from "./../component/ScrollAnimation";
 import CounterStats from "@/component/CounterStats"; 
 import ScienceHub from "@/component/ScienceHub";
-import { motion } from "framer-motion";
 import PuzzleActionSection from "@/component/PuzzleButton";
-import StudentComments from "@/component/StudentComments"; // اضافه کردن کامپوننت نظرات
+import StudentComments from "@/component/StudentComments";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 
 export default function Home() {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
     <>
+      {/* پری‌لودر جذاب */}
+      <Preloader onComplete={() => setIsLoaded(true)} />
+
+      {/* محتوای اصلی سایت که بعد از پری‌لودر ظاهر می‌شود */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        animate={{ opacity: isLoaded ? 1 : 0 }}
+        transition={{ duration: 0.6 }}
       >
-        <HeroSec />
+       <HeroSec isLoaded={isLoaded} />
+        <StudentAuthButtons />
+        
+        <ScrollAnimation direction="up" delay={0.1}>
+          <CounterStats />
+        </ScrollAnimation>
+
+        <ScrollAnimation direction="up" delay={0.2}>
+          <ScienceHub />
+        </ScrollAnimation>
+
+        <ScrollAnimation direction="up" delay={0.2}>
+          <PuzzleActionSection />
+        </ScrollAnimation>
+
+        <ScrollAnimation direction="up" delay={0.3}>
+          <PopularClasses />
+        </ScrollAnimation>
+
+        <ScrollAnimation direction="up" delay={0.35}>
+          <StudentComments />
+        </ScrollAnimation>
+
+        <ScrollAnimation direction="up" delay={0.4}>
+          <Questions />
+        </ScrollAnimation>
       </motion.div>
-      <StudentAuthButtons />
-      {/* CounterStats - خودش Container دارد */}
-      <ScrollAnimation direction="up" delay={0.1}>
-        <CounterStats />
-      </ScrollAnimation>
-
-      {/* ScienceHub - خودش Container دارد */}
-      <ScrollAnimation direction="up" delay={0.2}>
-        <ScienceHub />
-      </ScrollAnimation>
-
-      <ScrollAnimation direction="up" delay={0.2}>
-        <PuzzleActionSection />
-      </ScrollAnimation>
-
-      {/* PopularClasses - باید Container داشته باشد */}
-      <ScrollAnimation direction="up" delay={0.3}>
-        <PopularClasses />
-      </ScrollAnimation>
-
-      {/* بخش نظرات دانشجویان (محل دقیق: بعد از دوره‌ها و قبل از سوالات) */}
-      <ScrollAnimation direction="up" delay={0.35}>
-        <StudentComments />
-      </ScrollAnimation>
-
-      {/* Questions - باید Container داشته باشد */}
-      <ScrollAnimation direction="up" delay={0.4}>
-        <Questions />
-      </ScrollAnimation>
     </>
   );
 }
