@@ -4,10 +4,11 @@ import dbConnect from "./../../../../../lib/dbConnect";
 import Student from "./../../../../../models/Student";
 import Exam from "./../../../../../models/Exam";
 import { jwtVerify } from "jose";
-
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export async function GET(req: Request) {
   await dbConnect();
-  
+
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("studentToken");
@@ -15,23 +16,27 @@ export async function GET(req: Request) {
     if (!token || !token.value) {
       return NextResponse.json(
         { success: false, error: "لطفاً وارد حساب کاربری خود شوید." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // 🔒 رمزگشایی و اعتبارسنجی توکن JWT
     const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+      process.env.JWT_SECRET ||
+        "elmi_super_secret_jwt_key_2026_secure_random_string",
     );
-    
+
     let studentId = "";
     try {
       const { payload } = await jwtVerify(token.value, secret);
       studentId = payload.userId as string;
     } catch (e) {
       return NextResponse.json(
-        { success: false, error: "توکن نامعتبر یا منقضی شده است. لطفاً دوباره وارد شوید." },
-        { status: 401 }
+        {
+          success: false,
+          error: "توکن نامعتبر یا منقضی شده است. لطفاً دوباره وارد شوید.",
+        },
+        { status: 401 },
       );
     }
 
@@ -40,8 +45,11 @@ export async function GET(req: Request) {
 
     if (!student || !student.nationalId) {
       return NextResponse.json(
-        { success: false, error: "حساب کاربری یافت نشد یا دسترسی غیرمجاز است." },
-        { status: 401 }
+        {
+          success: false,
+          error: "حساب کاربری یافت نشد یا دسترسی غیرمجاز است.",
+        },
+        { status: 401 },
       );
     }
 
@@ -52,30 +60,36 @@ export async function GET(req: Request) {
     const exams = await Exam.find({
       grade: student.grade,
       isPublished: true,
-    }).sort({ createdAt: -1 }).lean();
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
     // استخراج نمره و کارنامه این دانش‌آموز خاص با مقایسه ایمن
-    const studentExams = exams.map((exam: any) => {
-      const resultsArray = exam.results || [];
-      const myResult = resultsArray.find((r: any) => 
-        r && r.nationalId && String(r.nationalId).trim() === studentNationalId
-      );
+    const studentExams = exams
+      .map((exam: any) => {
+        const resultsArray = exam.results || [];
+        const myResult = resultsArray.find(
+          (r: any) =>
+            r &&
+            r.nationalId &&
+            String(r.nationalId).trim() === studentNationalId,
+        );
 
-      return {
-        _id: exam._id,
-        title: exam.title,
-        createdAt: exam.createdAt,
-        myResult: myResult || null,
-      };
-    }).filter(item => item.myResult !== null);
+        return {
+          _id: exam._id,
+          title: exam.title,
+          createdAt: exam.createdAt,
+          myResult: myResult || null,
+        };
+      })
+      .filter((item) => item.myResult !== null);
 
     return NextResponse.json({ success: true, exams: studentExams });
-
   } catch (error) {
     console.error("Error fetching student exams:", error);
     return NextResponse.json(
       { success: false, error: "خطا در دریافت کارنامه‌ها" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
