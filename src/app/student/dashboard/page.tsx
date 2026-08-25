@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import StudentDashboardClient from "@/component/StudentDashboardClient"; // آدرس فایل جدیدتان
+import StudentDashboardClient from "@/component/StudentDashboardClient"; 
 
 export default async function DashboardPage() {
   // چک کردن کوکی در سطح سرور

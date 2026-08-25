@@ -26,6 +26,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-intersection-observer": "^10.0.3",
+    "recharts": "^3.10.1",
     "uuid": "^14.0.1"
   },
   "devDependencies": {

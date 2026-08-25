@@ -70,7 +70,7 @@ function HeroSec({ isLoaded = true }: HeroSecProps) {
   return (
     <Container>
       <div 
-        className='w-full max-w-4xl mx-auto mt-10 sm:mt-10 lg:mt-30 h-[230px] sm:h-[320px] lg:h-[400px] relative overflow-hidden rounded-2xl group shadow-2xl touch-pan-y'
+        className='w-full max-w-5xl mx-auto mt-10 sm:mt-10 lg:mt-30 h-[230px] sm:h-[400px] lg:h-[500px] relative overflow-hidden rounded-2xl group shadow-2xl touch-pan-y'
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onTouchStart={handleTouchStart}
