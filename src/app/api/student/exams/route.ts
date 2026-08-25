@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import dbConnect from "./../../../../../lib/dbConnect";
 import Student from "./../../../../../models/Student";
 import Exam from "./../../../../../models/Exam";
-import { jwtVerify } from "jose";  
+import { jwtVerify } from "jose";
 
 export async function GET(req: Request) {
   await dbConnect();
@@ -35,8 +35,8 @@ export async function GET(req: Request) {
       );
     }
 
-    // پیدا کردن اطلاعات دانش‌آموز از دیتابیس برای دسترسی به کد ملی و پایه
-    const student = await Student.findById(studentId);
+    // پیدا کردن اطلاعات دانش‌آموز از دیتابیس
+    const student = await Student.findById(studentId).lean();
 
     if (!student || !student.nationalId) {
       return NextResponse.json(
@@ -45,15 +45,22 @@ export async function GET(req: Request) {
       );
     }
 
+    // تبدیل کد ملی به رشته خالص برای مقایسه دقیق بدون مشکل نوع داده (String vs Number)
+    const studentNationalId = String(student.nationalId).trim();
+
     // پیدا کردن تمام آزمون‌های منتشر شده برای پایه تحصیلی دانش‌آموز
     const exams = await Exam.find({
       grade: student.grade,
       isPublished: true,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 
-    // استخراج نمره و کارنامه این دانش‌آموز خاص از داخل هر آزمون
-    const studentExams = exams.map((exam) => {
-      const myResult = exam.results.find((r: any) => r.nationalId === student.nationalId);
+    // استخراج نمره و کارنامه این دانش‌آموز خاص با مقایسه ایمن
+    const studentExams = exams.map((exam: any) => {
+      const resultsArray = exam.results || [];
+      const myResult = resultsArray.find((r: any) => 
+        r && r.nationalId && String(r.nationalId).trim() === studentNationalId
+      );
+
       return {
         _id: exam._id,
         title: exam.title,
