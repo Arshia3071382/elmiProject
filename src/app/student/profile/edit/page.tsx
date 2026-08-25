@@ -55,6 +55,19 @@ export default function EditProfilePage() {
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  // پاک کردن کش مرورگر و هدایت در صورت استفاده از دکمه Back
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.replace("/");
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -69,9 +82,12 @@ export default function EditProfilePage() {
           if (json.data.profile.avatar) {
             setSelectedAvatar(json.data.profile.avatar);
           }
+        } else {
+          router.replace("/");
         }
       } catch (err) {
         console.error("Error fetching profile", err);
+        router.replace("/");
       } finally {
         setLoading(false);
       }
