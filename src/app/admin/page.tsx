@@ -7,7 +7,6 @@ import AddCourseForm from "@/component/adminpaneldet/AddCourseForm";
 import CourseManager from "@/component/adminpaneldet/CourseManager";
 import CategoryManager from "@/component/adminpaneldet/CategoryManager";
 import AdminSidebar from "@/component/adminpaneldet/AdminSidebar";
-import AdminLoginModal from "@/component/adminpaneldet/AdminLoginModal";
 import AddCategoryModal from "@/component/adminpaneldet/AddCategoryModal";
 import AdminEliteLeaguePanel from "@/component/adminpaneldet/AdminEliteLeaguePanel";
 import AdminTopicsPanel from "@/component/adminpaneldet/AdminTopicsPanel";
@@ -25,6 +24,7 @@ import AdminToast from "./AdminToast";
 import { MainTab, CourseTab } from "./constants";
 
 export default function AdminPage() {
+  const [isChecking, setIsChecking] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [contactMessages, setContactMessages] = useState<any[]>([]);
@@ -34,9 +34,25 @@ export default function AdminPage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeTab, setActiveTab] = useState<MainTab>("dashboard");
   const [activeCourseTab, setActiveCourseTab] = useState<CourseTab>("courses");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // چک کردن احراز هویت در لحظه ورود به صفحه
+  useEffect(() => {
+    async function verifyAuth() {
+      try {
+        const res = await fetch("/api/check-auth", { cache: "no-store" });
+        const data = await res.json();
+        if (!data.success && !data.isLoggedIn) {
+          window.location.href = "/";
+          return;
+        }
+      } catch {
+        window.location.href = "/";
+        return;
+      }
+      setIsChecking(false);
+    }
+    verifyAuth();
+  }, []);
 
   const showMessage = useCallback((type: "success" | "error", text: string) => {
     setMessage({ type, text });
@@ -77,29 +93,11 @@ export default function AdminPage() {
     }
   }, []);
 
-  const checkAuth = useCallback(async () => {
-    setIsCheckingAuth(true);
-    try {
-      const res = await fetch("/api/check-auth", { cache: "no-store" });
-      const data = await res.json();
-      if (data.isLoggedIn === true) {
-        setIsLoggedIn(true);
-        setShowLoginModal(false);
-        await Promise.all([fetchCategories(), fetchCourses(), fetchContactMessages()]);
-      } else {
-        setIsLoggedIn(false);
-        setShowLoginModal(true);
-      }
-    } catch (error) {
-      console.error("Auth check error:", error);
-      setIsLoggedIn(false);
-      setShowLoginModal(true);
-    } finally {
-      setIsCheckingAuth(false);
+  useEffect(() => {
+    if (!isChecking) {
+      Promise.all([fetchCategories(), fetchCourses(), fetchContactMessages()]);
     }
-  }, [fetchCategories, fetchCourses, fetchContactMessages]);
-
-  useEffect(() => { checkAuth(); }, [checkAuth]);
+  }, [isChecking, fetchCategories, fetchCourses, fetchContactMessages]);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,8 +146,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin-logout", { method: "POST" });
       if (res.ok) {
-        setIsLoggedIn(false);
-        setShowLoginModal(true);
+        window.location.href = "/";
       } else {
         showMessage("error", "خطا در خروج از پنل");
       }
@@ -158,24 +155,17 @@ export default function AdminPage() {
     }
   };
 
-  const handleLoginSuccess = () => {
-    setShowLoginModal(false);
-    setIsLoggedIn(true);
-    window.location.reload();
-  };
-
-  if (isCheckingAuth) {
+  // تا زمانی که وضعیت لاگین چک می‌شود، لودینگ نمایش داده شود
+  if (isChecking) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-600 border-r-transparent"></div>
-          <p className="mt-2 text-sm text-slate-500">در حال بررسی احراز هویت...</p>
+      <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 font-bold text-sm">در حال بررسی دسترسی...</p>
         </div>
       </div>
     );
   }
-
-  if (!isLoggedIn) return <AdminLoginModal onLoginSuccess={handleLoginSuccess} />;
 
   const panelComponents: Record<MainTab, React.ReactNode> = {
     dashboard: (

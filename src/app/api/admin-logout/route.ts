@@ -5,20 +5,27 @@ export async function POST() {
   try {
     const cookieStore = await cookies();
 
-    // پاک‌سازی قطعی کوکی با مشخص کردن path و ویژگی‌های امنیتی
-    cookieStore.delete({
-      name: "admin_token",
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+    // پاک‌سازی تمام نام‌های احتمالی کوکی ادمین با تنظیم MaxAge صفر
+    const tokenNames = ["admin_token", "admin__token", "adminToken"];
+    
+    for (const name of tokenNames) {
+      cookieStore.set({
+        name,
+        value: "",
+        path: "/",
+        maxAge: 0,
+        expires: new Date(0),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+    }
 
     const response = NextResponse.json({
       success: true,
       message: "با موفقیت خارج شدید",
     });
 
-    // جلوگیری کامل از کش شدن پاسخ خروج
     response.headers.set(
       "Cache-Control",
       "no-store, no-cache, must-revalidate, proxy-revalidate"

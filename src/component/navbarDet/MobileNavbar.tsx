@@ -24,7 +24,6 @@ import {
 import HeroLogo from "./HeroLogo";
 import FloatingActionDock from "./FloatingActionDock";
 import Container from "@/component/Container";
-import SeniorAdminLoginModal from "@/component/seniorAdmin/SeniorAdminLoginModal";
 import { useSeniorAdminLogin } from "@/component/seniorAdmin/useSeniorAdminLogin";
 
 // فرض بر این است که مودال‌های ورود و ثبت‌نام دانش‌آموز را دارید (مسیرها را مطابق پروژه خود تنظیم کنید)
@@ -330,17 +329,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
                 </div>
               </div>
 
-              {/* پنل مدیریت در پایین منو */}
-              <div className="pt-3 border-t border-slate-100 mt-3">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleOpenLoginModal}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
-                >
-                  <ShieldCheck className="h-4 w-4 text-slate-500" />
-                  <span>ورود به پنل مدیریت</span>
-                </motion.button>
-              </div>
+            
             </motion.div>
           </div>
         )}
@@ -365,12 +354,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
         }}
       />
 
-      {/* مودال ورود مدیر ارشد */}
-      <SeniorAdminLoginModal
-        isOpen={isLoginModalOpen}
-        onClose={closeLoginModal}
-        onSuccess={handleLoginSuccess}
-      />
+     
     </>
   );
 }
