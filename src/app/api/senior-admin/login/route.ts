@@ -207,10 +207,12 @@ async function setAuthCookie(username: string) {
     .setExpirationTime("7d")
     .sign(secret);
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   cookieStore.set("senior_admin_token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction, 
+    sameSite: "lax",      
     path: "/",
     maxAge: 60 * 60 * 24 * 7, // 7 روز
   });

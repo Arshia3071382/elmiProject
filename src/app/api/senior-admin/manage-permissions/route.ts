@@ -1,24 +1,8 @@
-
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import dbConnect from "./../../../../../lib/dbConnect";
 import SeniorAdmin from "./../../../../../models/SeniorAdmin";
-import { jwtVerify } from "jose"; // 🔒 در صورت نیاز به بررسی امنیتی توکن ادمین
-
-// کمکی برای اعتبارسنجی ادمین اصلی
-async function verifyAdminAuth(token: string) {
-  try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
-    );
-    await jwtVerify(token, secret);
-    return true;
-  } catch (e) {
-    // اگر توکن ساختار JWT داشت و نامعتبر بود خطا می‌دهد، 
-    // اگر ادمین اصلی از روش دیگری (مثل Base64 یا سشن) استفاده می‌کند می‌توانید این بخش را تطبیق دهید.
-    return false;
-  }
-}
+import bcrypt from "bcryptjs";
 
 // GET - دریافت لیست معین‌ها
 export async function GET() {
@@ -28,27 +12,19 @@ export async function GET() {
 
     if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "احراز هویت نشده‌اید",
-        },
-        {
-          status: 401,
-        }
+        { success: false, error: "احراز هویت نشده‌اید" },
+        { status: 401 }
       );
     }
 
     await dbConnect();
 
-    // دریافت تمام معین‌ها
     const admins = await SeniorAdmin.find({
       role: "senior_admin",
       isActive: true,
     })
       .select("-passwordHash -__v")
-      .sort({
-        createdAt: -1,
-      })
+      .sort({ createdAt: -1 })
       .lean();
 
     const formattedAdmins = admins.map((admin) => ({
@@ -62,19 +38,81 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET manage permissions error:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: "خطا در دریافت لیست معین‌ها",
-      },
-      {
-        status: 500,
-      }
+      { success: false, error: "خطا در دریافت لیست معین‌ها" },
+      { status: 500 }
     );
   }
 }
 
+// POST - ایجاد معین ارشد جدید (با پسورد هش‌شده)
+export async function POST(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("admin_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "احراز هویت نشده‌اید" },
+        { status: 401 }
+      );
+    }
+
+    await dbConnect();
+
+    const body = await req.json();
+    const { username, name, password } = body;
+
+    if (!username || !password || !name) {
+      return NextResponse.json(
+        { success: false, error: "تمامی فیلدها (نام، نام کاربری، رمز عبور) الزامی هستند." },
+        { status: 400 }
+      );
+    }
+
+    const cleanUsername = String(username).trim();
+    
+    // بررسی تکراری نبودن نام کاربری
+    const existing = await SeniorAdmin.findOne({ username: cleanUsername });
+    if (existing) {
+      return NextResponse.json(
+        { success: false, error: "این نام کاربری قبلاً ثبت شده است." },
+        { status: 400 }
+      );
+    }
+
+const hashedPassword = await bcrypt.hash(password, 12);
+
+const newSeniorAdmin = await SeniorAdmin.create({
+  username: cleanUsername,
+  name: name.trim(), // نام اجباری
+  password: hashedPassword,
+  role: "senior_admin", // نقش اجباری برای شناسایی در لاگین
+  permissions: [],
+  isActive: true,
+});
+
+    return NextResponse.json({
+      success: true,
+      message: "معین ارشد با موفقیت ایجاد شد.",
+      admin: {
+        _id: newSeniorAdmin._id.toString(),
+        username: newSeniorAdmin.username,
+        name: newSeniorAdmin.name,
+        permissions: newSeniorAdmin.permissions,
+        role: newSeniorAdmin.role,
+        isActive: newSeniorAdmin.isActive,
+      },
+    });
+  } catch (error: any) {
+    console.error("POST create senior admin error:", error);
+    // نمایش دقیق خطای Mongoose برای دیباگ بهتر در کنسول
+    return NextResponse.json(
+      { success: false, error: error.message || "خطا در ایجاد معین ارشد" },
+      { status: 500 }
+    );
+  }
+}
 // PUT - تغییر دسترسی معین
 export async function PUT(req: Request) {
   try {
@@ -83,13 +121,8 @@ export async function PUT(req: Request) {
 
     if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "احراز هویت نشده‌اید",
-        },
-        {
-          status: 401,
-        }
+        { success: false, error: "احراز هویت نشده‌اید" },
+        { status: 401 }
       );
     }
 
@@ -100,29 +133,18 @@ export async function PUT(req: Request) {
 
     if (!username || typeof username !== "string") {
       return NextResponse.json(
-        {
-          success: false,
-          error: "نام کاربری معتبر نیست",
-        },
-        {
-          status: 400,
-        }
+        { success: false, error: "نام کاربری معتبر نیست" },
+        { status: 400 }
       );
     }
 
     if (!Array.isArray(permissions)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "دسترسی‌ها باید آرایه باشند",
-        },
-        {
-          status: 400,
-        }
+        { success: false, error: "دسترسی‌ها باید آرایه باشند" },
+        { status: 400 }
       );
     }
 
-    // فقط معین‌ها قابل تغییر هستند
     const updatedAdmin = await SeniorAdmin.findOneAndUpdate(
       {
         username: username.trim(),
@@ -143,13 +165,8 @@ export async function PUT(req: Request) {
 
     if (!updatedAdmin) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "معین موردنظر پیدا نشد",
-        },
-        {
-          status: 404,
-        }
+        { success: false, error: "معین موردنظر پیدا نشد" },
+        { status: 404 }
       );
     }
 
@@ -163,15 +180,9 @@ export async function PUT(req: Request) {
     });
   } catch (error) {
     console.error("PUT manage permissions error:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: "خطا در بروزرسانی دسترسی‌ها",
-      },
-      {
-        status: 500,
-      }
+      { success: false, error: "خطا در بروزرسانی دسترسی‌ها" },
+      { status: 500 }
     );
   }
 }

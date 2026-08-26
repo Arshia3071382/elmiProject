@@ -32,7 +32,11 @@ export default function StudentDashboardPage() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/student/dashboard");
+      // 🔒 اصلاح حیاتی: اضافه کردن credentials برای ارسال کوکی به API
+      const res = await fetch("/api/student/dashboard", {
+        credentials: "include",
+      });
+      
       if (res.status === 401) {
         window.location.replace("/");
         return;
@@ -89,7 +93,6 @@ export default function StudentDashboardPage() {
       setLoading(false);
     }
   };
-
   const setFallbackData = () => {
     setData({
       isComplete: false,

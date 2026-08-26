@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Lock, User, KeyRound, Sparkle } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface SeniorAdminLoginModalProps {
   isOpen: boolean;
@@ -16,7 +15,6 @@ export default function SeniorAdminLoginModal({
   onClose,
   onSuccess,
 }: SeniorAdminLoginModalProps) {
-  const router = useRouter();
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -65,8 +63,8 @@ export default function SeniorAdminLoginModal({
       return;
     }
 
-    if (passwordInput.trim().length < 4) {
-      setLoginError("رمز عبور باید حداقل ۴ کاراکتر باشد.");
+    if (passwordInput.trim().length < 8) {
+      setLoginError("رمز عبور باید حداقل 8 کاراکتر باشد.");
       return;
     }
 
@@ -92,8 +90,9 @@ export default function SeniorAdminLoginModal({
         resetLoginModal();
         onClose();
         if (onSuccess) onSuccess();
-        router.push("/senior-admin");
-        router.refresh();
+        
+        // 🔒 هدایت مستقیم مرورگر برای بارگذاری کامل کوکی امن و رفع مشکل رفرش
+        window.location.href = "/senior-admin";
       } else {
         if (data.isFirstLogin) {
           setIsFirstLoginUser(true);
@@ -136,7 +135,7 @@ export default function SeniorAdminLoginModal({
           >
             <button
               onClick={handleClose}
-              className="absolute top-5 left-5 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-all"
+              className="absolute top-5 left-5 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -145,7 +144,7 @@ export default function SeniorAdminLoginModal({
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mb-3 border border-blue-100 shadow-sm">
                 <Lock className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold font-['iranBold'] text-slate-900">
+              <h3 className="text-xl font-bold text-slate-900">
                 احراز هویت معین ارشد
               </h3>
               <p className="text-xs text-slate-500 mt-1">
@@ -214,7 +213,7 @@ export default function SeniorAdminLoginModal({
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-md transition-all mt-2 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 ${
+                className={`w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-md transition-all mt-2 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${
                   isFirstLoginUser
                     ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
                     : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"

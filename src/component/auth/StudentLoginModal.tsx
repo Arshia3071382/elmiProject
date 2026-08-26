@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { X, LockKeyhole, Phone, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthInput } from "./AuthInput";
@@ -17,7 +16,6 @@ export default function StudentLoginModal({
   onClose,
   onSwitchToRegister,
 }: StudentLoginModalProps) {
-  const router = useRouter();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,12 +52,8 @@ export default function StudentLoginModal({
     setPhoneError("");
     setPasswordError("");
 
-    const phoneRegex = /^09[0-9]{9}$/;
-    if (!phone) {
-      setPhoneError("شماره تماس الزامی است.");
-      isValid = false;
-    } else if (!phoneRegex.test(phone)) {
-      setPhoneError("شماره تماس باید با 09 شروع شده و ۱۱ رقم باشد.");
+    if (!phone.trim()) {
+      setPhoneError("نام کاربری یا شماره تماس الزامی است.");
       isValid = false;
     }
 
@@ -79,10 +73,12 @@ export default function StudentLoginModal({
     setErrorMessage("");
 
     try {
-      const res = await fetch("/api/auth/student/login", {
+      // 🔒 ارسال درخواست به API جامع لاگین (/api/auth/login) با تنظیمات ذخیره کوکی
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password }),
+        body: JSON.stringify({ username: phone.trim(), password }),
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -93,18 +89,17 @@ export default function StudentLoginModal({
         if (data.student?.nationalId) {
           localStorage.setItem("studentNationalId", data.student.nationalId);
         }
-        localStorage.setItem("studentPhone", phone);
+        localStorage.setItem("studentPhone", phone.trim());
 
         setTimeout(() => {
           handleResetAndClose();
-          router.push("/student/dashboard");
-          router.refresh();
+          window.location.href = data.redirectUrl || "/student/dashboard";
         }, 1000);
       } else {
         setStatus("error");
-        setErrorMessage(data.error || "شماره تماس یا رمز عبور اشتباه است.");
+        setErrorMessage(data.error || "نام کاربری یا رمز عبور اشتباه است.");
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setErrorMessage("مشکل در ارتباط با سرور. لطفاً دوباره تلاش کنید.");
     }
@@ -151,37 +146,31 @@ export default function StudentLoginModal({
                 <X className="w-4 h-4" />
               </button>
 
-              {/* هدر با گرادنت تم آبی */}
+              {/* هدر */}
               <div className="mb-6 text-right">
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 bg-clip-text text-transparent font-[iranBold]">
-                  ورود به پنل
+                  ورود به حساب کاربری
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  برای ورود به حساب کاربری خود، شماره تماس و رمز عبور را وارد کنید.
+                  نام کاربری یا شماره تماس و رمز عبور خود را وارد کنید.
                 </p>
               </div>
 
               {/* فرم */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                {/* فیلد شماره تماس */}
                 <div className="flex flex-col gap-1">
                   <AuthInput
-                    label="شماره تماس"
-                    placeholder="09123456789"
+                    label="نام کاربری / شماره تماس"
+                    placeholder="نام کاربری یا 09123456789"
                     type="text"
-                    maxLength={11}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => setPhone(e.target.value)}
                     error={phoneError}
                     icon={<Phone className="w-4 h-4" />}
                     disabled={status === "loading" || status === "success"}
                   />
-                  <span className="text-[11px] text-slate-400 px-1">
-                    شماره موبایل ۱۱ رقمی خود را وارد کنید
-                  </span>
                 </div>
 
-                {/* فیلد رمز عبور */}
                 <AuthInput
                   label="رمز عبور"
                   placeholder="••••••••"
@@ -203,22 +192,20 @@ export default function StudentLoginModal({
                   disabled={status === "loading" || status === "success"}
                 />
 
-                {/* اعلان‌های موفقیت یا خطا زیر رمز عبور */}
                 {status === "success" && (
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 animate-fadeIn">
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                     <span className="text-xs sm:text-sm font-medium">ورود با موفقیت انجام شد. در حال انتقال...</span>
                   </div>
                 )}
 
                 {status === "error" && (
-                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 animate-fadeIn">
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800">
                     <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
                     <span className="text-xs sm:text-sm font-medium">{errorMessage}</span>
                   </div>
                 )}
 
-                {/* دکمه‌ها */}
                 <div className="flex items-center gap-3 mt-2">
                   <button
                     type="submit"
@@ -245,7 +232,6 @@ export default function StudentLoginModal({
                 </div>
               </form>
 
-              {/* سوییچ به ثبت‌نام */}
               <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs sm:text-sm text-slate-500">
                 حساب کاربری ندارید؟{" "}
                 <button

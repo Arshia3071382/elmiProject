@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { jwtVerify } from "jose"; // 🔒 ایمپورت برای اعتبارسنجی توکن امن JWT
+import { jwtVerify } from "jose";
 
 import dbConnect from "./../../../../../lib/dbConnect";
 import SeniorAdmin from "./../../../../../models/SeniorAdmin";
@@ -14,62 +14,43 @@ export async function GET() {
 
     if (!token) {
       return NextResponse.json(
-        {
-          error: "احراز هویت نشده‌اید",
-        },
-        {
-          status: 401,
-        }
+        { success: false, error: "احراز هویت نشده‌اید" },
+        { status: 401 }
       );
     }
 
-    // 🔒 اعتبارسنجی و رمزگشایی توکن JWT امن
+    let adminId = "";
     let username = "";
+
     try {
       const secret = new TextEncoder().encode(
         process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
       );
       const { payload } = await jwtVerify(token, secret);
+      adminId = (payload.userId || payload.id) as string;
       username = payload.username as string;
     } catch {
-      return NextResponse.json(
-        {
-          error: "توکن نامعتبر یا منقضی شده است",
-        },
-        {
-          status: 401,
-        }
-      );
+      // پشتیبانی از حالت قدیمی که کوکی فقط شامل _id ادمین بود (برای جلوگیری از خطای ناگهانی)
+      adminId = token;
     }
 
-    if (!username) {
-      return NextResponse.json(
-        {
-          error: "توکن نامعتبر است",
-        },
-        {
-          status: 401,
-        }
-      );
+    let admin = null;
+    if (adminId && adminId.length === 24) {
+      // اگر مقدار ذخیره شده یک ObjectId معتبر مانگو باشد
+      admin = await SeniorAdmin.findById(adminId).select("-passwordHash -__v");
+    } else if (username) {
+      admin = await SeniorAdmin.findOne({ username, isActive: true }).select("-passwordHash -__v");
     }
 
-    const admin = await SeniorAdmin.findOne({
-      username,
-      isActive: true,
-    }).select("-passwordHash -__v");
-
-    if (!admin) {
+    if (!admin || !admin.isActive) {
       return NextResponse.json(
-        {
-          error: "کاربر یافت نشد",
-        },
-        {
-          status: 404,
-        }
+        { success: false, error: "کاربر یافت نشد یا غیرفعال است" },
+        { status: 404 }
       );
     }
 
     return NextResponse.json({
+      success: true,
       user: {
         username: admin.username,
         name: admin.name,
@@ -80,14 +61,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("ME API ERROR:", error);
-
     return NextResponse.json(
-      {
-        error: "خطایی در سرور رخ داد",
-      },
-      {
-        status: 500,
-      }
+      { success: false, error: "خطایی در سرور رخ داد" },
+      { status: 500 }
     );
   }
 }

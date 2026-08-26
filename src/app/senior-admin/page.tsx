@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -44,10 +45,12 @@ export default function SeniorAdminDashboard() {
   useEffect(() => {
     async function fetchUserData() {
       try {
-        const res = await fetch("/api/senior-admin/me");
+        const res = await fetch("/api/senior-admin/me", {
+          cache: "no-store",
+        });
         const data = await res.json();
 
-        if (res.ok && data.user) {
+        if (res.ok && data.success && data.user) {
           setUser(data.user);
         } else {
           setError(data.error || "خطا در دریافت اطلاعات کاربر");
@@ -84,7 +87,7 @@ export default function SeniorAdminDashboard() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-xs font-bold text-slate-500">
-            در حال بارگذاری اطلاعات پنل...
+            در حال بارگذاری اطلاعات پنل معین...
           </p>
         </div>
       </div>
@@ -92,8 +95,20 @@ export default function SeniorAdminDashboard() {
   }
 
   if (error) {
-    window.location.replace("/");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir="rtl">
+        <div className="bg-rose-50 border border-rose-200 p-6 rounded-2xl text-center text-rose-700 max-w-md shadow-sm">
+          <p className="text-sm font-bold mb-2">خطا در دسترسی به پنل</p>
+          <p className="text-xs mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.replace("/")}
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+          >
+            بازگشت به صفحه اصلی
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -141,7 +156,7 @@ export default function SeniorAdminDashboard() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-2.5 bg-white/10 hover:bg-rose-500/80 text-white rounded-2xl border border-white/15 transition-all active:scale-95"
+                  className="p-2.5 bg-white/10 hover:bg-rose-500/80 text-white rounded-2xl border border-white/15 transition-all active:scale-95 cursor-pointer"
                   title="خروج از حساب"
                 >
                   <LogOut className="w-4 h-4" />
@@ -156,12 +171,13 @@ export default function SeniorAdminDashboard() {
           {activeTab && (
             <button
               onClick={() => setActiveTab(null)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold transition-all shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
             >
               <ArrowRight className="w-4 h-4" />
               <span>بازگشت به لیست ماژول‌ها</span>
             </button>
           )}
+
           {/* نمایش ماژول انتخاب شده */}
           {activeTab === "calendar" &&
           user?.permissions?.includes("calendar") ? (
@@ -175,12 +191,9 @@ export default function SeniorAdminDashboard() {
             </div>
           ) : activeTab === "exams" && user?.permissions?.includes("exams") ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-4 md:p-6 shadow-sm">
-              {/* اصلاح شد: بدون ارسال پروپ اضافی */}
               <AdminExamsPanel />
             </div>
           ) : (
-            /* لیست تمامی کارت‌های دسترسی معین */
-            // ...
             /* لیست تمامی کارت‌های دسترسی معین */
             <div>
               <h2 className="text-sm font-bold text-slate-700 mb-4 px-1">
@@ -204,13 +217,12 @@ export default function SeniorAdminDashboard() {
                         مدیریت تقویم آموزشی
                       </h3>
                       <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        تنظیم روزهای ماه، تاریخ‌ها و رویدادهای تقویم آموزشی
-                        سامانه.
+                        تنظیم روزهای ماه، تاریخ‌ها و رویدادهای تقویم آموزشی سامانه.
                       </p>
                     </div>
                     <button
                       onClick={() => setActiveTab("calendar")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-blue-600"
+                      className="w-full py-2.5 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-blue-600 cursor-pointer"
                     >
                       ورود به مدیریت تقویم
                     </button>
@@ -238,7 +250,7 @@ export default function SeniorAdminDashboard() {
                     </div>
                     <button
                       onClick={() => setActiveTab("notices")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-emerald-600"
+                      className="w-full py-2.5 bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-emerald-600 cursor-pointer"
                     >
                       ورود به اطلاعیه‌ها
                     </button>
@@ -266,7 +278,7 @@ export default function SeniorAdminDashboard() {
                     </div>
                     <button
                       onClick={() => setActiveTab("courses")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-violet-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-violet-600"
+                      className="w-full py-2.5 bg-slate-50 hover:bg-violet-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-violet-600 cursor-pointer"
                     >
                       ورود به دوره‌ها
                     </button>
@@ -294,7 +306,7 @@ export default function SeniorAdminDashboard() {
                     </div>
                     <button
                       onClick={() => setActiveTab("counseling")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-amber-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-amber-600"
+                      className="w-full py-2.5 bg-slate-50 hover:bg-amber-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-amber-600 cursor-pointer"
                     >
                       ورود به مشاوره
                     </button>
@@ -322,7 +334,7 @@ export default function SeniorAdminDashboard() {
                     </div>
                     <button
                       onClick={() => setActiveTab("grade_league")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-yellow-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-yellow-600"
+                      className="w-full py-2.5 bg-slate-50 hover:bg-yellow-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-yellow-600 cursor-pointer"
                     >
                       ورود به لیگ علمی پایه
                     </button>
@@ -350,7 +362,7 @@ export default function SeniorAdminDashboard() {
                     </div>
                     <button
                       onClick={() => setActiveTab("exams")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-rose-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-rose-600"
+                      className="w-full py-2.5 bg-slate-50 hover:bg-rose-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-rose-600 cursor-pointer"
                     >
                       ورود به مدیریت آزمون‌ها
                     </button>

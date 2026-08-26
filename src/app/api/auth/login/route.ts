@@ -1,17 +1,27 @@
 import { NextResponse } from "next/server";
-import dbConnect from "./../../../../../../lib/dbConnect";
-import Admin from "./../../../../../../models/Admin";
-import SeniorAdmin from "./../../../../../../models/SeniorAdmin";
-import Student from "./../../../../../../models/Student";
+import dbConnect from "./../../../../../lib/dbConnect";
+import Admin from "./../../../../../models/Admin";
+import SeniorAdmin from "./../../../../../models/SeniorAdmin";
+import Student from "./../../../../../models/Student";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
 export async function POST(req: Request) {
-  await dbConnect();
+  try {
+    await dbConnect();
+  } catch (dbErr) {
+    console.error("Database Connection Error in Login API:", dbErr);
+    return NextResponse.json(
+      { success: false, error: "خطا در اتصال به پایگاه داده." },
+      { status: 500 }
+    );
+  }
 
   try {
     const body = await req.json().catch(() => null);
+    
     if (!body) {
+      console.error("Login Error: Body is null or invalid JSON");
       return NextResponse.json(
         { success: false, error: "اطلاعات ارسالی نامعتبر است." },
         { status: 400 }
@@ -113,10 +123,10 @@ export async function POST(req: Request) {
       const isMatch = await bcrypt.compare(cleanPassword, student.passwordHash);
       if (isMatch) {
         const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
+          process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
         );
         
-        // 🔒 تکمیل پِی‌لود توکن برای سازگاری کامل با داشبورد و میدلور
+        // ساخت توکن با پِی‌لود کامل و سازگار با داشبورد و میدلور
         const token = await new SignJWT({ 
           userId: student._id.toString(), 
           id: student._id.toString(),
@@ -134,7 +144,8 @@ export async function POST(req: Request) {
           message: "ورود با موفقیت انجام شد.",
         });
 
-        response.cookies.set("token", token, {
+        // 🔒 ست کردن کوکی با نام studentToken برای هماهنگی کامل با ثبت‌نام و میدلور
+        response.cookies.set("studentToken", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
@@ -146,47 +157,17 @@ export async function POST(req: Request) {
       }
     }
 
-    if (student && student.passwordHash) {
-      const isMatch = await bcrypt.compare(cleanPassword, student.passwordHash);
-      if (isMatch) {
-        const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
-        );
-        
-        const token = await new SignJWT({ userId: student._id.toString(), role: "student" })
-          .setProtectedHeader({ alg: "HS256" })
-          .setExpirationTime("7d")
-          .sign(secret);
-
-        const response = NextResponse.json({
-          success: true,
-          role: "student",
-          redirectUrl: "/student/dashboard",
-          message: "ورود با موفقیت انجام شد.",
-        });
-
-        // 🔒 اصلاح نام کوکی از studentToken به token برای هماهنگی با میدلور و جلوگیری از رفرش ناخواسته
-        response.cookies.set("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return response;
-      }
-    }
-
-    // جلوگیری از Timing Attack در صورت پیدا نشدن کاربر
+    // جلوگیری از Timing Attack و ثبت لاگ خطا
     await bcrypt.compare(cleanPassword, "$2a$10$invalidhashvaluetomatchtiming123456789");
+    console.warn(`Failed login attempt for username: ${cleanUsername}`);
+    
     return NextResponse.json(
       { success: false, error: genericErrorMessage },
       { status: 401 }
     );
 
   } catch (err: any) {
-    console.error("Unified Login Error:", err);
+    console.error("Unified Login Critical Error:", err);
     return NextResponse.json(
       { success: false, error: "خطای سرور. لطفاً دوباره تلاش کنید." },
       { status: 500 }

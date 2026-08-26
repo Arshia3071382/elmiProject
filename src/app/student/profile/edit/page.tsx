@@ -1,5 +1,8 @@
 "use client";
 
+
+
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Container from "@/component/Container";
@@ -193,15 +196,28 @@ export default function EditProfilePage() {
       setSavingPassword(false);
     }
   };
+  const handleStudentLogout = async () => {
+  try {
+    await fetch("/api/student/logout", { method: "POST" });
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+    // پاک کردن تاریخچه مرورگر و ریدایرکت قطعی به صفحه اصلی
+    window.history.replaceState(null, "", "/");
+    window.location.replace("/");
+  }
+};
 
-  if (loading) {
+ if (loading) {
     return (
       <div dir="rtl" className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="text-xs text-slate-500 font-[iranSans-r]">در حال بررسی دسترسی...</span>
+        </div>
       </div>
     );
   }
-
   const activeAvatarObj = AVATAR_OPTIONS.find(a => a.imageUrl === selectedAvatar) || AVATAR_OPTIONS[0];
 
   return (

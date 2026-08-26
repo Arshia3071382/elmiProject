@@ -28,7 +28,11 @@ export async function GET(req: Request) {
     const queryNationalId = searchParams.get("nationalId");
 
     const cookieStore = await cookies();
-    const token = cookieStore.get("studentToken");
+    // 🔒 پوشش کامل تمام نام‌های احتمالی کوکی دانش‌آموز
+    const token = 
+      cookieStore.get("token") || 
+      cookieStore.get("studentToken") || 
+      cookieStore.get("student_token");
 
     let student = null;
 
@@ -39,23 +43,32 @@ export async function GET(req: Request) {
           process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
         );
         const { payload } = await jwtVerify(token.value, secret);
-        const studentId = payload.userId as string;
+        const studentId = (payload.userId || payload.id || payload.sub) as string;
         
         if (studentId) {
           student = await Student.findById(studentId);
         }
       } catch (e) {
-        // اگر توکن نامعتبر یا منقضی بود ادامه می‌دهیم تا بررسی کوئری پارامتر انجام شود
+        // اگر توکن به صورت کد ملی یا آیدی خام در کوکی ذخیره شده بود
+        const rawTokenVal = token.value;
+        if (rawTokenVal.length === 24) {
+          student = await Student.findById(rawTokenVal);
+        } else {
+          student = await Student.findOne({ nationalId: normalizeNationalId(rawTokenVal) });
+        }
       }
     }
 
     // ۲. پشتیبانی از جستجو با کد ملی ارسالی از کوئری پارامتر
     if (!student && queryNationalId) {
       const cleanQueryId = normalizeNationalId(queryNationalId);
-      const allStudents = await Student.find({});
-      student = allStudents.find(
-        (s) => normalizeNationalId(s.nationalId) === cleanQueryId,
-      );
+      student = await Student.findOne({ nationalId: cleanQueryId });
+      if (!student) {
+        const allStudents = await Student.find({});
+        student = allStudents.find(
+          (s) => normalizeNationalId(s.nationalId) === cleanQueryId,
+        );
+      }
     }
 
     if (!student) {
@@ -74,10 +87,13 @@ export async function GET(req: Request) {
     }
 
     if (!gradeRecord && cleanStudentNationalId) {
-      const allGradeStudents = await GradeStudent.find({});
-      gradeRecord = allGradeStudents.find(
-        (gs) => normalizeNationalId(gs.nationalId) === cleanStudentNationalId,
-      );
+      gradeRecord = await GradeStudent.findOne({ nationalId: cleanStudentNationalId });
+      if (!gradeRecord) {
+        const allGradeStudents = await GradeStudent.find({});
+        gradeRecord = allGradeStudents.find(
+          (gs) => normalizeNationalId(gs.nationalId) === cleanStudentNationalId,
+        );
+      }
 
       if (gradeRecord) {
         student.leagueProfile = gradeRecord._id;
@@ -97,21 +113,18 @@ export async function GET(req: Request) {
     
     let userIndex = -1;
 
-    // الف: جستجو با ObjectId رکورد لیگ
     if (gradeRecord && gradeRecord._id) {
       userIndex = sameGradeStudents.findIndex(
         (s) => s._id.toString() === gradeRecord._id.toString()
       );
     }
 
-    // ب: اگر پیدا نشد، جستجو با اتصال به studentId
     if (userIndex === -1 && student._id) {
       userIndex = sameGradeStudents.findIndex(
         (s) => s.studentId && s.studentId.toString() === student._id.toString()
       );
     }
     
-    // ج: اگر باز هم پیدا نشد، جستجو با کد ملی نرمال‌شده
     if (userIndex === -1 && cleanStudentNationalId) {
       userIndex = sameGradeStudents.findIndex(
         (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
@@ -120,7 +133,6 @@ export async function GET(req: Request) {
     
     const gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
 
-    // پیدا کردن نفر بالایی و پایینی برای رادار رقابتی
     let higherStudent = null;
     let lowerStudent = null;
 
@@ -131,8 +143,6 @@ export async function GET(req: Request) {
           name: `${higher.firstName || ""} ${higher.lastName || ""}`.trim() || "دانش‌آموز برتر",
           score: higher.totalScore || 0,
         };
-      } else {
-        higherStudent = null;
       }
       
       if (userIndex < sameGradeStudents.length - 1) {
@@ -141,17 +151,13 @@ export async function GET(req: Request) {
           name: `${lower.firstName || ""} ${lower.lastName || ""}`.trim() || "دانش‌آموز",
           score: lower.totalScore || 0,
         };
-      } else {
-        lowerStudent = null;
       }
     }
 
-    // ۵. استخراج دقیق نام و نام خانوادگی
     const firstName = student.firstName || gradeRecord?.firstName || "";
     const lastName = student.lastName || gradeRecord?.lastName || "";
     const fullName = `${firstName} ${lastName}`.trim() || "دانش‌آموز";
 
-    // ۶. محاسبه رتبه و امتیاز در لیگ نخبگان (EliteStudent)
     let eliteLeagueData = null;
     try {
       const eliteRecord = await EliteStudent.findOne({
@@ -181,7 +187,6 @@ export async function GET(req: Request) {
       console.error("Elite League fetch error:", e);
     }
 
-    // ۷. دریافت تاریخ آخرین به‌روزرسانی لیگ
     const setting = await LeagueSetting.findOne();
     const lastLeagueUpdate = setting?.lastUpdate
       ? new Date(setting.lastUpdate).toLocaleDateString("fa-IR")
@@ -196,7 +201,6 @@ export async function GET(req: Request) {
           level: "فعال",
           totalScore: totalScore,
           scoreToNextLevel: 100 - (totalScore % 100),
-          // اصلاح مقدار آواتار برای پشتیبانی از مسیرهای جدید و جلوگیری از خطای شناسه‌های قدیمی
           avatar: student.avatar && student.avatar.startsWith("/") 
             ? student.avatar 
             : "/image/profile/p2.png",
