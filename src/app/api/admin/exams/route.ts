@@ -29,10 +29,33 @@ async function verifyAdminOrSenior(): Promise<boolean> {
 
 // دریافت لیست آزمون‌ها و همگام‌سازی خودکار همه دانش‌آموزان
 export async function GET(req: Request) {
-  if (!(await verifyAdminOrSenior())) {
-    return NextResponse.json({ success: false, error: "دسترسی غیرمجاز. لطفاً وارد شوید." }, { status: 401 });
-  }
+async function verifyAdminOrSenior(): Promise<boolean> {
+  const cookieStore = await cookies();
+  
+  // چاپ تمام کوکی‌های موجود برای دیباگ در ترمینال سرور
+  const allCookies = cookieStore.getAll();
+  console.log("Available cookies:", allCookies.map(c => c.name));
 
+  const token = 
+    cookieStore.get("senior_admin_token")?.value || 
+    cookieStore.get("admin_token")?.value || 
+    cookieStore.get("adminToken")?.value ||
+    cookieStore.get("token")?.value || // 👈 اضافه کردن کوکی عمومی توکن
+    cookieStore.get("auth_token")?.value;
+
+  if (!token) return false;
+
+  try {
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+    );
+    await jwtVerify(token, secret);
+    return true;
+  } catch (err) {
+    console.error("JWT Verify Error:", err);
+    return false;
+  }
+}
   await dbConnect();
   try {
     const { searchParams } = new URL(req.url);

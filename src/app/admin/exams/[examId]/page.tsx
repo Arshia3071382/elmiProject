@@ -32,7 +32,9 @@ export default function ExamDetailPage() {
   const fetchExamDetails = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/exams`);
+      const res = await fetch(`/api/admin/exams`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         const found = data.exams.find((e: IExam) => e._id === examId);
@@ -43,6 +45,8 @@ export default function ExamDetailPage() {
           setExam({ ...found, subjects: subjectsList });
           setExamSubjects(subjectsList);
         }
+      } else {
+        console.error("Auth error:", data.error);
       }
     } catch (err) {
       console.error("خطا در دریافت اطلاعات آزمون:", err);
@@ -63,6 +67,7 @@ export default function ExamDetailPage() {
       const res = await fetch("/api/admin/exams", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           examId: exam._id,
           action: "update_subjects",
@@ -121,6 +126,7 @@ export default function ExamDetailPage() {
       const res = await fetch("/api/admin/exams", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           examId: exam._id,
           studentId: activeStudent.studentId || activeStudent._id,
