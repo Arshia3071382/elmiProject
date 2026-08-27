@@ -7,22 +7,27 @@ export function middleware(request: NextRequest) {
   const adminToken = request.cookies.get("admin_token")?.value;
   const seniorAdminToken = request.cookies.get("senior_admin_token")?.value;
   
-  // 🔒 پوشش کامل تمام نام‌های احتمالی کوکی دانش‌آموز در میدلور
+  // بررسی توکن‌های معتبر ادمین یا معین ارشد
+  const anyAdminToken = 
+    adminToken || 
+    seniorAdminToken || 
+    request.cookies.get("token")?.value;
+
   const studentToken = 
     request.cookies.get("token")?.value || 
     request.cookies.get("studentToken")?.value ||
     request.cookies.get("student_token")?.value;
 
-  // محافظت از پنل ادمین کل
+  // محافظت از پنل ادمین (اجازه ورود به ادمین کل یا معین‌های ارشد دارای توکن)
   if (pathname.startsWith("/admin")) {
-    if (!adminToken) {
+    if (!anyAdminToken) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
   // محافظت از پنل معین ارشد
   if (pathname.startsWith("/senior-admin")) {
-    if (!seniorAdminToken && !adminToken) {
+    if (!anyAdminToken) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
