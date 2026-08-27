@@ -19,11 +19,12 @@ export async function GET() {
 
     await dbConnect();
 
+    // اصلاح فیلد `-password` به جای `-passwordHash`
     const admins = await SeniorAdmin.find({
       role: "senior_admin",
       isActive: true,
     })
-      .select("-passwordHash -__v")
+      .select("-password -__v")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -45,7 +46,7 @@ export async function GET() {
   }
 }
 
-// POST - ایجاد معین ارشد جدید (با پسورد هش‌شده)
+// POST - ایجاد معین ارشد جدید
 export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
@@ -72,7 +73,6 @@ export async function POST(req: Request) {
 
     const cleanUsername = String(username).trim();
     
-    // بررسی تکراری نبودن نام کاربری
     const existing = await SeniorAdmin.findOne({ username: cleanUsername });
     if (existing) {
       return NextResponse.json(
@@ -81,16 +81,16 @@ export async function POST(req: Request) {
       );
     }
 
-const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-const newSeniorAdmin = await SeniorAdmin.create({
-  username: cleanUsername,
-  name: name.trim(), // نام اجباری
-  password: hashedPassword,
-  role: "senior_admin", // نقش اجباری برای شناسایی در لاگین
-  permissions: [],
-  isActive: true,
-});
+    const newSeniorAdmin = await SeniorAdmin.create({
+      username: cleanUsername,
+      name: name.trim(),
+      password: hashedPassword,
+      role: "senior_admin",
+      permissions: [],
+      isActive: true,
+    });
 
     return NextResponse.json({
       success: true,
@@ -106,13 +106,13 @@ const newSeniorAdmin = await SeniorAdmin.create({
     });
   } catch (error: any) {
     console.error("POST create senior admin error:", error);
-    // نمایش دقیق خطای Mongoose برای دیباگ بهتر در کنسول
     return NextResponse.json(
       { success: false, error: error.message || "خطا در ایجاد معین ارشد" },
       { status: 500 }
     );
   }
 }
+
 // PUT - تغییر دسترسی معین
 export async function PUT(req: Request) {
   try {
@@ -160,7 +160,7 @@ export async function PUT(req: Request) {
         new: true,
       }
     )
-      .select("-passwordHash -__v")
+      .select("-password -__v")
       .lean();
 
     if (!updatedAdmin) {

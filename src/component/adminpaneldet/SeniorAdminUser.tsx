@@ -34,7 +34,7 @@ export default function SeniorAdminUser() {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/manage-permissions");
+      const res = await fetch("/api/senior-admin/manage-permissions");
       const data = await res.json();
       if (data.success) {
         setAdmins(data.admins || []);
@@ -72,7 +72,7 @@ export default function SeniorAdminUser() {
     setMessage(null);
 
     try {
-      const res = await fetch("/api/admin/manage-permissions", {
+      const res = await fetch("/api/senior-admin/manage-permissions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: targetUsername, permissions }),
@@ -103,7 +103,7 @@ export default function SeniorAdminUser() {
     setMessage(null);
 
     try {
-      const res = await fetch("/api/admin/manage-permissions", {
+      const res = await fetch("/api/senior-admin/manage-permissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), name: name.trim(), password }),
