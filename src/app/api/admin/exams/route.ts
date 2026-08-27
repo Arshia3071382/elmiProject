@@ -2,10 +2,37 @@ import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../lib/dbConnect";
 import Exam from "./../../../../../models/Exam";
 import Student from "./../../../../../models/Student";
-import GradeStudent from "./../../../../../models/GradeStudent"; // این خط را اضافه کنید
+import GradeStudent from "./../../../../../models/GradeStudent";
 import { cookies } from "next/headers";
-// دریافت لیست آزمون‌ها و همگام‌سازی خودکار همه دانش‌آموزان (از GradeStudent و Student)
+import { jwtVerify } from "jose";
+
+// تابع کمکی برای بررسی احراز هویت ادمین یا معین ارشد
+async function verifyAdminOrSenior(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const token = 
+    cookieStore.get("senior_admin_token")?.value || 
+    cookieStore.get("admin_token")?.value || 
+    cookieStore.get("adminToken")?.value;
+
+  if (!token) return false;
+
+  try {
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+    );
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// دریافت لیست آزمون‌ها و همگام‌سازی خودکار همه دانش‌آموزان
 export async function GET(req: Request) {
+  if (!(await verifyAdminOrSenior())) {
+    return NextResponse.json({ success: false, error: "دسترسی غیرمجاز. لطفاً وارد شوید." }, { status: 401 });
+  }
+
   await dbConnect();
   try {
     const { searchParams } = new URL(req.url);
@@ -20,10 +47,8 @@ export async function GET(req: Request) {
       
       const currentGradeNum = Number(exam.grade);
 
-      // ۱. گرفتن دانش‌آموزان از مدل GradeStudent (که همه دانش‌آموزان پایه در آن هستند)
       let allStudentsInGrade = await GradeStudent.find({ grade: currentGradeNum });
 
-      // ۲. اگر در GradeStudent نبودند، از مدل Student هم چک می‌کنیم که چیزی از قلم نیفتد
       if (allStudentsInGrade.length === 0) {
         allStudentsInGrade = await Student.find({ grade: currentGradeNum });
       }
@@ -33,7 +58,6 @@ export async function GET(req: Request) {
 
       for (const stu of allStudentsInGrade) {
         const stuId = stu._id.toString();
-        // بررسی اینکه آیا این دانش‌آموز قبلاً در نتایج آزمون هست یا خیر
         const alreadyExists = existingStudentIds.includes(stuId) || 
           exam.results.some((r: any) => r.nationalId === stu.nationalId);
 
@@ -65,6 +89,10 @@ export async function GET(req: Request) {
 
 // ایجاد آزمون جدید و پر کردن خودکار دانش‌آموزان آن پایه
 export async function POST(req: Request) {
+  if (!(await verifyAdminOrSenior())) {
+    return NextResponse.json({ success: false, error: "دسترسی غیرمجاز. لطفاً وارد شوید." }, { status: 401 });
+  }
+
   await dbConnect();
   try {
     const { title, grade } = await req.json();
@@ -75,15 +103,12 @@ export async function POST(req: Request) {
 
     const currentGradeNum = Number(grade);
 
-    // ۱. ابتدا از مدل GradeStudent جستجو می‌کنیم
     let students = await GradeStudent.find({ grade: currentGradeNum });
 
-    // ۲. اگر خالی بود، از مدل Student استفاده می‌کنیم
     if (students.length === 0) {
       students = await Student.find({ grade: currentGradeNum });
     }
 
-    // ساخت آرایه نتایج اولیه برای همه دانش‌آموزان این پایه
     const initialResults = students.map((stu) => ({
       studentId: stu._id,
       firstName: stu.firstName,
@@ -108,8 +133,12 @@ export async function POST(req: Request) {
   }
 }
 
-// ==================== PUT (به‌روزرسانی دروس یا ثبت نمرات و محاسبه درصدها) ====================
+// به‌روزرسانی دروس یا ثبت نمرات و محاسبه درصدها
 export async function PUT(req: Request) {
+  if (!(await verifyAdminOrSenior())) {
+    return NextResponse.json({ success: false, error: "دسترسی غیرمجاز. لطفاً وارد شوید." }, { status: 401 });
+  }
+
   await dbConnect();
   try {
     const body = await req.json();
@@ -120,21 +149,18 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, error: "آزمون یافت نشد." }, { status: 404 });
     }
 
-  // در فایل route.ts بخش مربوط به update_subjects
-if (action === "update_subjects") {
-  exam.subjects = subjects.map((s: any) => ({
-    subjectName: s.subjectName,
-    totalQuestions: Number(s.totalQuestions) || 0,
-    coefficient: Number(s.coefficient) || 1,
-  }));
-  
-  await exam.save();
-  
-  // حتما سند به‌روز شده را برگردانید
-  return NextResponse.json({ success: true, exam });
-}
+    if (action === "update_subjects") {
+      exam.subjects = subjects.map((s: any) => ({
+        subjectName: s.subjectName,
+        totalQuestions: Number(s.totalQuestions) || 0,
+        coefficient: Number(s.coefficient) || 1,
+      }));
+      
+      await exam.save();
+      
+      return NextResponse.json({ success: true, exam });
+    }
 
-    // ۲. اگر هدف، ثبت نمرات یک دانش‌آموز باشد
     const studentResult = exam.results.id(resultId) || exam.results.find(
       (r: any) => r.studentId?.toString() === studentId || r._id?.toString() === studentId
     );
@@ -143,12 +169,10 @@ if (action === "update_subjects") {
       return NextResponse.json({ success: false, error: "دانش‌آموز یافت نشد." }, { status: 404 });
     }
 
-    // آپدیت نمرات این دانش‌آموز (شامل درست، غلط، نزده و درصدها)
     studentResult.scores = scores;
     studentResult.totalPercentage = totalPercentage;
     studentResult.isCompleted = true;
 
-    // محاسبه رتبه‌ها برای تمام دانش‌آموزانی که آزمون را تکمیل کرده‌اند
     const completedStudents = exam.results
       .filter((r: any) => r.isCompleted)
       .sort((a: any, b: any) => b.totalPercentage - a.totalPercentage);
@@ -168,8 +192,12 @@ if (action === "update_subjects") {
   }
 }
 
-// تغییر وضعیت انتشار آزمون (Published / Unpublished)
+// تغییر وضعیت انتشار آزمون
 export async function PATCH(req: Request) {
+  if (!(await verifyAdminOrSenior())) {
+    return NextResponse.json({ success: false, error: "دسترسی غیرمجاز. لطفاً وارد شوید." }, { status: 401 });
+  }
+
   await dbConnect();
   try {
     const { examId, isPublished } = await req.json();
@@ -190,18 +218,14 @@ export async function PATCH(req: Request) {
   }
 }
 
-// متد DELETE برای حذف آزمون
+// حذف آزمون
 export async function DELETE(req: Request) {
+  if (!(await verifyAdminOrSenior())) {
+    return NextResponse.json({ success: false, error: "دسترسی غیرمجاز. لطفاً وارد شوید." }, { status: 401 });
+  }
+
   await dbConnect();
-
   try {
-    // ----------------------------------------------------
-    // موقتاً بررسی کوکی را غیرفعال می‌کنیم تا حذف آزمون انجام شود
-    // const cookieStore = await cookies();
-    // const adminToken = cookieStore.get("senior_admin_token");
-    // if (!adminToken) { ... }
-    // ----------------------------------------------------
-
     const body = await req.json();
     const { examId } = body;
 
@@ -232,13 +256,4 @@ export async function DELETE(req: Request) {
       { status: 500 }
     );
   }
-}
-// تابع کمکی (دیگر نیازی به استفاده پیچیده از آن نیست چون مستقیماً داخل متد بررسی شد)
-async function checkAdminAuth(cookieStore: any): Promise<boolean> {
-  const adminToken = 
-    cookieStore.get("senior_admin_token") || 
-    cookieStore.get("adminToken") || 
-    cookieStore.get("token");
-
-  return !!adminToken;
 }
