@@ -13,6 +13,7 @@ import ScienceHub from "@/component/ScienceHub";
 import PuzzleActionSection from "@/component/PuzzleButton";
 import StudentComments from "@/component/StudentComments";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
+import EliteLeagueBanner from "@/component/EliteLeagueBanner";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -30,6 +31,7 @@ export default function Home() {
       >
        <HeroSec isLoaded={isLoaded} />
         <StudentAuthButtons />
+        <EliteLeagueBanner />
         
         <ScrollAnimation direction="up" delay={0.1}>
           <CounterStats />

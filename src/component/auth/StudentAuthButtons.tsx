@@ -24,7 +24,7 @@ export default function StudentAuthPillHorizontal() {
 
   return (
     <>
-      <div className="w-full flex justify-center items-center my-8 px-3" dir="rtl">
+      <div className="w-full flex justify-center items-center mt-5 sm:mt-20 px-3" dir="rtl">
         {/* کانتینر کپسولی افقی */}
         <div className="flex flex-row w-full max-w-3xl rounded-[28px] sm:rounded-[36px] p-[2px] sm:p-[2.5px] relative overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.15)] bg-slate-900/10 backdrop-blur-2xl">
           
