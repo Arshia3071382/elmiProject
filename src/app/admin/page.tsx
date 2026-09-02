@@ -20,8 +20,10 @@ import AdminTeachersPanel from "@/component/adminpaneldet/AdminTeachersPanel";
 import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel";
 import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel";
 import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel";
+import AdminBorhanPanel from "@/component/adminpaneldet/AdminBorhanPanel";
+
 import AdminToast from "./AdminToast";
-import { MainTab, CourseTab } from "./constants";
+import { CourseTab } from "./constants";
 
 export default function AdminPage() {
   const [isChecking, setIsChecking] = useState(true);
@@ -32,7 +34,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [activeTab, setActiveTab] = useState<MainTab>("dashboard");
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [activeCourseTab, setActiveCourseTab] = useState<CourseTab>("courses");
 
   // چک کردن احراز هویت در لحظه ورود به صفحه
@@ -167,7 +169,7 @@ export default function AdminPage() {
     );
   }
 
-  const panelComponents: Record<MainTab, React.ReactNode> = {
+  const panelComponents: Record<string, React.ReactNode> = {
     dashboard: (
       <div className="space-y-6">
         <StatsCards categoriesCount={categories.length} coursesCount={courses.length} averageCourses={categories.length ? Number((courses.length / categories.length).toFixed(1)) : 0} />
@@ -208,9 +210,10 @@ export default function AdminPage() {
     podcasts: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminPodcastPanel /></div>,
     exams: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminExamsPanel /></div>,
     permissions: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><SeniorPermissionManager onShowMessage={showMessage} /></div>,
+    borhan: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminBorhanPanel onShowMessage={showMessage} /></div>,
   };
 
-  const menuItems: { id: MainTab; label: string }[] = [
+  const menuItems: { id: string; label: string }[] = [
     { id: "dashboard", label: "داشبورد" },
     { id: "courses", label: "دوره‌ها" },
     { id: "elite-league", label: "لیگ نخبگان" },
@@ -225,6 +228,7 @@ export default function AdminPage() {
     { id: "podcasts", label: "پادکست‌ها" },
     { id: "exams", label: "آزمون‌ها" },
     { id: "permissions", label: "دسترسی‌ها" },
+    { id: "borhan", label: "پروژه برهان" },
   ];
 
   return (
@@ -234,7 +238,7 @@ export default function AdminPage() {
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10 flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4 text-center md:text-right w-full md:w-auto justify-center md:justify-start">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner shrink-0">
               <span className="text-xl sm:text-2xl font-black text-sky-300">🎓</span>
             </div>
             <div>

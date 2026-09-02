@@ -15,7 +15,7 @@ const GRADES = [
   { 
     id: 2, 
     label: "پایه دوم", 
-    description: "شروع شگفت‌انگیز یادگیری", 
+    description: "گروه شهید جباری", 
     icon: Rocket,
     titleColor: "text-emerald-950",
     descColor: "text-emerald-600",
@@ -25,7 +25,7 @@ const GRADES = [
   { 
     id: 3, 
     label: "پایه سوم", 
-    description: "کشف استعدادها و خلاقیت", 
+    description: "گروه شهید عبدی", 
     icon: Flame,
     titleColor: "text-green-950",
     descColor: "text-green-600",
@@ -35,7 +35,7 @@ const GRADES = [
   { 
     id: 4, 
     label: "پایه چهارم", 
-    description: "ماجراجویی در دنیای علوم", 
+    description: "گروه شهید ذوالفقاری", 
     icon: Zap,
     titleColor: "text-teal-950",
     descColor: "text-teal-600",
@@ -45,7 +45,7 @@ const GRADES = [
   { 
     id: 5, 
     label: "پایه پنجم", 
-    description: "اوج‌گیری مهارت‌ها و رقابت", 
+    description: "گروه شهید دلخواسته", 
     icon: Rocket,
     titleColor: "text-emerald-950",
     descColor: "text-emerald-600",
@@ -55,7 +55,7 @@ const GRADES = [
   { 
     id: 6, 
     label: "پایه ششم", 
-    description: "تثبیت دانش و آمادگی بزرگ", 
+    description: "گروه شهید مسافرچی", 
     icon: Flame,
     titleColor: "text-green-950",
     descColor: "text-green-600",
@@ -65,7 +65,7 @@ const GRADES = [
   { 
     id: 7, 
     label: "پایه هفتم", 
-    description: "ورود به دنیای چالش‌های جدی", 
+    description: "گروه شهید ابراهیمی", 
     icon: Zap,
     titleColor: "text-teal-950",
     descColor: "text-teal-600",
@@ -75,7 +75,7 @@ const GRADES = [
   { 
     id: 8, 
     label: "پایه هشتم", 
-    description: "رقابت نفس‌گیر نخبگان", 
+    description: "گروه شهید سلیمانی", 
     icon: Rocket,
     titleColor: "text-emerald-950",
     descColor: "text-emerald-600",

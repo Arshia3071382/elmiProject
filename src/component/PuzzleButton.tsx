@@ -118,7 +118,7 @@ export default function PuzzleActionSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <Link
-                href="/borhan-team"
+                href="/borhan"
                 onMouseEnter={() => setHoveredIndex(1)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="group relative block rounded-3xl p-[1.5px] overflow-hidden h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)]"

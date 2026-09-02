@@ -37,7 +37,7 @@ export default function EliteLeagueBanner() {
   };
 
   return (
-    <div className="w-full my-8">
+    <div className="w-full my-8 sm:mt-30 ">
       {/* بنر با پالت رنگی نهایی لیگ نخبگان */}
       <div className="relative overflow-hidden rounded-none bg-[#050505] border-y border-[#F97316]/40 shadow-[0_0_60px_rgba(249,115,22,0.18)] py-8 px-4 sm:px-12 text-[#F8FAFC]">
         

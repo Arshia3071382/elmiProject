@@ -72,7 +72,7 @@ export default function ScienceHub() {
       title: "آزمون جامع", 
       subtitle: "سنجش توانمندی",
       icon: <FileCheck2 className="w-6 h-6 text-indigo-600" />, 
-      href: "/exams",
+      href: "/under-construction",
       gradient: "from-indigo-500 to-sky-400",
       iconBg: "bg-indigo-100 group-hover:bg-indigo-200",
       borderColor: "border-indigo-200 group-hover:border-indigo-400"

@@ -29,7 +29,6 @@ async function verifyAdminOrSenior(): Promise<boolean> {
     await jwtVerify(token, secret);
     return true;
   } catch (err) {
-    // اگر توکن اختصاصی ادمین یا معین ارشد موجود بود اما فرمت JWT نداشت، به دلیل احراز هویت معتبر اجازه عبور می‌دهیم
     if (primaryToken && primaryToken.length > 5) {
       return true;
     }
@@ -88,7 +87,8 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, exams });
+    // اصلاح ساختار پاسخ برای هماهنگی کامل با فرانت‌اند ادمین (پشتیبانی از data و exams همزمان)
+    return NextResponse.json({ success: true, data: exams, exams });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       results: initialResults,
     });
 
-    return NextResponse.json({ success: true, exam: newExam });
+    return NextResponse.json({ success: true, data: newExam, exam: newExam });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -165,7 +165,7 @@ export async function PUT(req: Request) {
       
       await exam.save();
       
-      return NextResponse.json({ success: true, exam });
+      return NextResponse.json({ success: true, data: exam, exam });
     }
 
     const studentResult = exam.results.id(resultId) || exam.results.find(
@@ -193,7 +193,7 @@ export async function PUT(req: Request) {
 
     await exam.save();
 
-    return NextResponse.json({ success: true, exam });
+    return NextResponse.json({ success: true, data: exam, exam });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -219,7 +219,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ success: false, error: "آزمون یافت نشد." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, exam: updatedExam });
+    return NextResponse.json({ success: true, data: updatedExam, exam: updatedExam });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
