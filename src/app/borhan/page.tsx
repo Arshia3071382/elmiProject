@@ -249,15 +249,15 @@ export default function BorhanPage() {
         {/* گالری تصاویر */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl mb-16">
           <div className="relative h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white hover:scale-105 hover:shadow-2xl transition-all duration-300">
-            <Image src="/image/1.jpg" alt="برهان ۱" fill className="object-cover" />
+            <Image src="/image/borhan/hero13.jpg" alt="برهان ۱" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
           <div className="relative h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white hover:scale-105 hover:shadow-2xl transition-all duration-300 sm:-translate-y-4">
-            <Image src="/image/2.jpg" alt="برهان ۲" fill className="object-cover" />
+            <Image src="/image/borhan/n1.png" alt="برهان ۲" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
           <div className="relative h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white hover:scale-105 hover:shadow-2xl transition-all duration-300">
-            <Image src="/image/ordoP.jpg" alt="برهان ۳" fill className="object-cover" />
+            <Image src="/image/borhan/hero12.png" alt="برهان ۳" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
         </div>

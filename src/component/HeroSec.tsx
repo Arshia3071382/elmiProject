@@ -5,17 +5,17 @@ import Container from './Container'
 import Image from 'next/image'
 
 const images: string[] = [
-  "/image/hero17.png",
-  "/image/hero13.jpg",
-  "/image/hero20.png",
-  "/image/hero22.png",
-  "/image/hero16.png",
-  "/image/hero15.png",
-  "/image/hero21.png",
-  "/image/hero11.png",
-  "/image/hero12.png",
-  "/image/hero18.png",
-  "/image/hero23.png"
+  "/image/heroSection/hero17.png",
+  "/image/heroSection/hero13.jpg",
+  "/image/heroSection/hero20.png",
+  "/image/heroSection/hero22.png",
+  "/image/heroSection/hero16.png",
+  "/image/heroSection/hero15.png",
+  "/image/heroSection/hero21.png",
+  "/image/heroSection/hero11.png",
+  "/image/heroSection/hero12.png",
+  "/image/heroSection/hero18.png",
+  "/image/heroSection/hero23.png"
 ]
 
 interface HeroSecProps {
