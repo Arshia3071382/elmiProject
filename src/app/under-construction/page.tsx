@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function UnderConstructionPage() {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 sm:p-6 text-center font-sans" dir="rtl">
+    <div className="min-h-screen bg-white mt-10 sm:mt-25 flex flex-col items-center justify-center p-4 sm:p-6 text-center font-sans" dir="rtl">
       <div className="max-w-xl w-full bg-slate-50 border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm flex flex-col items-center">
         
         {/* تصویر لگویی با ارتفاع بهینه‌شده برای موبایل */}

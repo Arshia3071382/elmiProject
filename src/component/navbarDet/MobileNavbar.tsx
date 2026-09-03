@@ -113,7 +113,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
     { label: "ارتباط با ما", href: "/contactUs", icon: PhoneCall },
     { label: "معرفی اساتید", href: "/teachers", icon: GraduationCap },
     { label: "آشنایی با لیگ نخبگان", href: "/league-guide", icon: Trophy },
-    { label: "آشنایی با برهان", href: "/", icon: Rocket },
+    { label: "آشنایی با برهان", href: "/borhan", icon: Rocket },
   ];
 
   const handleOpenLoginModal = (e: React.MouseEvent) => {

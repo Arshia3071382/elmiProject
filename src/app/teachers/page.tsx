@@ -196,18 +196,18 @@ export default function TeachersSection() {
 
         {/* Teachers Grid */}
         {!loading && !error && teachers.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
             {teachers.map((teacher, index) => (
               <motion.div
                 key={teacher.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="flex flex-col items-center text-center p-6 rounded-3xl bg-white border border-[var(--color-border)] shadow-sm hover:shadow-md transition-shadow"
+                className="group flex flex-col items-center text-center p-7 rounded-[2.2rem] bg-[#f8fafc]/90 backdrop-blur-2xl border-2 border-blue-200/80 shadow-2xl shadow-indigo-950/10 hover:border-blue-400 hover:shadow-blue-500/20 hover:-translate-y-3 transition-all duration-300 relative"
               >
                 {/* Avatar */}
-                <div className="relative w-40 h-40 mb-6 flex items-center justify-center">
+                <div className="relative w-36 h-36 mb-6 flex items-center justify-center">
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{
@@ -234,11 +234,11 @@ export default function TeachersSection() {
                         "conic-gradient(from 90deg, var(--color-success) 0deg 60deg, transparent 60deg 180deg, var(--color-primary) 180deg 240deg, transparent 240deg 360deg)",
                     }}
                   />
-                  <div className="relative w-[150px] h-[150px] rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-inner">
+                  <div className="relative w-[136px] h-[136px] rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md">
                     <img
                       src={teacher.avatar || "/default-avatar.png"}
                       alt={teacher.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(event) => {
                         const image = event.currentTarget;
                         if (image.src.endsWith("/default-avatar.png")) return;
@@ -249,13 +249,13 @@ export default function TeachersSection() {
                 </div>
 
                 {/* Name */}
-                <h3 className="text-lg font-['iranBold'] text-[var(--color-text-primary)] mb-2">
+                <h3 className="text-lg font-['iranBold'] text-[var(--color-text-primary)] mb-1.5">
                   {teacher.name}
                 </h3>
 
                 {/* Subject */}
                 {teacher.subject && (
-                  <p className="text-xs text-[var(--color-text-secondary)] mb-5">
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-6 bg-white/90 backdrop-blur-md px-3.5 py-1 rounded-full border border-blue-100 shadow-sm">
                     {teacher.subject}
                   </p>
                 )}
@@ -263,10 +263,9 @@ export default function TeachersSection() {
                 {/* Details button */}
                 <button
                   onClick={() => setSelectedTeacher(teacher)}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[var(--color-bg)] hover:bg-blue-50 text-[var(--color-primary)] hover:text-[var(--color-secondary)] border border-[var(--color-border)] font-['iranBold'] text-xs transition-all flex items-center justify-center gap-2 group"
+                  className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-[var(--color-secondary)] text-[var(--color-primary)] hover:text-white border border-blue-200 shadow-md hover:shadow-lg font-['iranBold'] text-xs transition-all duration-300 flex items-center justify-center gap-2 group/btn"
                 >
                   <span>اطلاعات تکمیلی</span>
-                  <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 </button>
               </motion.div>
             ))}
@@ -283,7 +282,7 @@ export default function TeachersSection() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedTeacher(null)}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl"
               />
 
               {/* Modal content */}
@@ -293,19 +292,19 @@ export default function TeachersSection() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
                 transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                className="relative w-full max-w-xl bg-white border border-[var(--color-border)] rounded-3xl shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col font-['iranSans-r']"
+                className="relative w-full max-w-xl bg-[#f8fafc]/95 backdrop-blur-3xl border-2 border-blue-200 rounded-[2.55rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col font-['iranSans-r']"
               >
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedTeacher(null)}
-                  className="absolute top-4 left-4 z-20 p-2 rounded-xl bg-[var(--color-bg)] hover:bg-slate-200 text-[var(--color-text-secondary)] transition-colors"
+                  className="absolute top-4 left-4 z-20 p-2 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-[var(--color-text-secondary)] transition-colors"
                   aria-label="بستن"
                 >
                   <X className="w-4 h-4" />
                 </button>
 
                 {/* Modal Header */}
-                <div className="p-6 bg-[var(--color-bg)] border-b border-[var(--color-border)] flex items-center gap-4">
+                <div className="p-6 bg-white/60 backdrop-blur-md border-b border-blue-100 flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow shrink-0">
                     <img
                       src={selectedTeacher.avatar || "/default-avatar.png"}
@@ -343,7 +342,7 @@ export default function TeachersSection() {
                       <h4 className="text-xs font-['iranBold'] text-[var(--color-primary)] mb-1.5">
                         توضیحات و بیوگرافی
                       </h4>
-                      <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed bg-[var(--color-bg)] p-3.5 rounded-2xl border border-[var(--color-border)]">
+                      <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed bg-white p-3.5 rounded-2xl border border-blue-100 shadow-sm">
                         {selectedTeacher.bio}
                       </p>
                     </div>
@@ -351,7 +350,7 @@ export default function TeachersSection() {
 
                   {/* Education */}
                   {selectedTeacher.education && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-violet-50 border border-violet-100">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-violet-50/80 border border-violet-100">
                       <GraduationCap className="w-5 h-5 text-violet-600 shrink-0" />
                       <div>
                         <div className="text-[10px] text-violet-600 font-['iranBold'] mb-0.5">
@@ -369,7 +368,7 @@ export default function TeachersSection() {
                     selectedTeacher.experienceYears > 0) && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {selectedTeacher.articlesCount > 0 && (
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/60 border border-blue-100">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/80 border border-blue-100">
                           <BookOpen className="w-5 h-5 text-[var(--color-secondary)] shrink-0" />
                           <div>
                             <div className="text-sm font-['iranBold'] text-[var(--color-primary)]">
@@ -382,7 +381,7 @@ export default function TeachersSection() {
                         </div>
                       )}
                       {selectedTeacher.experienceYears > 0 && (
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50/80 border border-emerald-100">
                           <GraduationCap className="w-5 h-5 text-[var(--color-success)] shrink-0" />
                           <div>
                             <div className="text-sm font-['iranBold'] text-[var(--color-primary)]">
@@ -403,7 +402,7 @@ export default function TeachersSection() {
                       href={selectedTeacher.teachingSampleUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-red-50 border border-red-100 hover:bg-red-100 hover:border-red-200 transition-all group"
+                      className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-red-50/90 border border-red-100 hover:bg-red-100 hover:border-red-200 transition-all group"
                     >
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="w-11 h-11 rounded-xl bg-white text-white flex items-center justify-center shadow-sm">
@@ -437,7 +436,7 @@ export default function TeachersSection() {
                         {selectedTeacher.courses.map((course, index) => (
                           <div
                             key={`${course.title}-${index}`}
-                            className="flex items-center justify-between gap-3 p-3 rounded-xl bg-blue-50/50 border border-blue-100"
+                            className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-blue-100 shadow-sm"
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <BookOpen className="w-4 h-4 text-[var(--color-secondary)] shrink-0" />
@@ -471,7 +470,7 @@ export default function TeachersSection() {
                         {selectedTeacher.recentTopics.map((topic, index) => (
                           <span
                             key={index}
-                            className="px-3 py-1 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] font-['iranBold']"
+                            className="px-3 py-1 rounded-lg bg-white border border-blue-100 text-xs text-[var(--color-text-secondary)] font-['iranBold'] shadow-sm"
                           >
                             {topic}
                           </span>
@@ -491,7 +490,7 @@ export default function TeachersSection() {
                         {selectedTeacher.achievements.map((item, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-2 text-xs text-[var(--color-text-primary)] bg-[var(--color-bg)] p-2.5 rounded-xl border border-[var(--color-border)]"
+                            className="flex items-center gap-2 text-xs text-[var(--color-text-primary)] bg-white p-2.5 rounded-xl border border-blue-100 shadow-sm"
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-secondary)] shrink-0" />
                             <span>{item}</span>
@@ -502,7 +501,7 @@ export default function TeachersSection() {
                   )}
 
                   {/* Student Satisfaction */}
-                  <div className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-100">
+                  <div className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-50/90 border border-emerald-100">
                     <span className="text-sm font-['iranBold'] text-emerald-700">
                       میزان رضایت دانش‌آموزان:
                     </span>
@@ -517,7 +516,7 @@ export default function TeachersSection() {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-4 bg-[var(--color-bg)] border-t border-[var(--color-border)]">
+                <div className="p-4 bg-white/60 backdrop-blur-md border-t border-blue-100">
                   <button
                     onClick={() => setSelectedTeacher(null)}
                     className="w-full py-2.5 rounded-xl bg-[var(--color-secondary)] hover:bg-[var(--color-primary)] text-white font-['iranBold'] text-xs transition-colors flex items-center justify-center gap-2"
