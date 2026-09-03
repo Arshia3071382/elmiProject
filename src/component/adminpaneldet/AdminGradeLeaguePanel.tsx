@@ -9,6 +9,8 @@ import StudentForm from "./grade-league/StudentForm";
 import StudentTable from "./grade-league/StudentTable";
 import StudentEditModal from "./grade-league/StudentEditModal";
 import ActivityModal from "./grade-league/ActivityModal";
+// فرض بر این است که کامپوننت مودال حذف را هم در همان مسیر یا پوشه دارید
+import DeleteConfirmModal from "./grade-league/DeleteConfirmModal";
 import { LEAGUE_ACTIVITIES } from "../../../lib/leagueActivities";
 
 interface IStudent {
@@ -19,9 +21,10 @@ interface IStudent {
   grade: number;
   selectedActivities: string[];
   totalScore: number;
-  previousRank?: number; // اضافه شده
+  previousRank?: number;
   published: boolean;
 }
+
 export default function AdminGradeLeaguePanel() {
   // States
   const [activeGrade, setActiveGrade] = useState<number | null>(null);
@@ -43,16 +46,18 @@ export default function AdminGradeLeaguePanel() {
   const [editNationalId, setEditNationalId] = useState<string>("");
   const [editingSave, setEditingSave] = useState<boolean>(false);
 
+  // Delete student modal state (اضافه شده)
+  const [studentToDelete, setStudentToDelete] = useState<IStudent | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
+
   // Activity modal
   const [selectedStudent, setSelectedStudent] = useState<IStudent | null>(null);
   const [activeCheckboxes, setActiveCheckboxes] = useState<string[]>([]);
   const [saving, setSaving] = useState<boolean>(false);
   const [searchActivity, setSearchActivity] = useState<string>("");
 
-  // لیست پایه‌ها برای نوار ناوبری بالا
   const allGrades = [2, 3, 4, 5, 6, 7, 8, 9];
 
-  // Fetch students
   const fetchStudents = useCallback(async () => {
     if (activeGrade === null) return;
     setLoading(true);
@@ -114,15 +119,21 @@ export default function AdminGradeLeaguePanel() {
     }
   };
 
-  // Delete student
-  const handleDeleteStudent = async (id: string) => {
-    if (!confirm("Are you sure?")) return;
+  // Delete student handlers (تغییر یافته برای استفاده از مودال)
+  const confirmDeleteStudent = (student: IStudent) => {
+    setStudentToDelete(student);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!studentToDelete) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/league/grade?id=${id}`, {
+      const res = await fetch(`/api/league/grade?id=${studentToDelete._id}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (data.success) {
+        setStudentToDelete(null);
         await fetchStudents();
       } else {
         alert(`Error: ${data.error || "Failed to delete"}`);
@@ -130,6 +141,8 @@ export default function AdminGradeLeaguePanel() {
     } catch (err) {
       console.error("Error deleting student:", err);
       alert("Server error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -245,7 +258,6 @@ export default function AdminGradeLeaguePanel() {
       className="w-full bg-slate-50 min-h-screen p-4 md:p-8 font-[IRANSansXFaNum-Bold] text-slate-800"
     >
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* نوار ناوبری سریع پایه‌ها (نمایش در صورت انتخاب یک پایه) */}
         {activeGrade !== null && (
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2 overflow-x-auto">
             <span className="text-sm font-bold text-slate-500 pl-4 border-l ml-2">
@@ -305,7 +317,7 @@ export default function AdminGradeLeaguePanel() {
                 gradeId={activeGrade}
                 loading={loading}
                 onEdit={handleEditStudent}
-                onDelete={handleDeleteStudent}
+                onDelete={confirmDeleteStudent} // ارسال تابع بازکننده مودال به جای تابع حذف مستقیم
                 onOpenModal={handleOpenModal}
               />
             </div>
@@ -336,6 +348,14 @@ export default function AdminGradeLeaguePanel() {
         onToggleActivity={toggleActivity}
         onSearchChange={setSearchActivity}
         onSave={handleSaveActivities}
+      />
+
+      {/* مودال تایید حذف (اضافه شده) */}
+      <DeleteConfirmModal
+        student={studentToDelete}
+        deleting={deleting}
+        onClose={() => setStudentToDelete(null)}
+        onConfirm={handleDeleteConfirmed}
       />
     </div>
   );

@@ -18,7 +18,7 @@ interface StudentTableProps {
   gradeId: number;
   loading: boolean;
   onEdit: (student: Student) => void;
-  onDelete: (id: string) => void;
+  onDelete: (student: Student) => void; // تغییر نوع ورودی از string به Student
   onOpenModal: (student: Student) => void;
 }
 
@@ -110,7 +110,7 @@ export default function StudentTable({
                         امتیاز
                       </button>
                       <button
-                        onClick={() => onDelete(st._id)}
+                        onClick={() => onDelete(st)} // ارسال کل آبجکت دانش‌آموز به جای st._id
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-600 text-red-700 hover:text-white border border-red-200 hover:border-red-600 text-xs font-bold transition-all"
                       >
                         🗑️ حذف
