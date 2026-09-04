@@ -42,18 +42,18 @@ export default function EliteLeagueBanner() {
     return () => clearInterval(slideInterval);
   }, []);
 
-  // تابع تبدیل دقیق اعداد انگلیسی به فارسی برای تمام حالت‌ها (حتی زیر ۱۰ ثانیه)
+  // تابع تبدیل دقیق اعداد انگلیسی به فارسی
   const formatNum = (num: number) => {
     const str = num < 10 ? `0${num}` : num.toString();
     return str.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 sm:mt-30">
-      {/* کانتینر اصلی بنر با border و هاله متغیر */}
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 sm:mt-16">
+      {/* کانتینر اصلی بنر با border و هاله متغیر (پدینگ‌ها کمتر شدند تا حالت بنری بگیرد) */}
       <motion.div 
         className={`
-          relative overflow-hidden rounded-2xl bg-[#050505] py-6 sm:py-8 px-3 sm:px-12 text-[#F8FAFC]
+          relative overflow-hidden rounded-2xl bg-[#050505] py-3 sm:py-5 px-3 sm:px-8 text-[#F8FAFC]
           border-y sm:border
           transition-all duration-700
           ${
@@ -126,14 +126,12 @@ export default function EliteLeagueBanner() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {/* هاله سبز کمرنگ کل اسلاید */}
               <div 
                 className="absolute inset-0"
                 style={{
                   background: "radial-gradient(circle at center, rgba(34, 197, 94, 0.12) 0%, rgba(16, 185, 129, 0.05) 50%, rgba(255, 255, 255, 0) 80%)"
                 }}
               />
-              {/* هاله‌های سبز محو در اطراف */}
               <motion.div
                 animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -145,8 +143,8 @@ export default function EliteLeagueBanner() {
           )}
         </AnimatePresence>
 
-        {/* محتوای اسلایدر با ارتفاع ثابت - یکسان برای هر دو اسلاید */}
-        <div className="relative z-10 flex flex-col items-center justify-center min-h-[160px] sm:min-h-[200px] py-1 sm:py-2">
+        {/* محتوای اسلایدر با ارتفاع ثابت و کمتر (بنری) */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-[90px] sm:min-h-[120px] py-1">
           <div className="w-full flex items-center justify-center flex-1">
             <AnimatePresence mode="wait">
               {currentSlide === 0 ? (
@@ -157,13 +155,13 @@ export default function EliteLeagueBanner() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.5 }}
-                  className="w-full flex flex-col items-center gap-3 sm:gap-4"
+                  className="w-full flex flex-col items-center gap-2 sm:gap-4"
                 >
                   <div className="w-full text-center relative">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 sm:w-80 h-10 bg-[#F97316]/15 blur-3xl rounded-full pointer-events-none animate-pulse" />
 
                     <span 
-                      className="relative z-10 text-xl sm:text-5xl font-black tracking-wider uppercase font-sans drop-shadow-[0_0_15px_rgba(249,115,22,0.4)] block"
+                      className="relative z-10 text-lg sm:text-4xl font-black tracking-wider uppercase font-sans drop-shadow-[0_0_15px_rgba(249,115,22,0.4)] block"
                       style={{
                         background: "linear-gradient(90deg, #F97316 0%, #FBBF24 50%, #FDE68A 100%)",
                         WebkitBackgroundClip: "text",
@@ -176,29 +174,29 @@ export default function EliteLeagueBanner() {
 
                   {!isStarted ? (
                     <div className="w-full flex items-center justify-center gap-1.5 sm:gap-4">
-                      <Trophy className="w-5 h-5 sm:w-8 sm:h-8 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
+                      <Trophy className="w-4 h-4 sm:w-8 sm:h-8 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
 
-                      <div className="flex items-center justify-center gap-1 sm:gap-3 bg-[#111318] border border-[#F97316]/35 backdrop-blur-xl px-2 py-1.5 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-[0_0_25px_rgba(17,19,24,0.8)]">
+                      <div className="flex items-center justify-center gap-1 sm:gap-3 bg-[#111318] border border-[#F97316]/35 backdrop-blur-xl px-2 py-1.5 sm:px-6 sm:py-2 rounded-xl sm:rounded-2xl shadow-[0_0_25px_rgba(17,19,24,0.8)]">
                         <CompactTimeUnit value={formatNum(timeLeft.seconds)} label="ثانیه" />
-                        <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-2 sm:mb-3">:</span>
+                        <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-1 sm:mb-2">:</span>
                         <CompactTimeUnit value={formatNum(timeLeft.minutes)} label="دقیقه" />
-                        <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-2 sm:mb-3">:</span>
+                        <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-1 sm:mb-2">:</span>
                         <CompactTimeUnit value={formatNum(timeLeft.hours)} label="ساعت" />
-                        <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-2 sm:mb-3">:</span>
+                        <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-1 sm:mb-2">:</span>
                         <CompactTimeUnit value={formatNum(timeLeft.days)} label="روز" />
                       </div>
 
-                      <Trophy className="w-5 h-5 sm:w-8 sm:h-8 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
+                      <Trophy className="w-4 h-4 sm:w-8 sm:h-8 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
                     </div>
                   ) : (
                     <div className="w-full flex items-center justify-center">
                       <a
                         href="/elite-league-guide"
-                        className="group relative inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#F97316] via-[#FBBF24] to-[#FDE68A] text-[#050505] font-black text-xs sm:text-lg shadow-[0_0_30px_rgba(249,115,22,0.5)] hover:shadow-[0_0_40px_rgba(251,191,36,0.8)] transition-all duration-300 transform hover:-translate-y-0.5"
+                        className="group relative inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#F97316] via-[#FBBF24] to-[#FDE68A] text-[#050505] font-black text-xs sm:text-lg shadow-[0_0_30px_rgba(249,115,22,0.5)] hover:shadow-[0_0_40px_rgba(251,191,36,0.8)] transition-all duration-300 transform hover:-translate-y-0.5"
                       >
-                        <Trophy className="w-5 h-5 sm:w-6 h-5 sm:h-6 text-[#050505]" />
-                        <span className="text-[10px] sm:text-lg">شروع رقابت</span>
-                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" />
+                        <Trophy className="w-4 h-4 sm:w-6 sm:h-6 text-[#050505]" />
+                        <span className="text-[11px] sm:text-lg">شروع رقابت</span>
+                        <ArrowLeft className="w-3.5 h-3.5 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" />
                       </a>
                     </div>
                   )}
@@ -222,67 +220,70 @@ export default function EliteLeagueBanner() {
                     className="
                       group
                       flex items-center
-                      justify-center
-                      px-4 sm:px-8
-                      py-2 sm:py-3
+                      justify-between
+                      w-full max-w-3xl
+                      px-2 sm:px-8
+                      py-1
                       transition-all duration-300
                       hover:scale-[1.02]
-                      gap-3 sm:gap-6
                     "
                   >
-                    {/* لوگو */}
-                    <motion.div
-                      className="
-                        relative
-                        h-[70px] w-[70px]
-                        shrink-0
-                        transition-transform duration-300
-                        group-hover:scale-105
-                        sm:h-[130px] sm:w-[130px]
-                        lg:h-[150px] lg:w-[150px]
-                      "
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <Image
-                        src="/image/montazeran.png"
-                        alt="مجموعه منتظران"
-                        fill
-                        sizes="(max-width: 640px) 70px, 150px"
+                    {/* گروه لوگو و متن */}
+                    <div className="flex items-center gap-3 sm:gap-6">
+                      {/* لوگو */}
+                      <motion.div
                         className="
-                          object-contain
-                          drop-shadow-[0_5px_15px_rgba(22,163,74,0.15)]
+                          relative
+                          h-[50px] w-[50px]
+                          shrink-0
+                          transition-transform duration-300
+                          group-hover:scale-105
+                          sm:h-[90px] sm:w-[90px]
+                          lg:h-[100px] lg:w-[100px]
                         "
-                      />
-                    </motion.div>
-
-                    {/* "مجموعه منتظران" */}
-                    <motion.div 
-                      className="min-w-0 text-right"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <p
-                        className="
-                          text-base
-                          font-black
-                          text-[#1f3a5f]
-                          sm:text-4xl
-                          lg:text-5xl
-                        "
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.5 }}
                       >
-                        مجموعه منتظران
-                      </p>
-                    </motion.div>
+                        <Image
+                          src="/image/montazeran.png"
+                          alt="مجموعه منتظران"
+                          fill
+                          sizes="(max-width: 640px) 50px, 100px"
+                          className="
+                            object-contain
+                            drop-shadow-[0_5px_15px_rgba(22,163,74,0.15)]
+                          "
+                        />
+                      </motion.div>
 
-                    {/* آیکون درب ورود - در موبایل و دسکتاپ */}
+                      {/* متن "مجموعه منتظران" */}
+                      <motion.div 
+                        className="min-w-0 text-right"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <p
+                          className="
+                            text-lg
+                            font-black
+                            text-[#1f3a5f]
+                            sm:text-3xl
+                            lg:text-4xl
+                          "
+                        >
+                          مجموعه منتظران
+                        </p>
+                      </motion.div>
+                    </div>
+
+                    {/* آیکون درب ورود - هل داده شده به انتهای خط */}
                     <motion.div
                       className="
-                        flex h-10 w-10
+                        flex h-[42px] w-[42px]
                         shrink-0
                         items-center justify-center
                         rounded-xl sm:rounded-2xl
@@ -295,8 +296,8 @@ export default function EliteLeagueBanner() {
                         group-hover:text-white
                         group-hover:shadow-lg
                         group-hover:border-emerald-400
-                        sm:h-[70px] sm:w-[70px]
-                        lg:h-[80px] lg:w-[80px]
+                        sm:h-[65px] sm:w-[65px]
+                        lg:h-[70px] lg:w-[70px]
                       "
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -309,7 +310,7 @@ export default function EliteLeagueBanner() {
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2.5"
-                        className="h-4 w-4 sm:h-8 sm:w-8 lg:h-9 lg:w-9"
+                        className="h-4 w-4 sm:h-7 sm:w-7 lg:h-8 lg:w-8"
                       >
                         <path
                           strokeLinecap="round"
@@ -331,18 +332,18 @@ export default function EliteLeagueBanner() {
           </div>
 
           {/* کنترل‌ها و دکمه‌های جابجایی اسلایدر */}
-          <div className="flex items-center gap-3 mt-3 sm:mt-4">
+          <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
             <button
               onClick={() => setCurrentSlide(0)}
-              className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all ${
-                currentSlide === 0 ? "bg-[#F97316] w-4 sm:w-6" : "bg-slate-400/60"
+              className={`h-1.5 sm:h-2 rounded-full transition-all ${
+                currentSlide === 0 ? "bg-[#F97316] w-5 sm:w-8" : "bg-slate-400/60 w-1.5 sm:w-2"
               }`}
               aria-label="صفحه اول"
             />
             <button
               onClick={() => setCurrentSlide(1)}
-              className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all ${
-                currentSlide === 1 ? "bg-emerald-600 w-4 sm:w-6" : "bg-slate-400/60"
+              className={`h-1.5 sm:h-2 rounded-full transition-all ${
+                currentSlide === 1 ? "bg-emerald-600 w-5 sm:w-8" : "bg-slate-400/60 w-1.5 sm:w-2"
               }`}
               aria-label="صفحه دوم"
             />
@@ -355,7 +356,7 @@ export default function EliteLeagueBanner() {
 
 function CompactTimeUnit({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center bg-[#0B0F17] border border-[#F97316]/20 px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl shadow-md min-w-[28px] sm:min-w-[46px]">
+    <div className="flex flex-col items-center justify-center bg-[#0B0F17] border border-[#F97316]/20 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-md min-w-[26px] sm:min-w-[44px]">
       <span className="text-[7px] sm:text-[10px] text-[#94A3B8] font-medium tracking-wide mb-0.5" style={{ fontFamily: "iranSans-r" }}>
         {label}
       </span>

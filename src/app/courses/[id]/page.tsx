@@ -59,17 +59,19 @@ export default async function CoursePlayerPage({ params }: PageProps) {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-10" dir="rtl">
+    <div className="min-h-screen bg-gray-50/50 py-10 mt-10 sm:mt-30" dir="rtl">
       <div className="max-w-5xl mx-auto px-4">
         
         {/* دکمه بازگشت */}
-        <div className="mb-8 flex justify-end">
+        <div className="mb-8 flex justify-start">
           <Link
             href="/courses"
-            className="group inline-flex flex-row-reverse items-center gap-2.5 px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-white hover:text-red-600 rounded-xl border border-red-600 hover:border-red-600 shadow-sm transition-all duration-200"
+            className="group inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 hover:text-red-600 rounded-xl border border-gray-200 shadow-sm transition-all duration-200"
           >
-            <ArrowRight className="w-4 h-4 text-white mt-1 rotate-180 group-hover:text-red-600 group-hover:translate-x-1 transition-transform" />
-            <span>بازگشت به دوره‌ها</span>
+            <div className="flex flex-row-reverse items-center gap-2">
+              <span>بازگشت به دوره‌ها</span>
+            <ArrowRight className="w-4 h-4 mt-0.5 text-gray-500 group-hover:text-red-600 group-hover:-translate-x-1 transition-transform" />
+            </div>
           </Link>
         </div>
 

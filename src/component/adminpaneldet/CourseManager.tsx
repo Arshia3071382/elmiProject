@@ -120,7 +120,7 @@ export default function CourseManager({
     }
   };
 
-  const handleUpdate = async () => {
+ const handleUpdate = async () => {
     if (!editName.trim()) {
       onShowMessage('error', 'نام دوره نمی‌تواند خالی باشد');
       return;
@@ -128,14 +128,17 @@ export default function CourseManager({
 
     setLoading(true);
     try {
+      const formData = new FormData();
+      formData.append("id", editingCourse?._id || "");
+      formData.append("name", editName);
+      formData.append("categoryId", editCategoryId);
+      // اگر در فرم ویرایش فیلدهای دیگری مثل teacher یا description دارید، می‌توانید اینجا اضافه کنید:
+      // formData.append("teacher", editTeacher);
+
       const res = await fetch("/api/courses", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingCourse?._id,
-          name: editName,
-          categoryId: editCategoryId,
-        }),
+        // نکته: هدر Content-Type را تنظیم نکنید تا مرورگر خودش boundary مربوط به FormData را مدیریت کند
+        body: formData,
       });
 
       const data = await res.json();
@@ -153,7 +156,6 @@ export default function CourseManager({
       setLoading(false);
     }
   };
-
   const startEdit = (course: Course) => {
     setEditingCourse(course);
     setEditName(course.name);
