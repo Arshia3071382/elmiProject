@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import Preloader from "@/component/Preloader"; // مسیر کامپوننت پری‌لودر
+import Preloader from "@/component/Preloader";
 import PopularClasses from "@/component/classBox/PopularClasses";
 import Container from "@/component/Container";
 import HeroSec from "@/component/HeroSec";
@@ -14,24 +14,24 @@ import PuzzleActionSection from "@/component/PuzzleButton";
 import StudentComments from "@/component/StudentComments";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
+import MontazeranLink from "@/component/MontazeranLink";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
     <>
-      {/* پری‌لودر جذاب */}
       <Preloader onComplete={() => setIsLoaded(true)} />
 
-      {/* محتوای اصلی سایت که بعد از پری‌لودر ظاهر می‌شود */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 0.6 }}
       >
-       <HeroSec isLoaded={isLoaded} />
+        <HeroSec isLoaded={isLoaded} />
         <StudentAuthButtons />
         <EliteLeagueBanner />
+        <MontazeranLink />
         
         <ScrollAnimation direction="up" delay={0.1}>
           <CounterStats />
