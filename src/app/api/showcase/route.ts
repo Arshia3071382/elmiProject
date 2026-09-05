@@ -1,47 +1,67 @@
 import { NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import connectDB from "./../../../../lib/dbConnect";
+import Showcase from "./../../../../models/Showcase";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+// دریافت لیست آلبوم‌ها (GET)
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const folder = searchParams.get("folder");
+    await connectDB();
+    const albums = await Showcase.find({}).sort({ createdAt: -1 });
+    return NextResponse.json(albums, { status: 200 });
+  } catch (error: any) {
+    console.error("❌ Error in GET /api/showcase:", error);
+    return NextResponse.json(
+      { success: false, error: "خطا در دریافت لیست آلبوم‌ها" },
+      { status: 500 }
+    );
+  }
+}
 
-    if (!folder) {
+// ثبت آلبوم جدید (POST) - بدون وابستگی به Cloudinary Admin API و خطای سکرت
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+
+    const body = await req.json();
+    let { title, folder, coverImage, date, description, slug } = body;
+
+    if (!title || !folder) {
       return NextResponse.json(
-        { success: false, error: "نام پوشه ارسال نشده است." },
+        { success: false, error: "لطفاً عنوان و نام پوشه را وارد کنید." },
         { status: 400 }
       );
     }
 
-    try {
-      const searchResult = await cloudinary.search
-        .expression(`folder="${folder.trim()}"`)
-        .sort_by("created_at", "desc")
-        .max_results(30)
-        .execute();
+    const cleanFolder = folder.trim();
 
-      const images = searchResult.resources.map((file: any) => ({
-        public_id: file.public_id,
-        secure_url: file.secure_url,
-      }));
+    const baseSlug = (slug || cleanFolder)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-");
+    
+    const finalSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
-      return NextResponse.json({ success: true, images }, { status: 200 });
-    } catch (cloudErr: any) {
-      console.error("Error fetching images from Cloudinary:", cloudErr?.message);
-      return NextResponse.json(
-        { success: false, error: "خطا در ارتباط با کلادینری. لطفاً متغیرهای محیطی API Secret را بررسی کنید." },
-        { status: 500 }
-      );
-    }
+    // اگر عکس کاور به صورت دستی داده نشده بود، به صورت خودکار یک public_id استاندارد از پوشه می‌سازد
+    // بدون اینکه نیاز به جستجوی API و کلید Secret داشته باشد
+    const finalCoverImage = coverImage && coverImage.trim() !== "" 
+      ? coverImage.trim() 
+      : `${cleanFolder}/cover`;
+
+    const newAlbum = await Showcase.create({
+      title: title.trim(),
+      slug: finalSlug,
+      folder: cleanFolder,
+      coverImage: finalCoverImage,
+      date: date ? date.trim() : "",
+      description: description ? description.trim() : "",
+    });
+
+    return NextResponse.json({ success: true, data: newAlbum }, { status: 201 });
   } catch (error: any) {
+    console.error("❌ Error in POST /api/showcase:", error);
     return NextResponse.json(
       { success: false, error: error?.message || "خطای سرور" },
       { status: 500 }
