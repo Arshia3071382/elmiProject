@@ -4,7 +4,7 @@ import connectDB from "./../../../../lib/dbConnect";
 import Showcase from "./../../../../models/Showcase";
 
 cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
@@ -37,27 +37,39 @@ export async function POST(req: Request) {
 
     if (!coverImage) {
       try {
-        const result = await cloudinary.search
-          .expression(`folder:${cleanFolder}/*`)
-          .sort_by("created_at", "desc")
-          .max_results(1)
-          .execute();
+        // روش اول: جستجو با استفاده از متد API و پیشوند (Prefix) پوشه
+        let result = await cloudinary.api.resources({
+          type: "upload",
+          prefix: cleanFolder,
+          max_results: 1,
+        });
 
         if (result.resources && result.resources.length > 0) {
           coverImage = result.resources[0].public_id;
         } else {
-          return NextResponse.json(
-            {
-              success: false,
-              error: `هیچ تصاویری در پوشه "${cleanFolder}" در Cloudinary یافت نشد.`,
-            },
-            { status: 400 }
-          );
+          // روش دوم (پشتیبان): جستجو با دستور Search Expression
+          const searchResult = await cloudinary.search
+            .expression(`folder=${cleanFolder}`)
+            .sort_by("created_at", "desc")
+            .max_results(1)
+            .execute();
+
+          if (searchResult.resources && searchResult.resources.length > 0) {
+            coverImage = searchResult.resources[0].public_id;
+          } else {
+            return NextResponse.json(
+              {
+                success: false,
+                error: `پوشه "${cleanFolder}" پیدا شد اما هیچ عکسی داخل آن شناسایی نشد.`,
+              },
+              { status: 400 }
+            );
+          }
         }
       } catch (cloudErr: any) {
         console.error("Cloudinary Search Error:", cloudErr);
         return NextResponse.json(
-          { success: false, error: "خطا در استعلام عکس کاور از Cloudinary." },
+          { success: false, error: "خطا در ارتباط با کلادینری برای دریافت عکس کاور." },
           { status: 500 }
         );
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Link2 } from "lucide-react";
+import { Plus, Link2, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface Props {
   onShowMessage?: (type: "success" | "error", text: string) => void;
@@ -16,6 +16,9 @@ export default function AdminShowcasePanel({ onShowMessage }: Props) {
     date: "",
   });
   const [loading, setLoading] = useState(false);
+  
+  // 🔹 State جدید برای مدیریت پیام داخلی فرم
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // 🔹 ساخت اسلاگ آزمایشی برای پیش‌نمایش در فرم
   const previewSlug = (formData.slug || formData.title || formData.folder)
@@ -26,8 +29,12 @@ export default function AdminShowcasePanel({ onShowMessage }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null); // پاک کردن پیام قبلی
+
     if (!formData.title || !formData.folder) {
-      onShowMessage?.("error", "لطفاً تمامی فیلدهای الزامی (*) را پر کنید.");
+      const errText = "لطفاً تمامی فیلدهای الزامی (*) را پر کنید.";
+      setMessage({ type: "error", text: errText });
+      onShowMessage?.("error", errText);
       return;
     }
 
@@ -41,13 +48,19 @@ export default function AdminShowcasePanel({ onShowMessage }: Props) {
 
       const data = await res.json();
       if (data.success) {
-        onShowMessage?.("success", "آلبوم جدید با موفقیت در ویترین ایجاد شد.");
+        const successText = "آلبوم جدید با موفقیت در ویترین ایجاد شد.";
+        setMessage({ type: "success", text: successText });
+        onShowMessage?.("success", successText);
         setFormData({ title: "", slug: "", folder: "", description: "", date: "" });
       } else {
-        onShowMessage?.("error", data.error || "خطا در ثبت آلبوم");
+        const errText = data.error || "خطا در ثبت آلبوم";
+        setMessage({ type: "error", text: errText });
+        onShowMessage?.("error", errText);
       }
     } catch {
-      onShowMessage?.("error", "خطا در برقراری ارتباط با سرور");
+      const errText = "خطا در برقراری ارتباط با سرور";
+      setMessage({ type: "error", text: errText });
+      onShowMessage?.("error", errText);
     } finally {
       setLoading(false);
     }
@@ -59,6 +72,24 @@ export default function AdminShowcasePanel({ onShowMessage }: Props) {
         <Plus className="w-5 h-5 text-teal-600" />
         ایجاد آلبوم جدید در ویترین علمی
       </h2>
+
+      {/* 🔹 باکس نمایش پیام موفقیت یا ارور */}
+      {message && (
+        <div
+          className={`mb-6 p-4 rounded-2xl flex items-center gap-3 text-sm transition-all duration-300 ${
+            message.type === "success"
+              ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border border-rose-200 text-rose-800"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+          )}
+          <span>{message.text}</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
