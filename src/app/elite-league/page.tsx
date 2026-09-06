@@ -10,9 +10,14 @@ export default function EliteLeaguePublicPage() {
   const [category, setCategory] = useState<"elementary" | "highschool">("elementary");
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isTableVisible, setIsTableVisible] = useState(true);
 
   // تابع تبدیل عدد پایه به حروف فارسی
-  const getGradeTitle = (gradeNum: number) => {
+  const getGradeTitle = (gradeNum: number | string) => {
+    if (typeof gradeNum === "string" && isNaN(Number(gradeNum))) {
+      return gradeNum;
+    }
+    const num = Number(gradeNum);
     const map: { [key: number]: string } = {
       1: "اول",
       2: "دوم",
@@ -27,7 +32,7 @@ export default function EliteLeaguePublicPage() {
       11: "یازدهم",
       12: "دوازدهم",
     };
-    return map[gradeNum] || `${gradeNum}`;
+    return map[num] || `${gradeNum}`;
   };
 
   const fetchStudents = useCallback(async () => {
@@ -38,6 +43,16 @@ export default function EliteLeaguePublicPage() {
       );
       if (Array.isArray(res)) {
         setStudents(res);
+        setIsTableVisible(true);
+      } else if (res && typeof res === "object") {
+        if (res.isVisible !== undefined) {
+          setIsTableVisible(res.isVisible);
+        }
+        if (Array.isArray(res.students)) {
+          setStudents(res.students);
+        } else if (Array.isArray(res.data)) {
+          setStudents(res.data);
+        }
       }
     } catch (error) {
       console.error("خطا در بارگذاری جدول نخبگان:", error);
@@ -53,7 +68,7 @@ export default function EliteLeaguePublicPage() {
   }, [activeLeague, fetchStudents]);
 
   return (
-    <div dir="rtl" className="max-w-5xl mx-auto px-4 py-12 font-[iranBold] mt-16 md:mt-20">
+    <div dir="rtl" className="max-w-5xl mx-auto px-2 sm:px-4 py-12 font-[iranBold] mt-16 md:mt-20 overflow-x-hidden">
       <AnimatePresence mode="wait">
         {activeLeague === null ? (
           <motion.div
@@ -168,7 +183,7 @@ export default function EliteLeaguePublicPage() {
               <button
                 type="button"
                 onClick={() => setActiveLeague(null)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-gray-700 text-sm font-bold transition-all font-[iranSans-r]"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold transition-all font-[iranSans-r]"
               >
                 <ArrowRight className="w-4 h-4" />
                 بازگشت به انتخاب لیگ‌ها
@@ -215,8 +230,8 @@ export default function EliteLeaguePublicPage() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-right border-collapse text-sm md:text-base">
+              <div className="w-full overflow-hidden">
+                <table className="w-full text-right border-collapse text-[11px] sm:text-sm md:text-base table-fixed">
                   <thead>
                     <tr
                       className={
@@ -225,10 +240,10 @@ export default function EliteLeaguePublicPage() {
                           : "bg-indigo-600 text-white"
                       }
                     >
-                      <th className="p-4 text-right w-20 font-bold">رتبه</th>
-                      <th className="p-4 text-right font-bold">نام و نام خانوادگی</th>
-                      <th className="p-4 text-right font-bold">پایه تحصیلی</th>
-                      <th className="p-4 text-right font-bold">امتیاز کل لیگ</th>
+                      <th className="p-2 sm:p-4 text-right w-[15%] sm:w-20 font-bold">رتبه</th>
+                      <th className="p-2 sm:p-4 text-right w-[42%] sm:w-auto font-bold">نام و نام خانوادگی</th>
+                      <th className="p-2 sm:p-4 text-right w-[23%] sm:w-auto font-bold">پایه تحصیلی</th>
+                      <th className="p-2 sm:p-4 text-right w-[20%] sm:w-auto font-bold">امتیاز کل</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -244,6 +259,15 @@ export default function EliteLeaguePublicPage() {
                           </div>
                         </td>
                       </tr>
+                    ) : !isTableVisible ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="p-12 text-center text-gray-500 font-medium"
+                        >
+                          جدول این مقطع در حال حاضر غیرفعال می‌باشد.
+                        </td>
+                      </tr>
                     ) : students.length === 0 ? (
                       <tr>
                         <td
@@ -255,7 +279,6 @@ export default function EliteLeaguePublicPage() {
                       </tr>
                     ) : (
                       students.map((student, index) => {
-                        // تفکیک نام و نام خانوادگی (فرض بر این است که با فاصله جدا شده‌اند)
                         const nameParts = student.name ? student.name.trim().split(" ") : ["", ""];
                         const firstName = nameParts[0] || "";
                         const lastName = nameParts.slice(1).join(" ") || "";
@@ -265,33 +288,42 @@ export default function EliteLeaguePublicPage() {
                             key={student._id}
                             className="border-b border-gray-100 hover:bg-gray-50/80 transition duration-150"
                           >
-                            <td className="p-4 text-right font-black">
-                              {index === 0 && <span className="text-xl ml-1">🥇</span>}
-                              {index === 1 && <span className="text-xl ml-1">🥈</span>}
-                              {index === 2 && <span className="text-xl ml-1">🥉</span>}
-                              {index > 2 && (
-                                <span className="text-gray-400 font-mono text-sm ml-2">
-                                  #
+                            <td className="p-2 sm:p-4 text-right font-black">
+                              {index === 0 && (
+                                <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-100 text-base sm:text-xl shadow-sm">
+                                  🥇
                                 </span>
                               )}
-                              {index > 2 ? index + 1 : ""}
+                              {index === 1 && (
+                                <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-100 text-base sm:text-xl shadow-sm">
+                                  🥈
+                                </span>
+                              )}
+                              {index === 2 && (
+                                <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-700/10 text-base sm:text-xl shadow-sm">
+                                  🥉
+                                </span>
+                              )}
+                              {index > 2 && (
+                                <span className="inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-700 font-bold text-[10px] sm:text-xs shadow-sm border border-gray-200">
+                                  {index + 1}
+                                </span>
+                              )}
                             </td>
 
-                            {/* نام و نام خانوادگی: در موبایل زیر هم (flex-col)، در دسکتاپ کنار هم (md:inline یا md:space-x-reverse) */}
-                            <td className="p-4 font-bold text-gray-800">
-                              <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-1.5">
-                                <span>{firstName}</span>
-                                <span>{lastName}</span>
+                            <td className="p-2 sm:p-4 font-bold text-gray-800 truncate">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-1.5 truncate">
+                                <span className="truncate">{firstName}</span>
+                                <span className="truncate">{lastName}</span>
                               </div>
                             </td>
 
-                            {/* پایه تحصیلی به صورت حروف (مثلا چهارم، هفتم و...) */}
-                            <td className="p-4 text-right text-gray-600 font-medium">
-                              {getGradeTitle(Number(student.grade))}
+                            <td className="p-2 sm:p-4 text-right text-gray-600 font-medium truncate">
+                              {getGradeTitle(student.grade)}
                             </td>
 
                             <td
-                              className={`p-4 text-right font-black ${
+                              className={`p-2 sm:p-4 text-right font-black truncate ${
                                 category === "elementary"
                                   ? "text-amber-600"
                                   : "text-indigo-600"

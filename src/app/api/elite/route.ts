@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbConnect } from "./../../../../lib/dbConnect";
 import GradeStudent from "./../../../../models/GradeStudent";
 import { EliteStudent } from "./../../../../models/EliteStudent";
+import LeagueSetting from "./../../../../models/LeagueSetting";
 
 // GET: دریافت لیست دانش‌آموزان به تفکیک دسته‌بندی و مقطع
 export async function GET(request: Request) {
@@ -11,12 +12,17 @@ export async function GET(request: Request) {
     const category = searchParams.get("category") || "elementary";
     const isAdmin = searchParams.get("admin") === "true";
 
-    // تفکیک دقیق پایه‌ها بر اساس دسته
-    // ابتدایی: 2 تا 6 | راهنمایی: 7 تا 9
     const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
 
+    // دریافت تنظیمات نمایش جدول
+    let setting = await LeagueSetting.findOne();
+    if (!setting) {
+      setting = await LeagueSetting.create({ elementaryVisible: true, highschoolVisible: true });
+    }
+
+    const isVisible = category === "elementary" ? setting.elementaryVisible : setting.highschoolVisible;
+
     if (isAdmin) {
-      // برای ادمین: تمام دانش‌آموزان این پایه‌ها را می‌آوریم
       const students = await GradeStudent.find({ grade: { $in: targetGrades } })
         .sort({ totalScore: -1 });
 
@@ -32,9 +38,13 @@ export async function GET(request: Request) {
         isPublished: eliteIds.has(student._id.toString()),
       }));
 
-      return NextResponse.json(result, { status: 200 });
+      return NextResponse.json({ students: result, isVisible }, { status: 200 });
     } else {
-      // برای کاربران عادی: فقط 20 نفر برتر منتشر شده همان مقطع
+      // اگر جدول توسط ادمین غیرفعال شده باشد
+      if (!isVisible) {
+        return NextResponse.json({ students: [], isVisible: false }, { status: 200 });
+      }
+
       const eliteRecords = await EliteStudent.find({ category, isPublished: true })
         .sort({ score: -1 })
         .limit(20);
@@ -48,61 +58,78 @@ export async function GET(request: Request) {
         isPublished: true,
       }));
 
-      return NextResponse.json(result, { status: 200 });
+      return NextResponse.json({ students: result, isVisible: true }, { status: 200 });
     }
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch leaderboard data" }, { status: 500 });
   }
 }
 
-// POST: خالی یا فرمت پایه
-export async function POST(request: Request) {
-  try {
-    await dbConnect();
-    return NextResponse.json({ message: "Success" }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Insertion failed" }, { status: 500 });
-  }
-}
-
-// PATCH: تایید نهایی و انتشار 20 نفر برتر مقطع انتخابی (ابتدایی یا راهنمایی به صورت جداگانه)
+// PATCH: تایید نهایی انتشار یا تغییر وضعیت نمایش
 export async function PATCH(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { category } = body;
+    const { category, action } = body;
 
     if (!category) {
       return NextResponse.json({ error: "Category is required" }, { status: 400 });
     }
 
-    const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
-
-    // استخراج 20 نفر برتر از پایه‌های همان مقطع
-    const topStudents = await GradeStudent.find({ grade: { $in: targetGrades } })
-      .sort({ totalScore: -1 })
-      .limit(20);
-
-    // پاک کردن رکوردهای منتشر شده قبلی فقط برای همین مقطع
-    await EliteStudent.deleteMany({ category });
-
-    // ثبت 20 نفر برتر جدید این مقطع
-    const eliteDocs = topStudents.map((student: any) => ({
-      studentId: student._id,
-      name: `${student.firstName} ${student.lastName}`,
-      grade: `${student.grade}`,
-      score: student.totalScore,
-      category,
-      isPublished: true,
-    }));
-
-    if (eliteDocs.length > 0) {
-      await EliteStudent.insertMany(eliteDocs);
+    let setting = await LeagueSetting.findOne();
+    if (!setting) {
+      setting = new LeagueSetting();
     }
 
-    return NextResponse.json({ message: "Table published successfully" }, { status: 200 });
+    // اگر درخواست فقط تغییر وضعیت عدم نمایش (hide) باشد
+    if (action === "hide") {
+      if (category === "elementary") {
+        setting.elementaryVisible = false;
+      } else {
+        setting.highschoolVisible = false;
+      }
+      await setting.save();
+      return NextResponse.json({ message: "Hidden successfully" }, { status: 200 });
+    }
+
+    // اگر درخواست «نمایش» یا «تایید نهایی / انتشار» باشد
+    // هم وضعیت نمایش را روشن می‌کنیم و هم ۱۵ نفر برتر با بیشترین امتیاز را محاسبه و ذخیره می‌کنیم
+    if (action === "show" || action === "publish" || !action) {
+      if (category === "elementary") {
+        setting.elementaryVisible = true;
+      } else {
+        setting.highschoolVisible = true;
+      }
+      await setting.save();
+
+      const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
+
+      // استخراج ۱۵ نفر برتر بر اساس بیشترین امتیاز
+      const topStudents = await GradeStudent.find({ grade: { $in: targetGrades } })
+        .sort({ totalScore: -1 })
+        .limit(15);
+
+      await EliteStudent.deleteMany({ category });
+
+      const eliteDocs = topStudents.map((student: any) => ({
+        studentId: student._id,
+        name: `${student.firstName} ${student.lastName}`,
+        grade: `${student.grade}`,
+        score: student.totalScore,
+        category,
+        isPublished: true,
+      }));
+
+      if (eliteDocs.length > 0) {
+        await EliteStudent.insertMany(eliteDocs);
+      }
+
+      return NextResponse.json({ message: "Table published and visible successfully" }, { status: 200 });
+    }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ error: "Publish failed" }, { status: 500 });
+    return NextResponse.json({ error: "Operation failed" }, { status: 500 });
   }
 }
 
@@ -115,7 +142,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
     await EliteStudent.findOneAndDelete({ studentId: id });
-    return NextResponse.json({ message: "Deleted successfully" }, { status: 200 });
+    return NextResponse.json({ status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Deletion failed" }, { status: 500 });
   }

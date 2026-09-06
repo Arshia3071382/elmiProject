@@ -1,28 +1,24 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-export interface IShowcase {
-  _id?: string;
+interface IShowcase extends Document {
   title: string;
   slug: string;
-  folder: string;
-  coverImage: string;
   description?: string;
   date?: string;
-  published: boolean;
-  createdAt?: Date;
+  coverImage: string;
+  images: string[];
+  createdAt: Date;
 }
 
-const ShowcaseSchema = new Schema<IShowcase>(
-  {
-    title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    folder: { type: String, required: true },
-    coverImage: { type: String, required: true },
-    description: { type: String, default: "" },
-    date: { type: String, default: "" },
-    published: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
+const ShowcaseSchema: Schema = new Schema({
+  title: { type: String, required: true },
+  slug: { type: String, required: true, unique: true },
+  description: { type: String, default: "" }, // اضافه شدن توضیحات
+  date: { type: String, default: "" }, // اضافه شدن تاریخ فارسی
+  coverImage: { type: String, required: true },
+  images: [{ type: String, required: true }],
+  createdAt: { type: Date, default: Date.now },
+});
 
-export default models.Showcase || model<IShowcase>("Showcase", ShowcaseSchema);
+export default mongoose.models.Showcase ||
+  mongoose.model<IShowcase>("Showcase", ShowcaseSchema);

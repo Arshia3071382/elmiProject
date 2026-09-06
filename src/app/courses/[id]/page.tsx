@@ -26,10 +26,12 @@ async function getCourseData(id: string) {
       _id: String(course._id),
       name: course.name || "",
       teacher: course.teacher || "", // دریافت مدرس
-      duration: course.duration || "", 
+      duration: course.duration || "",
       videoUrl: course.videoUrl || "",
       description: course.description || "",
-      createdAt: course.createdAt ? new Date(course.createdAt).toISOString() : null,
+      createdAt: course.createdAt
+        ? new Date(course.createdAt).toISOString()
+        : null,
     };
   } catch (error) {
     console.error("خطا در واکشی اطلاعات دوره:", error);
@@ -43,10 +45,12 @@ export default async function CoursePlayerPage({ params }: PageProps) {
 
   if (!course) {
     notFound();
-  }
+  } // مرحله ۹ - قرار دادن لاگ قبل از return خروجی صفحه جزئیات دوره
 
-  // مرحله ۹ - قرار دادن لاگ قبل از return خروجی صفحه جزئیات دوره
-  console.log("Trace [CoursePlayerPage Server Component] - Course data:", course);
+  console.log(
+    "Trace [CoursePlayerPage Server Component] - Course data:",
+    course,
+  );
 
   const finalVideoUrl = course.videoUrl || "";
 
@@ -61,7 +65,6 @@ export default async function CoursePlayerPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50/50 py-10 mt-10 sm:mt-30" dir="rtl">
       <div className="max-w-5xl mx-auto px-4">
-        
         {/* دکمه بازگشت */}
         <div className="mb-8 flex justify-start">
           <Link
@@ -70,18 +73,19 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           >
             <div className="flex flex-row-reverse items-center gap-2">
               <span>بازگشت به دوره‌ها</span>
-            <ArrowRight className="w-4 h-4 mt-0.5 text-gray-500 group-hover:text-red-600 group-hover:-translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 mt-0.5 text-gray-500 group-hover:text-red-600 group-hover:-translate-x-1 transition-transform" />
             </div>
           </Link>
         </div>
-
         {/* ساختار محتوا */}
         <div className="space-y-6">
-          
           {/* ویدیو پلیر آپارات */}
           {finalVideoUrl ? (
             <div className="relative w-full rounded-2xl overflow-hidden shadow-md border border-gray-200/60 bg-black z-10 isolate">
-              <div className="relative w-full" style={{ paddingBottom: "56.25%", height: 0 }}>
+              <div
+                className="relative w-full"
+                style={{ paddingBottom: "56.25%", height: 0 }}
+              >
                 <iframe
                   src={finalVideoUrl}
                   className="absolute top-0 left-0 w-full h-full z-20"
@@ -99,19 +103,15 @@ export default async function CoursePlayerPage({ params }: PageProps) {
               </span>
             </div>
           )}
-
           {/* باکس جزئیات دوره */}
           <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-            
             {/* عنوان و متادیتا */}
             <div className="border-b border-gray-100 pb-5">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight">
                 {course.name}
               </h1>
-
               {/* ردیف تگ‌ها */}
               <div className="flex flex-wrap items-center gap-3">
-                
                 {/* نام مدرس زیر عنوان */}
                 {course.teacher && (
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg w-fit">
@@ -119,7 +119,6 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                     <span>مدرس: {course.teacher}</span>
                   </div>
                 )}
-
                 {/* تاریخ انتشار */}
                 {formattedPublishDate && (
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg w-fit">
@@ -127,7 +126,6 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                     <span>انتشار: {formattedPublishDate}</span>
                   </div>
                 )}
-
                 {/* مدت زمان */}
                 {course.duration && (
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg w-fit">
@@ -135,10 +133,8 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                     <span>مدت: {course.duration}</span>
                   </div>
                 )}
-                
               </div>
             </div>
-
             {/* توضیحات */}
             <div>
               <h3 className="text-lg font-bold text-gray-800 mb-3">
@@ -148,7 +144,6 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                 {course.description || "توضیحاتی برای این دوره وارد نشده است."}
               </p>
             </div>
-
           </div>
         </div>
       </div>

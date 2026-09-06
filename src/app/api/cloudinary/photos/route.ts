@@ -12,10 +12,16 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const folder = searchParams.get("folder");
+    let folder = searchParams.get("folder");
 
     if (!folder) {
       return NextResponse.json({ success: false, error: "نام پوشه مشخص نشده است" }, { status: 400 });
+    }
+
+    // 🔹 پاکسازی و ایمن‌سازی نام پوشه از مقادیر خراب مثل -2147 یا پسوند /cover
+    folder = folder.trim();
+    if (folder.includes("-2147") || folder.endsWith("/cover") || !folder) {
+      return NextResponse.json({ success: true, resources: [] }, { status: 200 });
     }
 
     // گرفتن تمام عکس‌های داخل این پوشه از طریق Cloudinary Search API
@@ -34,6 +40,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, resources }, { status: 200 });
   } catch (error: any) {
+    console.error("❌ Error fetching Cloudinary images:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

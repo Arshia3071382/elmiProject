@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Trophy, Trash2, Edit3, Plus, X, CheckCircle2 } from "lucide-react";
+import { Trophy, Trash2, Edit3, Plus, X, CheckCircle2, Eye, EyeOff } from "lucide-react";
 
 interface AdminEliteLeaguePanelProps {
   onShowMessage: (type: "success" | "error", text: string) => void;
@@ -10,8 +10,10 @@ interface AdminEliteLeaguePanelProps {
 export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeaguePanelProps) {
   const [category, setCategory] = useState<"elementary" | "highschool">("elementary");
   const [students, setStudents] = useState<any[]>([]);
+  const [isVisible, setIsVisible] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isChangingVisibility, setIsChangingVisibility] = useState(false);
   
   const [formData, setFormData] = useState({
     id: "",
@@ -20,11 +22,20 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
     score: "",
   });
 
-  const fetchStudents = useCallback(async () => {
+ const fetchStudents = useCallback(async () => {
     try {
       const res = await fetch(`/api/elite?category=${category}&admin=true`).then((r) => r.json());
-      if (Array.isArray(res)) {
-        setStudents(res);
+      
+      if (res) {
+        const visibleState = res.isVisible ?? true;
+        setIsVisible(visibleState);
+        
+        // اگر جدول مخفی شده باشد، در پنل ادمین هم لیست را خالی نشان دهیم تا بسته شود
+        if (visibleState && Array.isArray(res.students)) {
+          setStudents(res.students);
+        } else {
+          setStudents([]);
+        }
       }
     } catch {
       onShowMessage("error", "خطا در دریافت لیست نخبگان");
@@ -85,7 +96,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   const handleEditInit = (student: any) => {
     setIsEditing(true);
     setFormData({
-      id: student._id,
+      id: student._id || student.id,
       name: student.name,
       grade: student.grade,
       score: student.score.toString(),
@@ -119,7 +130,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
       const res = await fetch("/api/elite", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category }),
+        body: JSON.stringify({ category, action: "publish" }),
       }).then((r) => r.json());
 
       if (!res.error) {
@@ -135,6 +146,32 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
     }
   };
 
+  // تغییر وضعیت نمایش/عدم نمایش کلی جدول در سایت
+  const handleToggleVisibility = async (show: boolean) => {
+    const actionText = show ? "نمایش" : "عدم نمایش";
+    if (!confirm(`آیا از ${actionText} جدول لیگ نخبگان مقطع ${category === "elementary" ? "ابتدایی" : "راهنمایی"} اطمینان دارید؟`)) return;
+
+    setIsChangingVisibility(true);
+    try {
+      const res = await fetch("/api/elite", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, action: show ? "show" : "hide" }),
+      }).then((r) => r.json());
+
+      if (!res.error) {
+        onShowMessage("success", `وضعیت جدول با موفقیت به حالت ${actionText} تغییر یافت!`);
+        fetchStudents();
+      } else {
+        onShowMessage("error", "خطا در تغییر وضعیت نمایش جدول");
+      }
+    } catch {
+      onShowMessage("error", "خطا در ارتباط با سرور");
+    } finally {
+      setIsChangingVisibility(false);
+    }
+  };
+
   // مرتب‌سازی کل دانش‌آموزان این مقطع و انتخاب ۱۵ نفر برتر بر اساس امتیاز
   const topFifteenStudents = [...students]
     .sort((a, b) => b.score - a.score)
@@ -143,12 +180,20 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   return (
     <div dir="rtl" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 font-sans">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 pb-4 mb-6 gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Trophy className="w-6 h-6 text-amber-500" />
-          <h2 className="text-xl font-bold text-gray-800">لیگ نخبگان علمی (۱۵ نفر برتر ماهانه)</h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">لیگ نخبگان علمی (۱۵ نفر برتر ماهانه)</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              وضعیت در سایت:{" "}
+              <span className={`font-bold ${isVisible ? "text-emerald-600" : "text-rose-600"}`}>
+                {isVisible ? "در حال نمایش به کاربران" : "مخفی‌شده (غیرفعال)"}
+              </span>
+            </p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex bg-gray-100 p-1 rounded-xl">
             <button
               type="button"
@@ -163,6 +208,28 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
               className={`px-4 py-2 text-xs md:text-sm font-bold rounded-lg transition-all ${category === "highschool" ? "bg-indigo-600 text-white shadow" : "text-gray-600 hover:text-gray-900"}`}
             >
               راهنمایی (هفتم تا نهم)
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleToggleVisibility(false)}
+              disabled={isChangingVisibility}
+              className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+            >
+              <EyeOff className="w-4 h-4" />
+              عدم نمایش
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleToggleVisibility(true)}
+              disabled={isChangingVisibility}
+              className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+            >
+              <Eye className="w-4 h-4" />
+              نمایش
             </button>
           </div>
 
@@ -271,13 +338,13 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
               </tr>
             ) : (
               topFifteenStudents.map((student, index) => (
-                <tr key={student._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <tr key={student._id || student.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
                   <td className="p-3 text-right font-bold text-gray-500">
                     <span className="text-amber-600">#</span>{index + 1}
                   </td>
                   <td className="p-3 font-semibold text-gray-800">{student.name}</td>
                   <td className="p-3 text-right text-gray-600">{student.grade}</td>
-                  <td className="p-3 text-right font-bold text-emerald-600">{student.score.toLocaleString()}</td>
+                  <td className="p-3 text-right font-bold text-emerald-600">{student.score?.toLocaleString()}</td>
                   <td className="p-3 text-center">
                     <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${student.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
                       {student.isPublished ? "منتشر شده" : "پیش‌نویس ادمین"}
@@ -294,7 +361,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(student._id)}
+                        onClick={() => handleDelete(student._id || student.id)}
                         className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
                       >
                         <Trash2 className="w-4 h-4" />

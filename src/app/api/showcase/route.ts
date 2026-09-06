@@ -1,70 +1,46 @@
-import { NextResponse } from "next/server";
-import connectDB from "./../../../../lib/dbConnect";
-import Showcase from "./../../../../models/Showcase";
+import { NextResponse } from 'next/server';
+import dbConnect from './../../../../lib/dbConnect';
+import Showcase from './../../../../models/Showcase';
 
-export const dynamic = "force-dynamic";
-
-// دریافت لیست آلبوم‌ها (GET)
 export async function GET() {
+  await dbConnect();
   try {
-    await connectDB();
-    const albums = await Showcase.find({}).sort({ createdAt: -1 });
-    return NextResponse.json(albums, { status: 200 });
-  } catch (error: any) {
-    console.error("❌ Error in GET /api/showcase:", error);
-    return NextResponse.json(
-      { success: false, error: "خطا در دریافت لیست آلبوم‌ها" },
-      { status: 500 }
-    );
+    const showcases = await Showcase.find({}).sort({ createdAt: -1 });
+    return NextResponse.json({ success: true, data: showcases });
+  } catch (error) {
+    console.error("GET showcases error:", error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch showcases' }, { status: 500 });
   }
 }
 
-// ثبت آلبوم جدید (POST) - بدون وابستگی به Cloudinary Admin API و خطای سکرت
 export async function POST(req: Request) {
+  await dbConnect();
   try {
-    await connectDB();
-
     const body = await req.json();
-    let { title, folder, coverImage, date, description, slug } = body;
+    const { title, coverImage, images, description, date, slug } = body;
 
-    if (!title || !folder) {
-      return NextResponse.json(
-        { success: false, error: "لطفاً عنوان و نام پوشه را وارد کنید." },
-        { status: 400 }
-      );
+    if (!title || !coverImage || !images || images.length === 0) {
+      return NextResponse.json({ success: false, error: 'لطفاً تمام فیلدها و حداقل یک عکس را وارد کنید.' }, { status: 400 });
     }
 
-    const cleanFolder = folder.trim();
+    // اگر کاربر اسلاگ را دستی وارد کرده باشد از آن استفاده می‌کنیم، در غیر این صورت از روی title می‌سازیم
+    let finalSlug = slug ? slug.trim().replace(/\s+/g, '-') : '';
+    if (!finalSlug) {
+      finalSlug = title.trim().replace(/\s+/g, '-') + '-' + Date.now();
+    }
 
-    const baseSlug = (slug || cleanFolder)
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-");
-    
-    const finalSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
-
-    // اگر عکس کاور به صورت دستی داده نشده بود، به صورت خودکار یک public_id استاندارد از پوشه می‌سازد
-    // بدون اینکه نیاز به جستجوی API و کلید Secret داشته باشد
-    const finalCoverImage = coverImage && coverImage.trim() !== "" 
-      ? coverImage.trim() 
-      : `${cleanFolder}/cover`;
-
-    const newAlbum = await Showcase.create({
-      title: title.trim(),
+    const newShowcase = await Showcase.create({
+      title,
       slug: finalSlug,
-      folder: cleanFolder,
-      coverImage: finalCoverImage,
-      date: date ? date.trim() : "",
-      description: description ? description.trim() : "",
+      coverImage,
+      images,
+      description: description || '',
+      date: date || '',
     });
 
-    return NextResponse.json({ success: true, data: newAlbum }, { status: 201 });
+    return NextResponse.json({ success: true, data: newShowcase });
   } catch (error: any) {
-    console.error("❌ Error in POST /api/showcase:", error);
-    return NextResponse.json(
-      { success: false, error: error?.message || "خطای سرور" },
-      { status: 500 }
-    );
+    console.error("❌ Detailed POST /api/showcase error:", error);
+    return NextResponse.json({ success: false, error: error.message || 'خطا در ثبت آلبوم (احتمالاً اسلاگ تکراری است)' }, { status: 500 });
   }
 }

@@ -15,7 +15,7 @@ export default function AdminShowcasePanel() {
   // استیت برای مدیریت حالت ویرایش
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // استیت‌های مربوط به مودال حذف سفارشی
+  // استیت‌های مربوط به مودال حذف
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; title: string } | null>(null);
 
@@ -82,7 +82,7 @@ export default function AdminShowcasePanel() {
     setCoverImage("");
   };
 
-  // باز کردن مودال حذف به جای استفاده از confirm مرورگر
+  // باز کردن مودال حذف
   const openDeleteModal = (id: string, albumTitle: string) => {
     setItemToDelete({ id, title: albumTitle });
     setDeleteModalOpen(true);
@@ -362,7 +362,7 @@ export default function AdminShowcasePanel() {
       {/* --- مودال تأیید حذف سفارشی --- */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
               ⚠️
             </div>
