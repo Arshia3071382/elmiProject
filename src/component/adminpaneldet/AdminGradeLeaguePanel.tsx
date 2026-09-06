@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import GradeSelector from "./grade-league/GradeSelector";
-import GradeHeader from "./grade-league/GradeHeader";
 import PublishBar from "./grade-league/PublishBar";
 import StudentForm from "./grade-league/StudentForm";
 import StudentTable from "./grade-league/StudentTable";
@@ -289,10 +288,7 @@ export default function AdminGradeLeaguePanel() {
           <GradeSelector onSelectGrade={setActiveGrade} />
         ) : (
           <>
-            <GradeHeader
-              gradeId={activeGrade}
-              onBack={() => setActiveGrade(null)}
-            />
+            
             <PublishBar
               lastUpdate={lastUpdate}
               isPublishing={isPublishing}
