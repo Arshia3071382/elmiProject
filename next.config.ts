@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Required for the Docker build: emits a minimal ./.next/standalone
+  // server that only bundles the node_modules actually needed at runtime,
+  // instead of shipping the whole node_modules folder in the image.
+  output: "standalone",
+
   experimental: {
     serverActions: {
-      bodySizeLimit: '500mb',
+      bodySizeLimit: "500mb",
     },
   },
   images: {
@@ -21,6 +26,6 @@ const nextConfig = {
       },
     ],
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
