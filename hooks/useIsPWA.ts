@@ -10,14 +10,14 @@ export function useIsPWA() {
     setIsMounted(true)
 
     const checkPWA = () => {
-      // 1. بررسی استاندارد display-mode
+      // ۱. بررسی استاندارد display-mode مرورگرها
       const isStandaloneMatch = window.matchMedia('(display-mode: standalone)').matches
 
-      // 2. بررسی مخصوص iOS Safari
+      // ۲. بررسی مخصوص iOS Safari هنگام اجرا از Home Screen
       const isIOSStandalone =
         (window.navigator as unknown as { standalone?: boolean }).standalone === true
 
-      // 3. بررسی URL Query (برای اطمینان ۱۰۰٪ در آیفون)
+      // ۳. بررسی پارامتر URL جهت اطمینان کامل
       const isUrlPWA = window.location.search.includes('mode=pwa')
 
       setIsPWA(isStandaloneMatch || isIOSStandalone || isUrlPWA)

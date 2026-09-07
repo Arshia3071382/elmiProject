@@ -11,12 +11,12 @@ interface AppShellProps {
 export default function AppShell({ websiteUI, appUI }: AppShellProps) {
   const { isPWA, isMounted } = useIsPWA()
 
-  // تا زمانی که Client-side مونت نشده، UI اصلی سایت رندر شود
+  // تا زمانی که Client-side مونت نشده، برای جلوگیری از FLS و Hydration Error همان websiteUI رندر می‌شود
   if (!isMounted) {
     return <>{websiteUI}</>
   }
 
-  // اگر PWA باشد، دقیقاً AppUI رندر می‌شود
+  // اگر PWA یا حالت standalone باشد، AppUI رندر می‌شود
   if (isPWA) {
     return <>{appUI}</>
   }
