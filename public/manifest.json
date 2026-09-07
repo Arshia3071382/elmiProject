@@ -2,7 +2,7 @@
   "name": "مجموعه علمی منتظران",
   "short_name": "علمی منتظران",
   "description": "سامانه علمی و آموزشی مجموعه علمی منتظران",
-  "start_url": "/",
+"start_url": "/?mode=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
