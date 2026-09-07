@@ -18,6 +18,11 @@ const NoticeSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    imageLayout: {
+      type: String,
+      enum: ["vertical", "horizontal"],
+      default: "vertical", // پیش‌فرض پوستر عمودی
+    },
     type: {
       type: String,
       enum: {
@@ -26,6 +31,10 @@ const NoticeSchema = new mongoose.Schema(
       },
       default: "news",
       required: true,
+    },
+    eventDate: {
+      type: String,
+      default: null,
     },
     isRead: {
       type: Boolean,
@@ -44,7 +53,6 @@ const NoticeSchema = new mongoose.Schema(
   },
 );
 
-// جلوگیری از خطای OverwriteModelError
 const Notice = mongoose.models.Notice || mongoose.model("Notice", NoticeSchema);
 
 export default Notice;

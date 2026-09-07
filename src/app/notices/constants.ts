@@ -5,10 +5,13 @@ export interface Notice {
   _id: string;
   title: string;
   content: string;
-  image: string | null;
+  image?: string | null;
+  imageLayout?: "vertical" | "horizontal"; // اضافه کردن این خط
   type: "news" | "schedule" | "cancel" | "correction";
+  eventDate?: string | null;
   isRead: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export const typeConfig = {
@@ -59,7 +62,7 @@ export const dateOptions = [
 
 export const typeOptions = ["all", "news", "schedule", "cancel", "correction"];
 
-// Format Persian date
+// Format Persian date (Full with time)
 export const formatPersianDate = (dateString: string) => {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("fa-IR", {
@@ -68,5 +71,15 @@ export const formatPersianDate = (dateString: string) => {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  }).format(date);
+};
+
+// Format Persian date (Date only, useful for event date)
+export const formatPersianShortDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("fa-IR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }).format(date);
 };
