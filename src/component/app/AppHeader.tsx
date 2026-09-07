@@ -1,61 +1,53 @@
-'use client'
+"use client";
 
-import React from 'react'
-import Image from 'next/image'
-import { Bell, Menu } from 'lucide-react'
+import Image from "next/image";
+import { Bell, User } from "lucide-react";
 
 interface AppHeaderProps {
-  onNotificationClick?: () => void
-  onMenuClick?: () => void
-  hasUnreadNotification?: boolean
+  onNotificationClick?: () => void;
+  onMenuClick?: () => void;
 }
 
 export default function AppHeader({
   onNotificationClick,
   onMenuClick,
-  hasUnreadNotification = true,
 }: AppHeaderProps) {
   return (
-    <div className="pt-safe px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between shadow-xs">
-      {/* Notification Button */}
-      <button
-        onClick={onNotificationClick}
-        aria-label="اعلان‌ها"
-        className="relative p-2.5 rounded-2xl bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors active:scale-95"
-      >
-        <Bell className="w-5 h-5" />
-        {hasUnreadNotification && (
-          <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
-        )}
-      </button>
-
-      {/* Brand Identity */}
-      <div className="flex flex-col items-center text-center">
-        <div className="flex items-center gap-1.5">
-          <Image
-            src="/icons/logo6.png"
-            alt="لوگوی علمی منتظران"
-            width={28}
-            height={28}
-            className="w-7 h-7 object-contain"
-          />
-          <h1 className="text-base font-bold text-slate-800 tracking-tight">
-            علمی منتظران
-          </h1>
-        </div>
-        <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-          آمادگی برای امروز، ساختن فردای بهتر
-        </p>
-      </div>
-
-      {/* Menu Button */}
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-2.5 flex items-center justify-between shadow-sm">
+      {/* دکمه سمت راست: پروفایل / منو */}
       <button
         onClick={onMenuClick}
-        aria-label="منو"
-        className="p-2.5 rounded-2xl bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors active:scale-95"
+        className="p-2.5 rounded-full bg-gray-50 text-gray-700 active:scale-95 transition-all hover:bg-gray-100"
+        aria-label="پروفایل"
       >
-        <Menu className="w-5 h-5" />
+        <User className="w-5 h-5 text-gray-700" />
       </button>
-    </div>
-  )
+
+      {/* لوگوی وسط: سایز بزرگ‌تر، بدون متن و متمرکز */}
+      <div className="relative flex items-center justify-center">
+        <div className="relative w-12 h-12 rounded-full p-1 bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-md shadow-blue-500/20 active:scale-105 transition-transform duration-300">
+          <div className="w-full h-full bg-white rounded-full p-1 flex items-center justify-center overflow-hidden">
+            <Image
+              src="/icons/logo6.png"
+              alt="علمی منتظران"
+              width={40}
+              height={40}
+              className="object-contain w-full h-full"
+              priority
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* دکمه سمت چپ: اعلانات */}
+      <button
+        onClick={onNotificationClick}
+        className="relative p-2.5 rounded-full bg-gray-50 text-gray-700 active:scale-95 transition-all hover:bg-gray-100"
+        aria-label="اعلانات"
+      >
+        <Bell className="w-5 h-5 text-gray-700" />
+        <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+      </button>
+    </header>
+  );
 }
