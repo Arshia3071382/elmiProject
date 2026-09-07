@@ -60,7 +60,7 @@ function Questions() {
           </div>
 
           <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
-            سوالات متداول
+             گره‌های ذهنی شما
           </h2>
           
           <div className="flex justify-start gap-1 mt-6 pr-0">

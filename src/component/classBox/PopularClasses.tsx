@@ -41,7 +41,7 @@ export default function PopularClasses() {
           </div>
 
           <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-            کلاس‌های پرطرفدار
+             انتخاب‌های طلایی
           </h2>
           
           {/* Bottom Pins Line (Left to Right) */}

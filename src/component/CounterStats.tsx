@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView, useMotionValue, animate } from "framer-motion";
+import { useInView, useMotionValue, animate, motion } from "framer-motion";
 import { Users, GraduationCap, Laptop, BookOpen } from "lucide-react";
 import Container from "./Container";
 
@@ -122,10 +122,64 @@ export default function CounterStats() {
 
   return (
     <Container>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 my-16 mt-30">
-        {stats.map((stat, idx) => (
-          <CounterItem key={idx} {...stat} />
-        ))}
+      <div className="my-16 mt-30">
+        {/* هدر بخش (خارج از حلقه کارت‌ها قرار گرفت تا تکرار نشود) */}
+        <motion.div 
+          initial={{ opacity: 0, y: -30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10"
+        >
+          {/* خط‌چین بالا */}
+          <div className="flex justify-end gap-1 mb-6 pl-0">
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ width: 0 }}
+                whileInView={{ width: 8 + (4 - i) * 12 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
+                className={`h-1 rounded-full ${
+                  i === 4 ? 'bg-blue-400' : 
+                  i === 3 ? 'bg-emerald-400' : 
+                  i === 2 ? 'bg-cyan-400' :
+                  i === 1 ? 'bg-teal-400' : 'bg-indigo-400'
+                }`}
+              />
+            ))}
+          </div>
+
+          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
+             ارقامِ ماندگار
+          </h2>
+          
+          {/* خط‌چین پایین */}
+          <div className="flex justify-start gap-1 mt-6 pr-0">
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ width: 0 }}
+                whileInView={{ width: 8 + i * 12 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
+                className={`h-1 rounded-full ${
+                  i === 0 ? 'bg-blue-400' : 
+                  i === 1 ? 'bg-emerald-400' : 
+                  i === 2 ? 'bg-cyan-400' :
+                  i === 3 ? 'bg-teal-400' : 'bg-indigo-400'
+                }`}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* لیست کارت‌ها */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, idx) => (
+            <CounterItem key={idx} {...stat} />
+          ))}
+        </div>
       </div>
     </Container>
   );
