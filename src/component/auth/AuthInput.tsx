@@ -22,7 +22,7 @@ export const AuthInput: React.FC<AuthInputProps> = ({
   const inputId = id || label;
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col  gap-1.5 w-full">
       <label htmlFor={inputId} className="text-sm font-medium text-slate-800">
         {label}
       </label>

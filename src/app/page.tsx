@@ -27,9 +27,13 @@ export default function Home() {
         animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 0.6 }}
       >
-        <HeroSec isLoaded={isLoaded} />
-        <StudentAuthButtons />
-        <EliteLeagueBanner />
+        <div className="space-y-3 sm:space-y-6 pt-4 sm:pt-6">
+          <HeroSec isLoaded={isLoaded} />
+          <div className="mt-10 sm:mt-25">
+            <StudentAuthButtons />
+          </div>
+          <EliteLeagueBanner />
+        </div>
         
         <ScrollAnimation direction="up" delay={0.1}>
           <CounterStats />
