@@ -19,7 +19,7 @@ export default function ChatGuidancePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] p-4 sm:p-8 font-['iranSans-r'] relative overflow-hidden" dir="rtl">
+    <div className="min-h-screen bg-[var(--color-bg)] p-4 sm:p-8 font-['iranSans-r'] relative overflow-hidden mt-10 sm:mt-30" dir="rtl">
       {/* هاله نور تزئینی پس‌زمینه */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[var(--color-accent)]/10 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-10 left-1/4 w-96 h-96 bg-[var(--color-secondary)]/10 rounded-full blur-3xl pointer-events-none -z-10" />
