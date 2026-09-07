@@ -2,48 +2,34 @@
 
 import { useState, useEffect } from 'react'
 
-export function useIsPWA(): { isPWA: boolean; isMounted: boolean } {
-  const [isPWA, setIsPWA] = useState<boolean>(false)
-  const [isMounted, setIsMounted] = useState<boolean>(false)
+export function useIsPWA() {
+  const [isPWA, setIsPWA] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
 
     const checkPWA = () => {
-      // 1. Check standard display-mode: standalone
-      const isStandaloneMedia = window.matchMedia('(display-mode: standalone)').matches
+      // ۱. بررسی دقیق حالت standalone واقعی مرورگرها
+      const isStandaloneMatch = window.matchMedia('(display-mode: standalone)').matches
 
-      // 2. Check iOS Safari specific standalone flag
+      // ۲. بررسی مخصوص iOS فقط زمان اجرا از Home Screen (وقتی بارگذاری در iOS WebApp است)
       const isIOSStandalone =
         (window.navigator as unknown as { standalone?: boolean }).standalone === true
 
-      // 3. Check document referrer fallback (Android TWA / Launchers)
-      const isReferrerStandalone = document.referrer.includes('android-app://')
-
-      return isStandaloneMedia || isIOSStandalone || isReferrerStandalone
+      // فقط اگر یکی از شروط بالا برقراری واقعی در حالت آیکون نصب شده بود:
+      setIsPWA(isStandaloneMatch || isIOSStandalone)
     }
 
-    setIsPWA(checkPWA())
+    checkPWA()
 
-    // Listen to changes in display-mode (e.g. dynamic state changes)
     const mediaQuery = window.matchMedia('(display-mode: standalone)')
     const handleChange = (e: MediaQueryListEvent) => {
       setIsPWA(e.matches)
     }
 
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange)
-    } else {
-      mediaQuery.addListener(handleChange)
-    }
-
-    return () => {
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', handleChange)
-      } else {
-        mediaQuery.removeListener(handleChange)
-      }
-    }
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
 
   return { isPWA, isMounted }
