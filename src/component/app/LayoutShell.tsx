@@ -8,17 +8,21 @@ import { useIsPWA } from './../../../hooks/useIsPWA'
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const { isPWA, isMounted } = useIsPWA()
 
-  // تا قبل از Mount شدن کلاینت، UI عادی وب‌سایت نمایش داده می‌شود
-  if (!isMounted || !isPWA) {
+  // در حالت PWA/Standalone وب‌سایت نباید هیچ Navbar و Footerی داشته باشد
+  if (isMounted && isPWA) {
     return (
-      <>
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-      </>
+      <main className="flex-grow w-full min-h-screen bg-slate-50">
+        {children}
+      </main>
     )
   }
 
-  // در حالت Standalone (PWA) فقط محتوای اصلی رندر می‌شود (بدون Navbar و Footer وب‌سایت)
-  return <main className="flex-grow">{children}</main>
+  // در حالت مرورگر عادی، Navbar و Footer وب‌سایت نمایش داده می‌شوند
+  return (
+    <>
+      <Navbar />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+    </>
+  )
 }

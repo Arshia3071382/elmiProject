@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useIsPWA } from "./../../hooks/useIsPWA";
 
-// ۱. کامپوننت‌های صفحه اصلی قبلی شما
+// ۱. کامپوننت‌های اصلی وب‌سایت
 import Preloader from "@/component/Preloader";
 import PopularClasses from "@/component/classBox/PopularClasses";
 import Container from "@/component/Container";
@@ -18,7 +19,6 @@ import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
 
 // ۲. کامپوننت‌های اختصاصی PWA
-import AppShell from "@/component/app/AppShell";
 import AppHome from "@/component/app/AppHome";
 import AppHeader from "@/component/app/AppHeader";
 import AppHero from "@/component/app/AppHero";
@@ -27,7 +27,7 @@ import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
 
-// --- UI اصلی سایت (دقیقاً همان کد قبلی شما بدون دستکاری) ---
+// --- UI اصلی سایت ---
 function ExistingWebsiteHome() {
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -176,12 +176,20 @@ function PWAAppHome() {
   );
 }
 
-// --- کامپوننت اصلی که سوئیچ را انجام می‌دهد ---
+// --- کامپوننت اصلی (سوئیچ مستقیم بدون وابستگی به AppShell) ---
 export default function Home() {
-  return (
-    <AppShell
-      websiteUI={<ExistingWebsiteHome />}
-      appUI={<PWAAppHome />}
-    />
-  );
+  const { isPWA, isMounted } = useIsPWA();
+
+  // تا قبل از Mount شدن در کلاینت، نسخه وب‌سایت برای SEO و ساختار اول صفحات رندر می‌شود
+  if (!isMounted) {
+    return <ExistingWebsiteHome />;
+  }
+
+  // اگر حالت PWA فعال باشد، UI مخصوص اپلیکیشن رندر می‌شود
+  if (isPWA) {
+    return <PWAAppHome />;
+  }
+
+  // در غیر این صورت نسخه کامل وب‌سایت
+  return <ExistingWebsiteHome />;
 }
