@@ -3,20 +3,24 @@ import "./globals.css";
 import LayoutShell from "@/component/app/LayoutShell";
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#2563eb",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
 };
 
 export const metadata: Metadata = {
   title: "مجموعه علمی منتظران",
-  description: "سامانه علمی و آموزشی مجموعه علمی منتظران",
+  description: "سامانه علمی و آموزشی مجموعه علمی منتظرan",
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/logo6.png",
     apple: "/icons/logo6.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "علمی منتظران",
   },
   formatDetection: {
     telephone: false,

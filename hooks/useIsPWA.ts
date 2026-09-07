@@ -10,28 +10,28 @@ export function useIsPWA() {
     setIsMounted(true)
 
     const checkPWA = () => {
-      // ۱. بررسی display-mode استاندارد مرورگرها
+      // ۱. بررسی حالت Standalone مرورگر کروم و سافاری
       const isStandaloneMatch = window.matchMedia('(display-mode: standalone)').matches
 
-      // ۲. بررسی حالت TWA / WebAPK در اندروید
-      const isAndroidApp = document.referrer.includes('android-app://')
-
-      // ۳. بررسی مخصوص iOS Safari
+      // ۲. بررسی مخصوص iOS
       const isIOSStandalone =
         (window.navigator as unknown as { standalone?: boolean }).standalone === true
 
-      // ۴. بررسی URL Query (برای تضمین ۱۰۰ درصدی)
+      // ۳. بررسی TWA / Android WebAPK Referrer
+      const isAndroidApp = document.referrer.includes('android-app://')
+
+      // ۴. بررسی URL Query Parameter
       const isUrlPWA = window.location.search.includes('mode=pwa')
 
-      setIsPWA(isStandaloneMatch || isAndroidApp || isIOSStandalone || isUrlPWA)
+      setIsPWA(isStandaloneMatch || isIOSStandalone || isAndroidApp || isUrlPWA)
     }
 
     checkPWA()
 
-    // ثبت Service Worker برای اندروید
+    // ثبت Service Worker برای مرورگر اندروید
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.log('SW registration failed:', err)
+        console.log('SW registration error:', err)
       })
     }
 
