@@ -10,47 +10,32 @@ import AppLeagueCard from '@/component/app/AppLeagueCard'
 import AppQuickAccess from '@/component/app/AppQuickAccess'
 import AppBottomNav, { TabType } from '@/component/app/AppBottomNav'
 
-// 1. UI فعلی وب‌سایت شما (کدهای صفحه اصلی فعلی سایت را اینجا یا در فایل مجزا فراخوانی کنید)
+// ۱. محتوای وب‌سایت اصلی شما برای کاربران مرورگر (اصلی)
 function ExistingWebsiteHome() {
   return (
-    <div className="w-full">
-      {/* محتوای فعلی صفحه اصلی سایت شما در اینجا قرار می‌گیرد */}
-      {/* این بخش در مرورگر عادی دقیقاً مانند قبل نمایش داده می‌شود */}
+    <div>
+      {/* در صورتی که محتوای صفحه اصلی قبلی در کامپوننت دیگری است، آن را اینجا فراخوانی کنید */}
+      {/* کدهای فعلی صفحه اول سایت شما */}
     </div>
   )
 }
 
-// 2. UI اختصاصی PWA / App
+// ۲. واکشی و رندر دقیق UI اپلیکیشن ساخته‌شده برای حالت PWA
 function PWAAppHome() {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [studentData, setStudentData] = useState({
-    name: 'دانش‌آموز',
+    name: 'امیرحسین',
     rank: 12,
     totalParticipants: 2450,
     progressPercentage: 60,
   })
 
-  // فراخوانی APIها و Session فعلی پروژه برای جایگزینی داده‌های واقعی
-  useEffect(() => {
-    async function fetchUserData() {
-      try {
-        // مثال: فراخوانی API فعلی کاربر/پروفایل
-        // const res = await fetch('/api/user/profile')
-        // const data = await res.json()
-        // if (data?.name) setStudentData(prev => ({ ...prev, name: data.name }))
-      } catch (error) {
-        console.error('Error fetching PWA user data:', error)
-      }
-    }
-    fetchUserData()
-  }, [])
-
   return (
     <AppHome
       header={
         <AppHeader
-          onNotificationClick={() => console.log('Notification clicked')}
-          onMenuClick={() => console.log('Menu clicked')}
+          onNotificationClick={() => alert('اعلان‌ها')}
+          onMenuClick={() => alert('منو')}
         />
       }
       hero={

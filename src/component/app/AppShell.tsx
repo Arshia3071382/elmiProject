@@ -1,30 +1,26 @@
 'use client'
 
-import React, { ReactNode } from 'react'
+import React from 'react'
 import { useIsPWA } from './../../../hooks/useIsPWA'
 
 interface AppShellProps {
-  websiteUI: ReactNode
-  appUI: ReactNode
+  websiteUI: React.ReactNode
+  appUI: React.ReactNode
 }
 
 export default function AppShell({ websiteUI, appUI }: AppShellProps) {
   const { isPWA, isMounted } = useIsPWA()
 
-  // جلوگیری از Hydration Mismatch: تا زمان Mount کامل در کلاینت، UI وب‌سایت رندر می‌شود
+  // تا زمانی که Client-side مونت نشده، UI اصلی سایت رندر شود
   if (!isMounted) {
     return <>{websiteUI}</>
   }
 
-  // اگر کاربر از آیکن Home Screen (Standalone) وارد شده باشد
+  // اگر PWA باشد، دقیقاً AppUI رندر می‌شود
   if (isPWA) {
-    return (
-      <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-blue-500 selection:text-white max-w-md mx-auto relative shadow-2xl overflow-x-hidden">
-        {appUI}
-      </div>
-    )
+    return <>{appUI}</>
   }
 
-  // در غیر این صورت، UI فعلی وب‌سایت نمایش داده می‌شود
+  // در غیر این صورت UI اصلی سایت
   return <>{websiteUI}</>
 }
