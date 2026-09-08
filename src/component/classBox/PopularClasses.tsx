@@ -26,29 +26,11 @@ export default function PopularClasses() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10"
         >
-          {/* Top Pins Line (Right to Left) */}
-          <div className="flex justify-end gap-1 mb-6 pl-0">
+          {/* خط‌چین بالا (شروع از سمت راست) */}
+          <div className="flex justify-start gap-1 mb-6 pr-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={`top-${i}`}
-                initial={{ width: 0 }}
-                whileInView={{ width: 8 + (4 - i) * 12 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
-                className={`h-1 rounded-full ${pinColors[i]}`}
-              />
-            ))}
-          </div>
-
-          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-             انتخاب‌های طلایی
-          </h2>
-          
-          {/* Bottom Pins Line (Left to Right) */}
-          <div className="flex justify-start gap-2 mt-4 pr-0">
-            {[...Array(5)].map((_, i) => (
-              <motion.div
-                key={`bottom-${i}`}
                 initial={{ width: 0 }}
                 whileInView={{ width: 8 + i * 12 }}
                 viewport={{ once: true }}
@@ -57,9 +39,27 @@ export default function PopularClasses() {
               />
             ))}
           </div>
+
+          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
+             انتخاب‌های طلایی
+          </h2>
+          
+          {/* خط‌چین پایین (شروع از سمت چپ) */}
+          <div className="flex justify-end gap-1 mt-6 pl-0">
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={`bottom-${i}`}
+                initial={{ width: 0 }}
+                whileInView={{ width: 8 + (4 - i) * 12 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
+                className={`h-1 rounded-full ${pinColors[i]}`}
+              />
+            ))}
+          </div>
         </motion.div>
 
-        {/* Cards List - Responsive Grid: بدون max-w محدود کننده */}
+        {/* Cards List */}
         <div className="w-full -mt-10">
           <ClassCart />
         </div>

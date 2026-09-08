@@ -70,12 +70,13 @@ export default function StudentComments() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10"
         >
-          <div className="flex justify-end gap-1 mb-6 pl-0">
+          {/* خط‌چین بالا (شروع از سمت راست) */}
+          <div className="flex justify-start gap-1 mb-6 pr-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={`top-${i}`}
                 initial={{ width: 0 }}
-                whileInView={{ width: 8 + (4 - i) * 12 }}
+                whileInView={{ width: 8 + i * 12 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
                 className={`h-1 rounded-full ${pinColors[i]}`}
@@ -83,16 +84,17 @@ export default function StudentComments() {
             ))}
           </div>
 
-          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight">
+          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
             تجربه یادگیری
           </h2>
 
-          <div className="flex justify-start gap-2 mt-4 pr-0">
+          {/* خط‌چین پایین (شروع از سمت چپ) */}
+          <div className="flex justify-end gap-1 mt-6 pl-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={`bottom-${i}`}
                 initial={{ width: 0 }}
-                whileInView={{ width: 8 + i * 12 }}
+                whileInView={{ width: 8 + (4 - i) * 12 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
                 className={`h-1 rounded-full ${pinColors[i]}`}
@@ -112,7 +114,7 @@ export default function StudentComments() {
                 transition={{ duration: 0.4 }}
                 className="w-full bg-white border-2 border-slate-100 rounded-3xl shadow-lg p-6 sm:p-8 flex flex-col justify-between text-right"
               >
-                {/* متن نظر (با رفع مشکل چیدمان و برعکس شدن ایموجی‌ها) */}
+                {/* متن نظر */}
                 <p
                   dir="auto"
                   className="font-[iranSans-r] text-slate-700 text-right leading-8 text-sm sm:text-base mb-6 whitespace-pre-line [unicode-bidi:plaintext]"
@@ -138,13 +140,13 @@ export default function StudentComments() {
                               key={idx}
                               className="w-3 h-3 fill-amber-400"
                             />
-                          ),
+                          )
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* بخش چپ و وسط (در موبایل رپ شده و به خط بعد می‌رود) */}
+                  {/* بخش چپ و وسط */}
                   <div className="flex flex-row-reverse w-full sm:w-auto items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                     {/* وسط: نام دوره آموزشی */}
                     <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-medium text-[10px] sm:text-xs truncate max-w-[160px]">
@@ -164,21 +166,20 @@ export default function StudentComments() {
             </AnimatePresence>
           </div>
 
-          {/* دکمه‌های ناوبری */}
+          {/* دکمه‌های ناوبری (با جایگزینی آیکون‌های فلش) */}
           <div className="flex justify-center items-center gap-4 mt-6">
-            <button
-              onClick={handlePrev}
-              className="w-10 h-10 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-blue-600 hover:text-white flex items-center justify-center shadow-sm cursor-pointer transition-all"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-
-            
             <button
               onClick={handleNext}
               className="w-10 h-10 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-blue-600 hover:text-white flex items-center justify-center shadow-sm cursor-pointer transition-all"
             >
               <ChevronRight className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={handlePrev}
+              className="w-10 h-10 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-blue-600 hover:text-white flex items-center justify-center shadow-sm cursor-pointer transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
             </button>
           </div>
         </div>

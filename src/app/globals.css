@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* ۱. اجبار سیستم به راست‌به‌چپ (RTL) در کل برنامه */
+:root, html, body {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
 @keyframes textGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -85,6 +91,8 @@
     font-family: iranSans-r, sans-serif;
     background-color: var(--color-bg);
     color: var(--color-text-primary);
+    direction: rtl;
+    text-align: right;
   }
 
   h1, h2, h3, h4, h5, h6, .font-bold, .font-black {

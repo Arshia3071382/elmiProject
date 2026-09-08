@@ -11,7 +11,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "مجموعه علمی منتظران",
-  description: "سامانه علمی و آموزشی مجموعه علمی منتظرan",
+  description: "سامانه علمی و آموزشی مجموعه علمی منتظران",
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/logo6.png",
@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body className="flex flex-col min-h-screen bg-white overflow-x-hidden antialiased">
+      <body className="flex flex-col min-h-screen bg-white overflow-x-hidden antialiased text-right dir-rtl">
         <LayoutShell>{children}</LayoutShell>
       </body>
     </html>

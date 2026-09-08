@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
+// کامپوننت‌های شاسی اصلی وب‌سایت
+import Navbar from '@/component/Navbar'
+import Footer from '@/component/Footer'
+
 // ۱. کامپوننت‌های اصلی وب‌سایت
 import Preloader from "@/component/Preloader";
 import PopularClasses from "@/component/classBox/PopularClasses";
-import Container from "@/component/Container";
 import HeroSec from "@/component/HeroSec";
 import Questions from "@/component/Questions";
 import ScrollAnimation from "@/component/ScrollAnimation";
@@ -27,56 +30,64 @@ import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
 
-// --- UI اصلی سایت ---
+// --- UI اصلی سایت (همراه با Navbar و Footer) ---
 function ExistingWebsiteHome() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
     <>
-      <Preloader onComplete={() => setIsLoaded(true)} />
+      {/* نوبار اختصاصی وب‌سایت در لایه کلاینت */}
+      <Navbar />
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isLoaded ? 1 : 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="space-y-3 sm:space-y-6 pt-4 sm:pt-6">
-          <HeroSec isLoaded={isLoaded} />
-          <div className="mt-10 sm:mt-25">
-            <StudentAuthButtons />
+      <div dir="rtl" className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white">
+        <Preloader onComplete={() => setIsLoaded(true)} />
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isLoaded ? 1 : 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="space-y-3 sm:space-y-6 pt-4 sm:pt-6 Container">
+            <HeroSec isLoaded={isLoaded} />
+            <div className="mt-10 sm:mt-20">
+              <StudentAuthButtons />
+            </div>
+            <EliteLeagueBanner />
           </div>
-          <EliteLeagueBanner />
-        </div>
-        
-        <ScrollAnimation direction="up" delay={0.1}>
-          <CounterStats />
-        </ScrollAnimation>
+          
+          <ScrollAnimation direction="up" delay={0.1}>
+            <CounterStats />
+          </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.2}>
-          <ScienceHub />
-        </ScrollAnimation>
+          <ScrollAnimation direction="up" delay={0.2}>
+            <ScienceHub />
+          </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.2}>
-          <PuzzleActionSection />
-        </ScrollAnimation>
+          <ScrollAnimation direction="up" delay={0.2}>
+            <PuzzleActionSection />
+          </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.3}>
-          <PopularClasses />
-        </ScrollAnimation>
+          <ScrollAnimation direction="up" delay={0.3}>
+            <PopularClasses />
+          </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.35}>
-          <StudentComments />
-        </ScrollAnimation>
+          <ScrollAnimation direction="up" delay={0.35}>
+            <StudentComments />
+          </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.4}>
-          <Questions />
-        </ScrollAnimation>
-      </motion.div>
+          <ScrollAnimation direction="up" delay={0.4}>
+            <Questions />
+          </ScrollAnimation>
+        </motion.div>
+      </div>
+
+      {/* فوتر اختصاصی وب‌سایت در لایه کلاینت */}
+      <Footer />
     </>
   );
 }
 
-// --- UI اختصاصی اپلیکیشن PWA ---
+// --- UI اختصاصی اپلیکیشن PWA (بدون تغییر) ---
 function PWAAppHome() {
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [studentData, setStudentData] = useState({
@@ -176,20 +187,15 @@ function PWAAppHome() {
   );
 }
 
-// --- کامپوننت اصلی (سوئیچ مستقیم بدون وابستگی به AppShell) ---
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
-  // تا قبل از Mount شدن در کلاینت، نسخه وب‌سایت برای SEO و ساختار اول صفحات رندر می‌شود
-  if (!isMounted) {
-    return <ExistingWebsiteHome />;
-  }
-
-  // اگر حالت PWA فعال باشد، UI مخصوص اپلیکیشن رندر می‌شود
-  if (isPWA) {
+  // تا زمانی که در کلاینت مونت نشده، نسخه وب را برای SEO رندر می‌کنیم.
+  // در PWA (اندروید)، بعد از مونت شدن، بلافاصله به PWAAppHome سوئیچ می‌شود و Navbar را دیگر رندر نمی‌کند.
+  if (isMounted && isPWA) {
     return <PWAAppHome />;
   }
 
-  // در غیر این صورت نسخه کامل وب‌سایت
+  // در تمام حالت‌های دیگر (دسکتاپ، سرور رندر)، نسخه وب همراه با نوبار نمایش داده می‌شود.
   return <ExistingWebsiteHome />;
 }

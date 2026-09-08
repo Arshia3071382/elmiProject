@@ -52,7 +52,7 @@ export default function ScienceHub() {
       title: "ویترین علمی", 
       subtitle: "فریم به فریم با علمی",
       icon: <Film className="w-6 h-6 text-sky-600" />, 
-      href: "/showcase", // مسیر اصلاح شد به /showcase
+      href: "/showcase",
       gradient: "from-sky-500 to-blue-400",
       iconBg: "bg-sky-100 group-hover:bg-sky-200",
       borderColor: "border-sky-200 group-hover:border-sky-400"
@@ -124,31 +124,8 @@ export default function ScienceHub() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10"
         >
-          {/* خط‌چین بالا */}
-          <div className="flex justify-end gap-1 mb-6 pl-0">
-            {[...Array(5)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ width: 0 }}
-                whileInView={{ width: 8 + (4 - i) * 12 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
-                className={`h-1 rounded-full ${
-                  i === 4 ? 'bg-blue-400' : 
-                  i === 3 ? 'bg-emerald-400' : 
-                  i === 2 ? 'bg-cyan-400' :
-                  i === 1 ? 'bg-teal-400' : 'bg-indigo-400'
-                }`}
-              />
-            ))}
-          </div>
-
-          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
-            قطب‌نمای علمی
-          </h2>
-          
-          {/* خط‌چین پایین */}
-          <div className="flex justify-start gap-1 mt-6 pr-0">
+          {/* خط‌چین بالا (شروع از سمت راست) */}
+          <div className="flex justify-start gap-1 mb-6 pr-0">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={i}
@@ -161,6 +138,29 @@ export default function ScienceHub() {
                   i === 1 ? 'bg-emerald-400' : 
                   i === 2 ? 'bg-cyan-400' :
                   i === 3 ? 'bg-teal-400' : 'bg-indigo-400'
+                }`}
+              />
+            ))}
+          </div>
+
+          <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
+            قطب‌نمای علمی
+          </h2>
+          
+          {/* خط‌چین پایین (شروع از سمت چپ) */}
+          <div className="flex justify-end gap-1 mt-6 pl-0">
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ width: 0 }}
+                whileInView={{ width: 8 + (4 - i) * 12 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
+                className={`h-1 rounded-full ${
+                  i === 4 ? 'bg-blue-400' : 
+                  i === 3 ? 'bg-emerald-400' : 
+                  i === 2 ? 'bg-cyan-400' :
+                  i === 1 ? 'bg-teal-400' : 'bg-indigo-400'
                 }`}
               />
             ))}

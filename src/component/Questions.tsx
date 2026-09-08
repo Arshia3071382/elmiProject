@@ -37,23 +37,24 @@ function Questions() {
     <Container>
       <section className="py-20 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 relative overflow-hidden dir-rtl font-[iranSans-r]">
         
-        
+        {/* المان‌های پس‌زمینه */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
 
-       
+        {/* هدر بخش */}
         <div className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10">
-          <div className="flex justify-end gap-1 mb-6 pl-0">
+          {/* خط‌چین بالا (شروع از سمت راست) */}
+          <div className="flex justify-start gap-1 mb-6 pr-0">
             {[...Array(5)].map((_, i) => (
               <div
-                key={i}
+                key={`top-${i}`}
                 className={`h-1 rounded-full ${
-                  i === 4 ? 'bg-blue-400 w-16' : 
-                  i === 3 ? 'bg-emerald-400 w-14' : 
+                  i === 0 ? 'bg-blue-400 w-8' : 
+                  i === 1 ? 'bg-emerald-400 w-10' : 
                   i === 2 ? 'bg-cyan-400 w-12' :
-                  i === 1 ? 'bg-teal-400 w-10' : 'bg-indigo-400 w-8'
+                  i === 3 ? 'bg-teal-400 w-14' : 'bg-indigo-400 w-16'
                 }`}
               />
             ))}
@@ -63,22 +64,23 @@ function Questions() {
              گره‌های ذهنی شما
           </h2>
           
-          <div className="flex justify-start gap-1 mt-6 pr-0">
+          {/* خط‌چین پایین (شروع از سمت چپ) */}
+          <div className="flex justify-end gap-1 mt-6 pl-0">
             {[...Array(5)].map((_, i) => (
               <div
-                key={i}
+                key={`bottom-${i}`}
                 className={`h-1 rounded-full ${
-                  i === 0 ? 'bg-blue-400 w-16' : 
-                  i === 1 ? 'bg-emerald-400 w-14' : 
+                  i === 4 ? 'bg-blue-400 w-8' : 
+                  i === 3 ? 'bg-emerald-400 w-10' : 
                   i === 2 ? 'bg-cyan-400 w-12' :
-                  i === 3 ? 'bg-teal-400 w-10' : 'bg-indigo-400 w-8'
+                  i === 1 ? 'bg-teal-400 w-14' : 'bg-indigo-400 w-16'
                 }`}
               />
             ))}
           </div>
         </div>
 
-        
+        {/* لیست سوالات */}
         <div className="w-full max-w-4xl mx-auto flex flex-col gap-4 relative z-10">
           {questionItem.map((item: QuestionItem) => {
             const isOpen = activeQuestion === item.id;
@@ -88,17 +90,14 @@ function Questions() {
                 key={item.id}
                 className="bg-white border-2 border-slate-100 rounded-3xl shadow-lg overflow-hidden transition-all duration-300"
               >
-                
                 <div 
                   className="flex flex-row-reverse justify-between items-center p-5 sm:p-6 cursor-pointer select-none gap-4 text-right"
                   onClick={() => handleQuestionClick(item.id)}
                 >
-                  
                   <h3 className="font-[iranBold] text-primary text-base sm:text-lg flex-1 leading-relaxed text-right">
                     {item.question}
                   </h3>
 
-                 
                   <div 
                     className={`shrink-0 rounded-2xl w-10 h-10 flex items-center justify-center transition-all duration-300 border-2 ${
                       isOpen 
@@ -112,7 +111,6 @@ function Questions() {
                   </div>
                 </div>
 
-                
                 <div 
                   className={`transition-all duration-300 ease-in-out overflow-hidden ${
                     isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
