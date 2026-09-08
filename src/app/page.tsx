@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
 // کامپوننت‌های شاسی اصلی وب‌سایت
-import Navbar from '@/component/Navbar'
-import Footer from '@/component/Footer'
+import Navbar from "@/component/Navbar";
+import Footer from "@/component/Footer";
 
 // ۱. کامپوننت‌های اصلی وب‌سایت
 import Preloader from "@/component/Preloader";
@@ -14,7 +14,7 @@ import PopularClasses from "@/component/classBox/PopularClasses";
 import HeroSec from "@/component/HeroSec";
 import Questions from "@/component/Questions";
 import ScrollAnimation from "@/component/ScrollAnimation";
-import CounterStats from "@/component/CounterStats"; 
+import CounterStats from "@/component/CounterStats";
 import ScienceHub from "@/component/ScienceHub";
 import PuzzleActionSection from "@/component/PuzzleButton";
 import StudentComments from "@/component/StudentComments";
@@ -36,16 +36,20 @@ function ExistingWebsiteHome() {
 
   return (
     <>
-      {/* نوبار اختصاصی وب‌سایت در لایه کلاینت */}
+      {/* پریلودر موشکی با اتمام دقیق ۳ ثانیه‌ای */}
+      <Preloader onComplete={() => setIsLoaded(true)} />
+
+      {/* نوبار اختصاصی وب‌سایت */}
       <Navbar />
 
-      <div dir="rtl" className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white">
-        <Preloader onComplete={() => setIsLoaded(true)} />
-
+      <div
+        dir="rtl"
+        className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white"
+      >
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isLoaded ? 1 : 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <div className="space-y-3 sm:space-y-6 pt-4 sm:pt-6 Container">
             <HeroSec isLoaded={isLoaded} />
@@ -54,7 +58,7 @@ function ExistingWebsiteHome() {
             </div>
             <EliteLeagueBanner />
           </div>
-          
+
           <ScrollAnimation direction="up" delay={0.1}>
             <CounterStats />
           </ScrollAnimation>
@@ -81,13 +85,13 @@ function ExistingWebsiteHome() {
         </motion.div>
       </div>
 
-      {/* فوتر اختصاصی وب‌سایت در لایه کلاینت */}
+      {/* فوتر اختصاصی وب‌سایت */}
       <Footer />
     </>
   );
 }
 
-// --- UI اختصاصی اپلیکیشن PWA (بدون تغییر) ---
+// --- UI اختصاصی اپلیکیشن PWA ---
 function PWAAppHome() {
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [studentData, setStudentData] = useState({
@@ -190,12 +194,9 @@ function PWAAppHome() {
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
-  // تا زمانی که در کلاینت مونت نشده، نسخه وب را برای SEO رندر می‌کنیم.
-  // در PWA (اندروید)، بعد از مونت شدن، بلافاصله به PWAAppHome سوئیچ می‌شود و Navbar را دیگر رندر نمی‌کند.
   if (isMounted && isPWA) {
     return <PWAAppHome />;
   }
 
-  // در تمام حالت‌های دیگر (دسکتاپ، سرور رندر)، نسخه وب همراه با نوبار نمایش داده می‌شود.
   return <ExistingWebsiteHome />;
 }
