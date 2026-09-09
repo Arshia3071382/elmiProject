@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
@@ -56,7 +56,7 @@ const CART_ITEMS: ClassItem[] = [
     borderColor: "border-emerald-200 group-hover:border-emerald-400",
     textColor: "text-emerald-600",
     sessionsText: "سال 1402",
-    description: "آشنایی با  رشته های پنج گانه تحصیلی",
+    description: "آشنایی با رشته های پنج گانه تحصیلی",
     teacher: "آقای مختاری",
     topics: ["مجموعه‌ها", "عبارت‌های جبری", "خط و معادلات خطی"]
   },
@@ -107,26 +107,32 @@ export default function ClassCart() {
   const [isPaused, setIsPaused] = useState(false);
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
 
-  // رفتن به کارت بعدی
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % CART_ITEMS.length);
   }, []);
 
-  // رفتن به کارت قبلی
   const goToPrev = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + CART_ITEMS.length) % CART_ITEMS.length);
   }, []);
 
-  // تایمر چرخش خودکار هر ۳ ثانیه
+  // پشتیبانی از کلیدهای کیبورد برای پیمایش
   useEffect(() => {
-    // اگر موس روی کارت باشد یا مودال باز باشد، تایمر اجرا نشود
-    if (isPaused || selectedClass !== null) {
-      return;
-    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedClass) return;
+      if (e.key === "ArrowLeft") goToNext();
+      if (e.key === "ArrowRight") goToPrev();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToNext, goToPrev, selectedClass]);
+
+  // چرخش خودکار
+  useEffect(() => {
+    if (isPaused || selectedClass !== null) return;
 
     const timer = setInterval(() => {
       goToNext();
-    }, 3000);
+    }, 3500);
 
     return () => clearInterval(timer);
   }, [isPaused, selectedClass, goToNext]);
@@ -142,13 +148,13 @@ export default function ClassCart() {
     { item: getCardAt(1), role: "next" },
   ];
 
-  // سواپ لمسی در موبایل
-  const handleDragEnd = (_: any, info: PanInfo) => {
-    const threshold = 50;
+  // اصلاح جهت Drag و Swiping بر اساس RTL
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const threshold = 40;
     if (info.offset.x > threshold) {
-      goToNext();
+      goToPrev(); // در RTL کشیدن به راست یعنی رفتن به قبلی
     } else if (info.offset.x < -threshold) {
-      goToPrev();
+      goToNext(); // در RTL کشیدن به چپ یعنی رفتن به بعدی
     }
   };
 
@@ -165,37 +171,33 @@ export default function ClassCart() {
 
           return (
             <motion.div
-              key={item.id}
+              key={`${item.id}-${role}`}
               drag={isActive ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
+              dragElastic={0.15}
               onDragEnd={isActive ? handleDragEnd : undefined}
               transition={{
-                duration: 0.35,
-                ease: "easeOut",
+                duration: 0.4,
+                ease: [0.25, 1, 0.5, 1],
               }}
               onClick={() => {
-                if (role === "prev") {
-                  goToPrev();
-                } else if (role === "next") {
-                  goToNext();
-                } else {
-                  setSelectedClass(item);
-                }
+                if (role === "prev") goToPrev();
+                else if (role === "next") goToNext();
+                else setSelectedClass(item);
               }}
               style={{
                 zIndex: isActive ? 20 : 10,
               }}
-              className={`absolute w-[300px] sm:w-[340px] bg-white rounded-3xl border touch-pan-y ${
+              className={`absolute w-[300px] sm:w-[340px] bg-white rounded-3xl border transition-colors ${
                 isActive
                   ? "border-blue-400 shadow-[0_20px_50px_rgba(59,130,246,0.15)] cursor-grab active:cursor-grabbing"
-                  : "border-gray-200/80 shadow-md cursor-pointer hover:border-gray-300"
+                  : "border-slate-200/80 shadow-md cursor-pointer hover:border-slate-300"
               }`}
               animate={{
                 x: role === "prev" ? "-105%" : role === "next" ? "105%" : "0%",
-                scale: isActive ? 1.05 : 0.9,
-                opacity: isActive ? 1 : 0.5,
-                filter: isActive ? "blur(0px)" : "blur(1px)",
+                scale: isActive ? 1.05 : 0.88,
+                opacity: isActive ? 1 : 0.45,
+                filter: isActive ? "blur(0px)" : "blur(1.5px)",
               }}
             >
               {/* تصویر کارت */}
@@ -204,6 +206,8 @@ export default function ClassCart() {
                   src={item.image}
                   alt={item.title}
                   fill
+                  sizes="(max-width: 640px) 300px, 340px"
+                  priority={isActive}
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -217,11 +221,12 @@ export default function ClassCart() {
                 <h3 className="text-base font-[iranBold] text-slate-900 mb-1 line-clamp-1">
                   {item.title}
                 </h3>
-                <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
+                <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed h-8">
                   {item.subtitle}
                 </p>
 
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedClass(item);
@@ -236,11 +241,13 @@ export default function ClassCart() {
         })}
       </div>
 
-      {/* نقطه‌های پایین */}
+      {/* نقطه‌های ناوبری پایین */}
       <div className="flex justify-center items-center gap-2 mt-8">
         {CART_ITEMS.map((_, idx) => (
           <button
             key={idx}
+            type="button"
+            aria-label={`رفتن به اسلاید ${idx + 1}`}
             onClick={() => setCurrentIndex(idx)}
             className={`h-2 rounded-full transition-all duration-300 ${
               idx === currentIndex
@@ -267,10 +274,16 @@ export default function ClassCart() {
 function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => void }) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [onClose]);
 
   return (
     <div dir="rtl" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -292,10 +305,11 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
         <div className="relative h-48 w-full shrink-0">
           <Image src={item.image} alt={item.title} fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
-          
+
           <button
+            type="button"
             onClick={onClose}
-            className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center transition-colors"
+            className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center transition-colors text-sm"
           >
             ✕
           </button>
@@ -311,6 +325,19 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
             <div>
               <h4 className="text-sm font-[iranBold] text-slate-800 mb-1">درباره این دوره:</h4>
               <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+            </div>
+          )}
+
+          {item.topics && item.topics.length > 0 && (
+            <div>
+              <h4 className="text-sm font-[iranBold] text-slate-800 mb-2">مباحث دوره:</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {item.topics.map((topic, i) => (
+                  <span key={i} className="text-[11px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg">
+                    {topic}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -336,8 +363,9 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className={`w-full py-3 rounded-xl text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-lg active:scale-98 transition-transform`}
+            className={`w-full py-3 rounded-xl text-sm font-[iranBold] text-white bg-gradient-to-r ${item.gradient} shadow-lg active:scale-95 transition-transform`}
           >
             بستن
           </button>

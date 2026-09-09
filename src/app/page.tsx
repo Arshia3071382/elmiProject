@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
-// کامپوننت‌های ضروری بالای صفحه (بدون Navbar و Footer)
+// کامپوننت‌های ضروری بالای صفحه
 import Preloader from "@/component/Preloader";
 import HeroSec from "@/component/HeroSec";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
@@ -20,43 +20,29 @@ import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
 
-// ۱. Dynamic Import برای بخش‌های سنگین پایین صفحه
-const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: true });
-const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: true });
-const PuzzleActionSection = dynamic(() => import("@/component/PuzzleButton"), { ssr: true });
-const PopularClasses = dynamic(() => import("@/component/classBox/PopularClasses"), { ssr: true });
-const StudentComments = dynamic(() => import("@/component/StudentComments"), { ssr: true });
-const Questions = dynamic(() => import("@/component/Questions"), { ssr: true });
+// ۱. بهینه‌سازی Lazy Loading: غیرفعال کردن ssr جهت سبک‌سازی Main Thread در لود اولیه
+const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
+const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
+const PuzzleActionSection = dynamic(() => import("@/component/PuzzleButton"), { ssr: false });
+const PopularClasses = dynamic(() => import("@/component/classBox/PopularClasses"), { ssr: false });
+const StudentComments = dynamic(() => import("@/component/StudentComments"), { ssr: false });
+const Questions = dynamic(() => import("@/component/Questions"), { ssr: false });
 
 // --- UI اصلی سایت ---
 function ExistingWebsiteHome() {
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // بررسی اولیه وضعیت پریلودر برای اسکرول مرورگر
   useEffect(() => {
     if (typeof window !== "undefined" && sessionStorage.getItem("hasSeenPreloader")) {
       setIsLoaded(true);
     }
   }, []);
 
-  // مدیریت دقیق Scrollbar
-  useEffect(() => {
-    if (!isLoaded) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isLoaded]);
-
   return (
     <>
       {/* پریلودر موشکی */}
       <Preloader onComplete={() => setIsLoaded(true)} />
 
-      {/* Navbar و Footer حذف شدند تا توسط LayoutShell کنترل شوند */}
       <div
         dir="rtl"
         className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white"
@@ -69,29 +55,34 @@ function ExistingWebsiteHome() {
           <EliteLeagueBanner />
         </div>
 
-        <ScrollAnimation direction="up" delay={0.05}>
-          <CounterStats />
-        </ScrollAnimation>
+        {/* کامپوننت‌های سنگین فقط پس از اتمام کامل پریلودر رندر می‌شوند تا اسکرول قفل نشود */}
+        {isLoaded && (
+          <>
+            <ScrollAnimation direction="up" delay={0.05}>
+              <CounterStats />
+            </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.1}>
-          <ScienceHub />
-        </ScrollAnimation>
+            <ScrollAnimation direction="up" delay={0.1}>
+              <ScienceHub />
+            </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.15}>
-          <PuzzleActionSection />
-        </ScrollAnimation>
+            <ScrollAnimation direction="up" delay={0.15}>
+              <PuzzleActionSection />
+            </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.2}>
-          <PopularClasses />
-        </ScrollAnimation>
+            <ScrollAnimation direction="up" delay={0.2}>
+              <PopularClasses />
+            </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.25}>
-          <StudentComments />
-        </ScrollAnimation>
+            <ScrollAnimation direction="up" delay={0.25}>
+              <StudentComments />
+            </ScrollAnimation>
 
-        <ScrollAnimation direction="up" delay={0.3}>
-          <Questions />
-        </ScrollAnimation>
+            <ScrollAnimation direction="up" delay={0.3}>
+              <Questions />
+            </ScrollAnimation>
+          </>
+        )}
       </div>
     </>
   );

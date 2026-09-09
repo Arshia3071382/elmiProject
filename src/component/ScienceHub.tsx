@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Container from "./Container";
-import { motion, useMotionValue, useSpring, useTransform, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Compass, 
   Radio, 
@@ -91,86 +91,38 @@ export default function ScienceHub() {
 
   return (
     <Container>
-      <section className="py-20 Mt-10 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 relative overflow-hidden dir-rtl font-[iranSans-r]">
-        {/* المان‌های پس‌زمینه متحرک */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-200/10 rounded-full blur-3xl animate-pulse delay-500" />
-          
-          {/* ذرات معلق */}
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ y: 0 }}
-              animate={{ y: [-20, 20, -20] }}
-              transition={{ duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
-              className={`absolute w-2 h-2 rounded-full ${
-                i % 2 === 0 ? 'bg-blue-400/30' : 'bg-emerald-400/30'
-              }`}
-              style={{
-                top: `${10 + i * 12}%`,
-                left: `${5 + i * 12}%`,
-              }}
-            />
-          ))}
+      <section className="py-16 sm:py-20 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60 relative overflow-hidden dir-rtl font-[iranSans-r]">
+        {/* المان‌های پس‌زمینه ثابت و سبک (بدون animate-pulse مداوم) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-0 w-80 h-80 bg-blue-200/15 rounded-full blur-2xl transform-gpu" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-emerald-200/15 rounded-full blur-2xl transform-gpu" />
         </div>
 
         {/* هدر بخش */}
-        <motion.div 
-          initial={{ opacity: 0, y: -30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10"
-        >
-          {/* خط‌چین بالا (شروع از سمت راست) */}
-          <div className="flex justify-start gap-1 mb-6 pr-0">
-            {[...Array(5)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ width: 0 }}
-                whileInView={{ width: 8 + i * 12 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
-                className={`h-1 rounded-full ${
-                  i === 0 ? 'bg-blue-400' : 
-                  i === 1 ? 'bg-emerald-400' : 
-                  i === 2 ? 'bg-cyan-400' :
-                  i === 3 ? 'bg-teal-400' : 'bg-indigo-400'
-                }`}
-              />
-            ))}
+        <div className="w-full max-w-3xl mx-auto mb-12 sm:mb-16 text-center relative z-10 transform-gpu">
+          <div className="flex justify-start gap-1 mb-4 pr-0">
+            <div className="h-1 w-8 rounded-full bg-blue-400" />
+            <div className="h-1 w-12 rounded-full bg-emerald-400" />
+            <div className="h-1 w-16 rounded-full bg-cyan-400" />
+            <div className="h-1 w-20 rounded-full bg-teal-400" />
           </div>
 
           <h2 className="font-[iranBold] text-primary text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4">
             قطب‌نمای علمی
           </h2>
-          
-          {/* خط‌چین پایین (شروع از سمت چپ) */}
-          <div className="flex justify-end gap-1 mt-6 pl-0">
-            {[...Array(5)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ width: 0 }}
-                whileInView={{ width: 8 + (4 - i) * 12 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 + i * 0.1 }}
-                className={`h-1 rounded-full ${
-                  i === 4 ? 'bg-blue-400' : 
-                  i === 3 ? 'bg-emerald-400' : 
-                  i === 2 ? 'bg-cyan-400' :
-                  i === 1 ? 'bg-teal-400' : 'bg-indigo-400'
-                }`}
-              />
-            ))}
-          </div>
-        </motion.div>
 
-        {/* گرید ریسپانسیو */}
+          <div className="flex justify-end gap-1 mt-4 pl-0">
+            <div className="h-1 w-20 rounded-full bg-teal-400" />
+            <div className="h-1 w-16 rounded-full bg-cyan-400" />
+            <div className="h-1 w-12 rounded-full bg-emerald-400" />
+            <div className="h-1 w-8 rounded-full bg-blue-400" />
+          </div>
+        </div>
+
+        {/* گرید ریسپانسیو کارت‌ها */}
         <div className="w-full grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 relative z-10">
-          {hubItems.map((item, index) => (
-            <ScienceCard key={item.id} item={item} index={index} />
+          {hubItems.map((item) => (
+            <ScienceCard key={item.id} item={item} />
           ))}
         </div>
       </section>
@@ -178,85 +130,37 @@ export default function ScienceHub() {
   );
 }
 
-function ScienceCard({ item, index }: { item: HubItem; index: number }) {
-  const [isHovered, setIsHovered] = useState(false);
+function ScienceCard({ item }: { item: HubItem }) {
   const [isClicked, setIsClicked] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(cardRef, { once: true, amount: 0.2 });
-
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(mouseY, [-100, 100], [8, -8]), { damping: 20, stiffness: 200 });
-  const rotateY = useSpring(useTransform(mouseX, [-100, 100], [-8, 8]), { damping: 20, stiffness: 200 });
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    mouseX.set(x);
-    mouseY.set(y);
-  }
 
   return (
-    <motion.div
-      ref={cardRef}
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.95 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-      className="h-full"
-    >
+    <div className="h-full transform-gpu">
       <Link 
         href={item.href} 
         className="block h-full"
         onClick={() => setIsClicked(true)}
       >
-        <motion.div
-          onMouseMove={handleMouseMove}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => {
-            setIsHovered(false);
-            mouseX.set(0);
-            mouseY.set(0);
-          }}
-          style={{
-            rotateX: isHovered ? rotateX : 0,
-            rotateY: isHovered ? rotateY : 0,
-            transformStyle: "preserve-3d",
-          }}
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.2 }}
-          className={`group relative flex flex-col items-center justify-between p-4 sm:p-8 bg-white border-2 ${item.borderColor} rounded-3xl shadow-lg hover:shadow-2xl transition-shadow duration-300 text-center overflow-hidden h-full`}
+        <div 
+          className={`group relative flex flex-col items-center justify-between p-4 sm:p-8 bg-white border-2 ${item.borderColor} rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 text-center overflow-hidden h-full active:scale-98`}
         >
-          {/* هاله رنگی پس‌زمینه */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ 
-              opacity: isHovered ? 0.05 : 0,
-              scale: isHovered ? 1 : 0.5,
-            }}
-            transition={{ duration: 0.3 }}
-            className={`absolute inset-0 bg-gradient-to-br ${item.gradient} blur-xl pointer-events-none -z-10`}
-          />
-
           {/* محتوای اصلی کارت */}
           <div className="w-full flex flex-col items-center relative z-10">
             {/* آیکون */}
             <motion.div
               animate={isClicked ? { rotate: 360 } : { rotate: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
               onAnimationComplete={() => setIsClicked(false)}
-              className={`mb-3 sm:mb-4 p-3 sm:p-4 ${item.iconBg} rounded-2xl border-2 ${item.borderColor} transition-all duration-300 flex items-center justify-center`}
+              className={`mb-3 sm:mb-4 p-3 sm:p-4 ${item.iconBg} rounded-2xl border-2 ${item.borderColor} transition-colors duration-300 flex items-center justify-center`}
             >
               {item.icon}
             </motion.div>
 
             {/* بخش متن‌ها */}
             <div className="w-full">
-              <h3 className="text-xs sm:text-base font-[iranBold] text-primary mb-1 opacity-100 antialiased">
+              <h3 className="text-xs sm:text-base font-[iranBold] text-primary mb-1 antialiased">
                 {item.title}
               </h3>
-              <p className="text-[11px] sm:text-xs text-text-secondary mb-3 sm:mb-4 opacity-100 antialiased">
+              <p className="text-[11px] sm:text-xs text-slate-500 mb-3 sm:mb-4 antialiased">
                 {item.subtitle}
               </p>
             </div>
@@ -264,28 +168,18 @@ function ScienceCard({ item, index }: { item: HubItem; index: number }) {
 
           {/* دکمه و فلش */}
           <div className="w-full mt-auto relative z-10">
-            <motion.div
-              initial={{ x: 0 }}
-              animate={isHovered ? { x: 4 } : { x: 0 }}
-              transition={{ duration: 0.3 }}
-              className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-medium"
-            >
+            <div className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-medium transition-transform duration-300 group-hover:translate-x-1">
               <span className={`text-transparent bg-clip-text bg-gradient-to-r ${item.gradient} font-[iranBold] antialiased`}>
                 بزن بریم
               </span>
               <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500" />
-            </motion.div>
+            </div>
           </div>
 
-          {/* خط تزئینی پایین کارت */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={isHovered ? { scaleX: 1 } : { scaleX: 0 }}
-            transition={{ duration: 0.4 }}
-            className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${item.gradient}`}
-          />
-        </motion.div>
+          {/* خط تزئینی پایین کارت با ترنزیشن CSS استاندارد */}
+          <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+        </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
