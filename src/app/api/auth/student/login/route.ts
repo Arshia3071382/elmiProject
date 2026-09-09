@@ -105,23 +105,26 @@ export async function POST(req: Request) {
     const student = await Student.findOne({
       $or: [
         { phone: cleanUsername },
-        { username: cleanUsername }
-      ]
+        { username: cleanUsername },
+        { nationalId: cleanUsername },
+      ],
     });
 
-    if (student && student.passwordHash) {
-      const isMatch = await bcrypt.compare(cleanPassword, student.passwordHash);
+    // پشتیبانی همزمان از password و passwordHash بر اساس اسکیمای دیتابیس
+    const studentPassword = student?.password || student?.passwordHash;
+
+    if (student && studentPassword) {
+      const isMatch = await bcrypt.compare(cleanPassword, studentPassword);
       if (isMatch) {
         const secret = new TextEncoder().encode(
           process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
         );
-        
-        // 🔒 تکمیل پِی‌لود توکن برای سازگاری کامل با داشبورد و میدلور
-        const token = await new SignJWT({ 
-          userId: student._id.toString(), 
+
+        const token = await new SignJWT({
+          userId: student._id.toString(),
           id: student._id.toString(),
           username: student.username || student.phone,
-          role: "student" 
+          role: "student",
         })
           .setProtectedHeader({ alg: "HS256" })
           .setExpirationTime("7d")
@@ -130,42 +133,14 @@ export async function POST(req: Request) {
         const response = NextResponse.json({
           success: true,
           role: "student",
+          student: {
+            nationalId: student.nationalId,
+            phone: student.phone,
+          },
           redirectUrl: "/student/dashboard",
           message: "ورود با موفقیت انجام شد.",
         });
 
-        response.cookies.set("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return response;
-      }
-    }
-
-    if (student && student.passwordHash) {
-      const isMatch = await bcrypt.compare(cleanPassword, student.passwordHash);
-      if (isMatch) {
-        const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
-        );
-        
-        const token = await new SignJWT({ userId: student._id.toString(), role: "student" })
-          .setProtectedHeader({ alg: "HS256" })
-          .setExpirationTime("7d")
-          .sign(secret);
-
-        const response = NextResponse.json({
-          success: true,
-          role: "student",
-          redirectUrl: "/student/dashboard",
-          message: "ورود با موفقیت انجام شد.",
-        });
-
-        // 🔒 اصلاح نام کوکی از studentToken به token برای هماهنگی با میدلور و جلوگیری از رفرش ناخواسته
         response.cookies.set("token", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",

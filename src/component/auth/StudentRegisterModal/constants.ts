@@ -29,3 +29,18 @@ export const getPasswordStrength = (pass: string) => {
   }
   return { label: "متوسط (نیازمند حروف بزرگ/کوچک و عدد)", color: "text-amber-600" };
 };
+
+// اعتبارسنجی سوال و پاسخ امنیتی
+export const validateSecurityFields = (question: string, answer: string) => {
+  const errors: { securityQuestion?: string; securityAnswer?: string } = {};
+
+  if (!question || question.trim() === "") {
+    errors.securityQuestion = "لطفاً یک سوال امنیتی انتخاب کنید.";
+  }
+
+  if (!answer || answer.trim().length < 2) {
+    errors.securityAnswer = "پاسخ سوال امنیتی باید حداقل ۲ کاراکتر باشد.";
+  }
+
+  return errors;
+};

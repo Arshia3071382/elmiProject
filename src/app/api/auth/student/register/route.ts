@@ -3,7 +3,7 @@ import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
 import GradeStudent from "./../../../../../../models/GradeStudent";
 import bcrypt from "bcryptjs";
-import { SignJWT } from "jose"; // 🔒 ایمپورت پکیج ساخت توکن امن
+import { SignJWT } from "jose";
 
 function normalizeNationalId(id: string): string {
   if (!id) return "";
@@ -33,12 +33,22 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { username, nationalId, phone, password, firstName, lastName, grade } = body;
+    const {
+      username,
+      nationalId,
+      phone,
+      password,
+      firstName,
+      lastName,
+      grade,
+      securityQuestion,
+      securityAnswer,
+    } = body;
 
-    // بررسی فیلدهای اجباری شامل نام کاربری
-    if (!username || !nationalId || !phone || !password) {
+    // بررسی فیلدهای اجباری شامل سوال و پاسخ امنیتی
+    if (!username || !nationalId || !phone || !password || !securityQuestion || !securityAnswer) {
       return NextResponse.json(
-        { success: false, message: "نام کاربری، کد ملی، شماره تماس و رمز عبور الزامی هستند." },
+        { success: false, message: "تمام اطلاعات اجباری شامل سوال و کلمه شخصی را وارد کنید." },
         { status: 400 }
       );
     }
@@ -47,8 +57,18 @@ export async function POST(req: Request) {
     const cleanUsername = username.trim();
     const cleanPhone = phone.trim();
 
+    // پاکسازی کلمه شخصی (حذف اسپیس‌ها و یکسان‌سازی حروف)
+    const cleanSecurityAnswer = securityAnswer.replace(/\s+/g, "").toLowerCase();
+
     if (!isValidNationalId(cleanNationalId)) {
       return NextResponse.json({ success: false, message: "کد ملی وارد شده معتبر نیست." }, { status: 400 });
+    }
+
+    if (cleanSecurityAnswer.length < 2) {
+      return NextResponse.json(
+        { success: false, message: "کلمه شخصی باید حداقل ۲ کاراکتر باشد." },
+        { status: 400 }
+      );
     }
 
     // ۱. بررسی تکراری نبودن کد ملی
@@ -107,8 +127,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۵. هش کردن ایمن رمز عبور
+    // ۵. هش کردن ایمن رمز عبور و کلمه شخصی امنیتی
     const passwordHash = await bcrypt.hash(password, 12);
+    const securityAnswerHash = await bcrypt.hash(cleanSecurityAnswer, 12);
 
     // ۶. ساخت حساب کاربری جدید
     const newStudent = await Student.create({
@@ -118,6 +139,8 @@ export async function POST(req: Request) {
       nationalId: cleanNationalId,
       phone: cleanPhone,
       passwordHash,
+      securityQuestion: securityQuestion.trim(),
+      securityAnswerHash,
       grade: finalGrade,
       isActive: true,
       isVerified: true,

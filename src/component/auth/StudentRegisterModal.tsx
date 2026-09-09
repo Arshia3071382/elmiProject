@@ -1,385 +1,511 @@
+// components/auth/StudentRegisterModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
-import RegisterForm from "./StudentRegisterModal/RegisterForm";
-import RulesModal from "./StudentRegisterModal/RulesModal";
-import { isValidNationalId } from "./StudentRegisterModal/constants";
+import { X, User, CreditCard, Phone, Lock, BookOpen, ShieldCheck, Download, ArrowLeft } from "lucide-react";
+
+// لیست سوالات امنیتی
+export const SECURITY_QUESTIONS = [
+  "کلمه مهم شخصی",
+  "عدد مهم شخصی",
+  "نام اولین کتاب غیردرسی که خواندید؟",
+  "کد پستی یا شماره پلاک اولین خانه‌ای که یادش هستید؟",
+  "نام سریالی که حداقل ۲ بار کامل آن را دیده‌اید؟",
+  "اسم عجیب‌ترین یا غافلگیرکننده‌ترین هدیه‌ای که گرفتید؟",
+];
+
+// تابع اعتبارسنجی کد ملی ایران
+export const isValidNationalId = (id: string): boolean => {
+  if (!/^\d{10}$/.test(id)) return false;
+  const check = parseInt(id[9], 10);
+  const sum = id
+    .split("")
+    .slice(0, 9)
+    .reduce((acc, x, i) => acc + parseInt(x, 10) * (10 - i), 0);
+  const remainder = sum % 11;
+  return (
+    (remainder < 2 && check === remainder) ||
+    (remainder >= 2 && check === 11 - remainder)
+  );
+};
 
 interface StudentRegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToLogin: () => void;
+  onSuccess?: () => void;
+  onSwitchToLogin?: () => void;
 }
 
 export default function StudentRegisterModal({
   isOpen,
   onClose,
+  onSuccess,
   onSwitchToLogin,
 }: StudentRegisterModalProps) {
   const router = useRouter();
 
-  // Form state
-  const [username, setUsername] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [nationalId, setNationalId] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [acceptRules, setAcceptRules] = useState(false);
-
-  // UI state
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | "security-card">(1);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Errors state
-  const [errors, setErrors] = useState({
-    username: "",
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     nationalId: "",
     phone: "",
     password: "",
     confirmPassword: "",
-    rules: "",
+    securityQuestion: SECURITY_QUESTIONS[0],
+    securityAnswer: "",
+    acceptRules: false,
   });
 
-  // Reset form
-  const handleResetAndClose = () => {
-    if (status === "loading") return;
-    setUsername("");
-    setFirstName("");
-    setLastName("");
-    setNationalId("");
-    setPhone("");
-    setPassword("");
-    setConfirmPassword("");
-    setAcceptRules(false);
-    setErrors({
-      username: "",
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword] = useState(false);
+  const [showConfirmPassword] = useState(false);
+
+  const updateField = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleNextStep = () => {
+    if (step === 1) {
+      if (!formData.firstName.trim() || !formData.lastName.trim()) {
+        setErrors({
+          firstName: !formData.firstName.trim() ? "نام الزامی است." : "",
+          lastName: !formData.lastName.trim() ? "نام خانوادگی الزامی است." : "",
+        });
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      const cleanedId = formData.nationalId.replace(/\D/g, "");
+      const cleanedPhone = formData.phone.replace(/\D/g, "");
+
+      if (!cleanedId || !cleanedPhone || !isValidNationalId(cleanedId) || !/^09[0-9]{9}$/.test(cleanedPhone)) {
+        setErrors({
+          nationalId: !cleanedId ? "کد ملی الزامی است." : !isValidNationalId(cleanedId) ? "کد ملی نامعتبر است." : "",
+          phone: !cleanedPhone ? "شماره همراه الزامی است." : !/^09[0-9]{9}$/.test(cleanedPhone) ? "شماره همراه نامعتبر است." : "",
+        });
+        return;
+      }
+      setStep(3);
+    } else if (step === 3) {
+      if (
+        formData.password.length < 6 ||
+        formData.password !== formData.confirmPassword
+      ) {
+        setErrors({
+          password: formData.password.length < 6 ? "رمز عبور باید حداقل ۶ کاراکتر باشد." : "",
+          confirmPassword: formData.password !== formData.confirmPassword ? "تکرار رمز عبور مطابقت ندارد." : "",
+        });
+        return;
+      }
+      setStep(4);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (step === 2) setStep(1);
+    else if (step === 3) setStep(2);
+    else if (step === 4) setStep(3);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.securityAnswer.trim()) {
+      setErrors((prev) => ({ ...prev, securityAnswer: "ورود پاسخ امنیتی الزامی است." }));
+      return;
+    }
+    if (!formData.acceptRules) {
+      setErrors((prev) => ({ ...prev, rules: "پذیرش قوانین الزامی است." }));
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMessage("");
+
+      const res = await fetch("/api/auth/student/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: `user_${formData.nationalId}`,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          nationalId: formData.nationalId,
+          phone: formData.phone,
+          password: formData.password,
+          securityQuestion: formData.securityQuestion,
+          securityAnswer: formData.securityAnswer,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "خطا در ثبت‌نام دانش‌آموز");
+      }
+
+      setStep("security-card");
+    } catch (err: any) {
+      setErrorMessage(err.message || "ارتباط با سرور برقرار نشد.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveImage = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 380;
+    const ctx = canvas.getContext("2d");
+
+    if (ctx) {
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#059669";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+      ctx.fillStyle = "#10b981";
+      ctx.font = "bold 20px sans-serif";
+      ctx.direction = "rtl";
+      ctx.textAlign = "right";
+      ctx.fillText("کارت امنیتی حساب کاربری - علمی منتظران", 560, 55);
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "16px sans-serif";
+      ctx.fillText(`نام و نام خانوادگی: ${formData.firstName} ${formData.lastName}`, 560, 125);
+      ctx.fillText(`کد ملی (نام کاربری): ${formData.nationalId}`, 560, 175);
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillText(`سوال امنیتی: ${formData.securityQuestion}`, 560, 235);
+
+      ctx.fillStyle = "#f43f5e";
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillText(`پاسخ امنیتی (کلمه شخصی): ${formData.securityAnswer}`, 560, 285);
+
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `security-card-${formData.nationalId}.png`;
+      link.click();
+    }
+  };
+
+  const handleFinish = () => {
+    onSuccess?.();
+    onClose();
+    setStep(1);
+    setFormData({
       firstName: "",
       lastName: "",
       nationalId: "",
       phone: "",
       password: "",
       confirmPassword: "",
-      rules: "",
+      securityQuestion: SECURITY_QUESTIONS[0],
+      securityAnswer: "",
+      acceptRules: false,
     });
-    setStatus("idle");
-    setErrorMessage("");
-    onClose();
+    router.push("/student/dashboard");
+    router.refresh();
   };
 
-  // Keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        if (isRulesModalOpen) setIsRulesModalOpen(false);
-        else handleResetAndClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, status, isRulesModalOpen]);
+  if (!isOpen) return null;
 
-  // Validation handlers
-  const handleUsernameChange = (val: string) => {
-    const cleaned = val.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    setUsername(cleaned);
-    if (!cleaned) {
-      setErrors((prev) => ({ ...prev, username: "نام کاربری الزامی است." }));
-    } else if (cleaned.length < 3 || cleaned.length > 15) {
-      setErrors((prev) => ({ ...prev, username: "باید بین ۳ تا ۱۵ کاراکتر باشد." }));
-    } else {
-      setErrors((prev) => ({ ...prev, username: "" }));
-    }
-  };
-
-  const handleFirstNameChange = (val: string) => {
-    setFirstName(val);
-    if (!val.trim()) {
-      setErrors((prev) => ({ ...prev, firstName: "نام الزامی است." }));
-    } else if (!/^[\u0600-\u06FF\s]{2,30}$/.test(val.trim())) {
-      setErrors((prev) => ({ ...prev, firstName: "فقط حروف فارسی مجاز است." }));
-    } else {
-      setErrors((prev) => ({ ...prev, firstName: "" }));
-    }
-  };
-
-  const handleLastNameChange = (val: string) => {
-    setLastName(val);
-    if (!val.trim()) {
-      setErrors((prev) => ({ ...prev, lastName: "نام خانوادگی الزامی است." }));
-    } else if (!/^[\u0600-\u06FF\s]{2,30}$/.test(val.trim())) {
-      setErrors((prev) => ({ ...prev, lastName: "فقط حروف فارسی مجاز است." }));
-    } else {
-      setErrors((prev) => ({ ...prev, lastName: "" }));
-    }
-  };
-
-  const handleNationalIdChange = (val: string) => {
-    const cleaned = val.replace(/\D/g, "");
-    setNationalId(cleaned);
-    if (!cleaned) {
-      setErrors((prev) => ({ ...prev, nationalId: "کد ملی الزامی است." }));
-    } else if (cleaned.length < 10) {
-      setErrors((prev) => ({ ...prev, nationalId: "کد ملی باید ۱۰ رقم باشد." }));
-    } else if (!isValidNationalId(cleaned)) {
-      setErrors((prev) => ({ ...prev, nationalId: "کد ملی وارد شده نامعتبر است." }));
-    } else {
-      setErrors((prev) => ({ ...prev, nationalId: "" }));
-    }
-  };
-
-  const handlePhoneChange = (val: string) => {
-    const cleaned = val.replace(/\D/g, "");
-    setPhone(cleaned);
-    const phoneRegex = /^09[0-9]{9}$/;
-    if (!cleaned) {
-      setErrors((prev) => ({ ...prev, phone: "شماره تماس الزامی است." }));
-    } else if (!phoneRegex.test(cleaned)) {
-      setErrors((prev) => ({ ...prev, phone: "باید با 09 شروع شده و ۱۱ رقم باشد." }));
-    } else {
-      setErrors((prev) => ({ ...prev, phone: "" }));
-    }
-  };
-
-  const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setErrors((prev) => ({ ...prev, password: "رمز عبور الزامی است." }));
-    } else if (val.length < 6 || val.length > 8) {
-      setErrors((prev) => ({ ...prev, password: "رمز عبور باید بین ۶ تا ۸ کاراکتر باشد." }));
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(val)) {
-      setErrors((prev) => ({ ...prev, password: "باید شامل حروف بزرگ، کوچک و عدد باشد." }));
-    } else {
-      setErrors((prev) => ({ ...prev, password: "" }));
-    }
-
-    if (confirmPassword && val !== confirmPassword) {
-      setErrors((prev) => ({ ...prev, confirmPassword: "تکرار رمز عبور مطابقت ندارد." }));
-    } else {
-      setErrors((prev) => ({ ...prev, confirmPassword: "" }));
-    }
-  };
-
-  const handleConfirmPasswordChange = (val: string) => {
-    setConfirmPassword(val);
-    if (val !== password) {
-      setErrors((prev) => ({ ...prev, confirmPassword: "تکرار رمز عبور مطابقت ندارد." }));
-    } else {
-      setErrors((prev) => ({ ...prev, confirmPassword: "" }));
-    }
-  };
-
-  const handleAcceptRulesChange = (checked: boolean) => {
-    setAcceptRules(checked);
-    if (checked) setErrors((prev) => ({ ...prev, rules: "" }));
-  };
-
-  // Validate all fields
-  const validateAll = () => {
-    const newErrors = {
-      username: !username ? "نام کاربری الزامی است." : username.length < 3 ? "باید حداقل ۳ کاراکتر باشد." : "",
-      firstName: !firstName.trim() ? "نام الزامی است." : "",
-      lastName: !lastName.trim() ? "نام خانوادگی الزامی است." : "",
-      nationalId: !nationalId ? "کد ملی الزامی است." : !isValidNationalId(nationalId) ? "کد ملی نامعتبر است." : "",
-      phone: !phone ? "شماره تماس الزامی است." : !/^09[0-9]{9}$/.test(phone) ? "شماره تماس نامعتبر است." : "",
-      password: !password ? "رمز عبور الزامی است." : password.length < 6 ? "رمز عبور کوتاه است." : "",
-      confirmPassword: password !== confirmPassword ? "تکرار رمز عبور مطابقت ندارد." : "",
-      rules: !acceptRules ? "پذیرش قوانین الزامی است." : "",
-    };
-    setErrors(newErrors);
-    return Object.values(newErrors).every((err) => err === "");
-  };
-
-  // Submit handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateAll() || status === "loading") return;
-
-    setStatus("loading");
-    setErrorMessage("");
-
-    try {
-      const res = await fetch("/api/auth/student/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, firstName, lastName, nationalId, phone, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.status === 409) {
-        setStatus("error");
-        if (data.field === "username") {
-          setErrors((prev) => ({ ...prev, username: data.message }));
-        } else if (data.field === "nationalId") {
-          setErrors((prev) => ({ ...prev, nationalId: data.message }));
-        } else if (data.field === "phone") {
-          setErrors((prev) => ({ ...prev, phone: data.message }));
-        }
-        setErrorMessage(data.message || "اطلاعات وارد شده تکراری است.");
-        return;
-      }
-
-      if (res.ok && data.success) {
-        setStatus("success");
-        if (nationalId) localStorage.setItem("studentNationalId", nationalId);
-        if (phone) localStorage.setItem("studentPhone", phone);
-
-        setTimeout(() => {
-          onClose();
-          router.push(data.redirectTo || "/student/dashboard");
-          router.refresh();
-        }, 1200);
-      } else {
-        setStatus("error");
-        setErrorMessage(data.message || "خطایی در ثبت‌نام رخ داد.");
-      }
-    } catch (err) {
-      setStatus("error");
-      setErrorMessage("ارتباط با سرور برقرار نشد.");
-    }
-  };
+  const stepNumber = typeof step === "number" ? step : 4;
+  const progressPercentage = (stepNumber / 4) * 100;
 
   return (
-    <>
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" dir="rtl">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleResetAndClose}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-            />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" dir="rtl">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+      />
 
-            {/* Modal Box with inner wrapper to keep scrollbar inside borders */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 25 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 25 }}
-              transition={{ type: "spring", duration: 0.5, bounce: 0.1 }}
-              className="relative w-full max-w-[540px] max-h-[90vh] overflow-y-auto overflow-x-hidden 
-                bg-gradient-to-b from-white via-white to-slate-50/90 
-                border border-white/80 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 
-                p-2 sm:p-3 z-10
-                [&::-webkit-scrollbar]:w-2
-                [&::-webkit-scrollbar-track]:bg-transparent
-                [&::-webkit-scrollbar-thumb]:bg-slate-300
-                [&::-webkit-scrollbar-thumb]:rounded-full
-                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400
-                scrollbar-thin
-                scrollbar-thumb-slate-300
-                hover:scrollbar-thumb-slate-400"
-            >
-              {/* Inner wrapper providing correct padding so scrollbar stays inside */}
-              <div className="p-5 sm:p-7 relative">
-                {/* Close button */}
-                <button
-                  type="button"
-                  onClick={handleResetAndClose}
-                  disabled={status === "loading"}
-                  className="absolute left-4 top-4 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2.5 rounded-full transition-all duration-200 shadow-sm cursor-pointer z-20"
-                  aria-label="بستن"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 25 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 25 }}
+        className="relative w-full max-w-[540px] max-h-[90vh] overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-8 z-10"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
-                {/* Header with gradient text */}
-                <div className="mb-7 text-right">
-                  <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_auto] animate-[textGradient_4s_ease_infinite] font-[iranBold]">
-                    ثبت‌نام دانش‌آموز
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-500 mt-2 font-[iranSans-r]">
-                    لطفاً اطلاعات خود را با دقت وارد کنید تا حساب کاربری شما فعال شود.
-                  </p>
-                </div>
-
-                {/* Form */}
-                <RegisterForm
-                  username={username}
-                  firstName={firstName}
-                  lastName={lastName}
-                  nationalId={nationalId}
-                  phone={phone}
-                  password={password}
-                  confirmPassword={confirmPassword}
-                  acceptRules={acceptRules}
-                  showPassword={showPassword}
-                  showConfirmPassword={showConfirmPassword}
-                  status={status}
-                  errors={errors}
-                  onUsernameChange={handleUsernameChange}
-                  onFirstNameChange={handleFirstNameChange}
-                  onLastNameChange={handleLastNameChange}
-                  onNationalIdChange={handleNationalIdChange}
-                  onPhoneChange={handlePhoneChange}
-                  onPasswordChange={handlePasswordChange}
-                  onConfirmPasswordChange={handleConfirmPasswordChange}
-                  onAcceptRulesChange={handleAcceptRulesChange}
-                  onTogglePassword={() => setShowPassword(!showPassword)}
-                  onToggleConfirmPassword={() => setShowConfirmPassword(!showConfirmPassword)}
-                  onOpenRules={() => setIsRulesModalOpen(true)}
-                  onSubmit={handleSubmit}
-                  onClose={handleResetAndClose}
+        {step !== "security-card" ? (
+          <div>
+            <div className="mb-6 pt-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
+                <span>مرحله {step} از 4</span>
+                <span>
+                  {step === 1 && "اطلاعات فردی"}
+                  {step === 2 && "کد ملی و تماس"}
+                  {step === 3 && "رمز عبور"}
+                  {step === 4 && "امنیت و قوانین"}
+                </span>
+              </div>
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <motion.div
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full"
+                  animate={{ width: `${progressPercentage}%` }}
+                  transition={{ duration: 0.3 }}
                 />
+              </div>
+            </div>
 
-                {/* Status messages */}
-                {status === "success" && (
-                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 shadow-sm animate-fadeIn mt-4">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold font-[iranSans-r]">
-                      ثبت‌نام با موفقیت انجام شد. در حال انتقال...
-                    </span>
+            <div className="mb-6 text-right">
+              <h2 className="text-2xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                ثبت‌نام دانش‌آموز
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">لطفاً اطلاعات خود را دقیق وارد کنید</p>
+            </div>
+
+            {errorMessage && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs">
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); handleNextStep(); }}>
+              {step === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">نام</label>
+                    <div className="relative">
+                      <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => updateField("firstName", e.target.value)}
+                        placeholder="مثال: علی"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.firstName && <p className="text-rose-500 text-[11px] mt-1">{errors.firstName}</p>}
                   </div>
-                )}
-
-                {status === "error" && (
-                  <div className="p-4 rounded-2xl bg-red-50 border border-red-200 flex items-center gap-3 text-red-800 shadow-sm animate-fadeIn mt-4">
-                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold font-[iranSans-r]">
-                      {errorMessage}
-                    </span>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">نام خانوادگی</label>
+                    <div className="relative">
+                      <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => updateField("lastName", e.target.value)}
+                        placeholder="مثال: محمدی"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.lastName && <p className="text-rose-500 text-[11px] mt-1">{errors.lastName}</p>}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Switch to login */}
-                <div className="mt-7 pt-4 border-t border-slate-100 text-center text-sm sm:text-base text-slate-500 font-[iranSans-r]">
-                  قبلاً ثبت‌نام کرده‌اید؟{" "}
+              {step === 2 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">کد ملی (۱۰ رقم)</label>
+                    <div className="relative">
+                      <CreditCard className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={10}
+                        value={formData.nationalId}
+                        onChange={(e) => updateField("nationalId", e.target.value.replace(/\D/g, ""))}
+                        placeholder="0012345678"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.nationalId && <p className="text-rose-500 text-[11px] mt-1">{errors.nationalId}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">شماره همراه</label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={11}
+                        value={formData.phone}
+                        onChange={(e) => updateField("phone", e.target.value.replace(/\D/g, ""))}
+                        placeholder="09123456789"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.phone && <p className="text-rose-500 text-[11px] mt-1">{errors.phone}</p>}
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">رمز عبور (حداقل ۶ کاراکتر)</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => updateField("password", e.target.value)}
+                        placeholder="******"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.password && <p className="text-rose-500 text-[11px] mt-1">{errors.password}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">تکرار رمز عبور</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={(e) => updateField("confirmPassword", e.target.value)}
+                        placeholder="******"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.confirmPassword && <p className="text-rose-500 text-[11px] mt-1">{errors.confirmPassword}</p>}
+                  </div>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">سوال امنیتی</label>
+                    <select
+                      value={formData.securityQuestion}
+                      onChange={(e) => updateField("securityQuestion", e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                    >
+                      {SECURITY_QUESTIONS.map((q, idx) => (
+                        <option key={idx} value={q}>{q}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">پاسخ امنیتی (کلمه شخصی)</label>
+                    <div className="relative">
+                      <BookOpen className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={formData.securityAnswer}
+                        onChange={(e) => updateField("securityAnswer", e.target.value)}
+                        placeholder="پاسخ بدون فاصله"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.securityAnswer && <p className="text-rose-500 text-[11px] mt-1">{errors.securityAnswer}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="rules"
+                      checked={formData.acceptRules}
+                      onChange={(e) => updateField("acceptRules", e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                    />
+                    <label htmlFor="rules" className="text-xs text-slate-600 cursor-pointer">
+                      قوانین و مقررات سامانه را می‌پذیرم.
+                    </label>
+                  </div>
+                  {errors.rules && <p className="text-rose-500 text-[11px]">{errors.rules}</p>}
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                {step > 1 && (
                   <button
                     type="button"
-                    onClick={onSwitchToLogin}
-                    className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer font-[iranBold]"
+                    onClick={handlePrevStep}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm"
                   >
-                    وارد شوید
+                    مرحله قبل
                   </button>
-                </div>
+                )}
+                <button
+                  type={step === 4 ? "submit" : "button"}
+                  onClick={step === 4 ? undefined : handleNextStep}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2"
+                >
+                  {loading ? "در حال ثبت‌نام..." : step === 4 ? "تکمیل ثبت‌نام" : "مرحله بعد"}
+                </button>
               </div>
-            </motion.div>
+            </form>
+          </div>
+        ) : (
+          <div className="space-y-6 text-center">
+            <div className="flex items-center justify-center text-emerald-600 mb-2">
+              <ShieldCheck className="w-12 h-12" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800">ثبت‌نام با موفقیت انجام شد</h3>
+            <p className="text-xs text-slate-500">کارت امنیتی شما آماده است. آن را دانلود کنید یا نگه دارید.</p>
+
+            <div className="bg-slate-50 border border-emerald-200 rounded-2xl p-4 text-right space-y-3">
+              <div className="flex justify-between text-xs border-b border-slate-200 pb-2">
+                <span className="text-slate-500">نام و نام خانوادگی:</span>
+                <span className="font-bold text-slate-800">{formData.firstName} {formData.lastName}</span>
+              </div>
+              <div className="flex justify-between text-xs border-b border-slate-200 pb-2">
+                <span className="text-slate-500">کد ملی:</span>
+                <span className="font-bold text-slate-800 dir-ltr">{formData.nationalId}</span>
+              </div>
+              <div className="text-xs space-y-1">
+                <span className="text-sky-600 block">سوال امنیتی:</span>
+                <p className="font-semibold text-slate-700">{formData.securityQuestion}</p>
+              </div>
+              <div className="text-xs space-y-1 pt-1">
+                <span className="text-rose-600 block">پاسخ امنیتی:</span>
+                <p className="font-bold text-rose-600">{formData.securityAnswer}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleSaveImage}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 text-sm"
+              >
+                <Download className="w-4 h-4" /> ذخیره کارت
+              </button>
+              <button
+                type="button"
+                onClick={handleFinish}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-emerald-600/30"
+              >
+                ورود به داشبورد <ArrowLeft className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
-      </AnimatePresence>
 
-      {/* Rules modal */}
-      <RulesModal
-        isOpen={isRulesModalOpen}
-        onClose={() => setIsRulesModalOpen(false)}
-        onAccept={() => {
-          setAcceptRules(true);
-          setErrors((prev) => ({ ...prev, rules: "" }));
-          setIsRulesModalOpen(false);
-        }}
-      />
-    </>
+        {onSwitchToLogin && step !== "security-card" && (
+          <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+            قبلاً ثبت‌نام کرده‌اید؟{" "}
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-emerald-600 font-extrabold hover:underline mr-1"
+            >
+              وارد شوید
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
   );
 }

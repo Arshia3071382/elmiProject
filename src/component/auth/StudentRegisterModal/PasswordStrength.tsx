@@ -1,7 +1,7 @@
 // Password strength indicator
 "use client";
 
-import { getPasswordStrength } from "./constants";
+import { getPasswordStrength } from "./constants"; // مطمئن شوید مسیر فایل constants درست باشد
 
 interface PasswordStrengthProps {
   password: string;
@@ -15,7 +15,7 @@ export default function PasswordStrength({ password, error }: PasswordStrengthPr
 
   return (
     <div className="flex items-center gap-2 mt-1.5 px-1">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
           className={`h-full transition-all duration-300 ${
             strength.label.includes("کوتاه")
@@ -26,7 +26,7 @@ export default function PasswordStrength({ password, error }: PasswordStrengthPr
           }`}
         />
       </div>
-      <span className={`text-[11px] font-bold ${strength.color}`}>
+      <span className={`text-[11px] font-bold font-[iranSans-r] ${strength.color}`}>
         {strength.label}
       </span>
     </div>
