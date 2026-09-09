@@ -45,7 +45,6 @@ function Questions() {
 
         {/* هدر بخش */}
         <div className="w-full max-w-3xl mx-auto mb-16 text-center relative z-10">
-          {/* خط‌چین بالا (شروع از سمت راست) */}
           <div className="flex justify-start gap-1 mb-6 pr-0">
             {[...Array(5)].map((_, i) => (
               <div
@@ -64,7 +63,6 @@ function Questions() {
              گره‌های ذهنی شما
           </h2>
           
-          {/* خط‌چین پایین (شروع از سمت چپ) */}
           <div className="flex justify-end gap-1 mt-6 pl-0">
             {[...Array(5)].map((_, i) => (
               <div
@@ -90,8 +88,9 @@ function Questions() {
                 key={item.id}
                 className="bg-white border-2 border-slate-100 rounded-3xl shadow-lg overflow-hidden transition-all duration-300"
               >
+                {/* تغییر flex-row-reverse به flex-row برای قرارگیری آیکون در سمت چپ در حالت RTL */}
                 <div 
-                  className="flex flex-row-reverse justify-between items-center p-5 sm:p-6 cursor-pointer select-none gap-4 text-right"
+                  className="flex flex-row justify-between items-center p-5 sm:p-6 cursor-pointer select-none gap-4 text-right"
                   onClick={() => handleQuestionClick(item.id)}
                 >
                   <h3 className="font-[iranBold] text-primary text-base sm:text-lg flex-1 leading-relaxed text-right">
