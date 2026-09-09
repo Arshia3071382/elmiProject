@@ -1,24 +1,28 @@
 @import "tailwindcss";
 
-/* ۱. اجبار سیستم به راست‌به‌چپ (RTL) در کل برنامه */
+/* ۱. اجبار سیستم به راست‌به‌چپ (RTL) و روان‌سازی اسکرول */
 :root, html, body {
   direction: rtl !important;
   text-align: right !important;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* ۲. بهینه‌سازی performance انیمیشن‌های متناوب */
 @keyframes textGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* کلاس اختصاصی برای افکت متحرک شفق قطبی روی متن */
 .aurora-text {
   background: linear-gradient(270deg, #38BDF8, #818CF8, #C084FC, #34D399, #38BDF8);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: textGradient 6s ease infinite;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 /* انیمیشن چرخش مداری کهکشان و فیزیک */
@@ -42,22 +46,27 @@
 
 .animate-orbit {
   animation: orbitSpin 30s linear infinite;
+  will-change: transform;
 }
 
 .animate-float-glow {
   animation: floatGlow 8s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 .meteor-1 {
   animation: meteor 5s linear infinite;
+  will-change: transform, opacity;
 }
 
 .meteor-2 {
   animation: meteor 7s linear infinite 2s;
+  will-change: transform, opacity;
 }
 
 .meteor-3 {
   animation: meteor 6s linear infinite 4s;
+  will-change: transform, opacity;
 }
 
 @theme {
@@ -80,11 +89,13 @@
     font-family: iranBold;
     src: url('./../../public/font/IRANSansXFaNum-Bold.ttf');
     font-weight: 900;
+    font-display: swap;
   }
   
   @font-face {
     font-family: iranSans-r; 
     src: url("./../../public/font/IRANSansXFaNum-Regular.ttf"); 
+    font-display: swap;
   }
 
   body {
@@ -93,6 +104,7 @@
     color: var(--color-text-primary);
     direction: rtl;
     text-align: right;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6, .font-bold, .font-black {

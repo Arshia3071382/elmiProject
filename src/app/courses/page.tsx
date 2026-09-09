@@ -67,7 +67,7 @@ export default function CoursesPage() {
       : courses;
 
   return (
-    <div className="min-h-screen mt-10" style={{ backgroundColor: "var(--color-bg)" }}>
+    <div className="min-h-screen mt-10 sm:mt-30" style={{ backgroundColor: "var(--color-bg)" }}>
       <Container>
         <main dir="rtl" className="py-8">
           {/* Header Section */}

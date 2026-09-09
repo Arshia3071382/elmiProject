@@ -1,27 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
-// کامپوننت‌های شاسی اصلی وب‌سایت
-import Navbar from "@/component/Navbar";
-import Footer from "@/component/Footer";
-
-// ۱. کامپوننت‌های اصلی وب‌سایت
+// کامپوننت‌های ضروری بالای صفحه (بدون Navbar و Footer)
 import Preloader from "@/component/Preloader";
-import PopularClasses from "@/component/classBox/PopularClasses";
 import HeroSec from "@/component/HeroSec";
-import Questions from "@/component/Questions";
-import ScrollAnimation from "@/component/ScrollAnimation";
-import CounterStats from "@/component/CounterStats";
-import ScienceHub from "@/component/ScienceHub";
-import PuzzleActionSection from "@/component/PuzzleButton";
-import StudentComments from "@/component/StudentComments";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
+import ScrollAnimation from "@/component/ScrollAnimation";
 
-// ۲. کامپوننت‌های اختصاصی PWA
+// کامپوننت‌های اختصاصی PWA
 import AppHome from "@/component/app/AppHome";
 import AppHeader from "@/component/app/AppHeader";
 import AppHero from "@/component/app/AppHero";
@@ -30,63 +20,79 @@ import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
 
-// --- UI اصلی سایت (همراه با Navbar و Footer) ---
+// ۱. Dynamic Import برای بخش‌های سنگین پایین صفحه
+const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: true });
+const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: true });
+const PuzzleActionSection = dynamic(() => import("@/component/PuzzleButton"), { ssr: true });
+const PopularClasses = dynamic(() => import("@/component/classBox/PopularClasses"), { ssr: true });
+const StudentComments = dynamic(() => import("@/component/StudentComments"), { ssr: true });
+const Questions = dynamic(() => import("@/component/Questions"), { ssr: true });
+
+// --- UI اصلی سایت ---
 function ExistingWebsiteHome() {
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // بررسی اولیه وضعیت پریلودر برای اسکرول مرورگر
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("hasSeenPreloader")) {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  // مدیریت دقیق Scrollbar
+  useEffect(() => {
+    if (!isLoaded) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isLoaded]);
+
   return (
     <>
-      {/* پریلودر موشکی با اتمام دقیق ۳ ثانیه‌ای */}
+      {/* پریلودر موشکی */}
       <Preloader onComplete={() => setIsLoaded(true)} />
 
-      {/* نوبار اختصاصی وب‌سایت */}
-      <Navbar />
-
+      {/* Navbar و Footer حذف شدند تا توسط LayoutShell کنترل شوند */}
       <div
         dir="rtl"
         className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white"
       >
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isLoaded ? 1 : 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          <div className="space-y-3 sm:space-y-6 pt-4 sm:pt-6 Container">
-            <HeroSec isLoaded={isLoaded} />
-            <div className="mt-10 sm:mt-20">
-              <StudentAuthButtons />
-            </div>
-            <EliteLeagueBanner />
+        <div className="space-y-3 sm:space-y-6 pt-4 sm:pt-6 Container">
+          <HeroSec isLoaded={true} />
+          <div className="mt-10 sm:mt-20">
+            <StudentAuthButtons />
           </div>
+          <EliteLeagueBanner />
+        </div>
 
-          <ScrollAnimation direction="up" delay={0.1}>
-            <CounterStats />
-          </ScrollAnimation>
+        <ScrollAnimation direction="up" delay={0.05}>
+          <CounterStats />
+        </ScrollAnimation>
 
-          <ScrollAnimation direction="up" delay={0.2}>
-            <ScienceHub />
-          </ScrollAnimation>
+        <ScrollAnimation direction="up" delay={0.1}>
+          <ScienceHub />
+        </ScrollAnimation>
 
-          <ScrollAnimation direction="up" delay={0.2}>
-            <PuzzleActionSection />
-          </ScrollAnimation>
+        <ScrollAnimation direction="up" delay={0.15}>
+          <PuzzleActionSection />
+        </ScrollAnimation>
 
-          <ScrollAnimation direction="up" delay={0.3}>
-            <PopularClasses />
-          </ScrollAnimation>
+        <ScrollAnimation direction="up" delay={0.2}>
+          <PopularClasses />
+        </ScrollAnimation>
 
-          <ScrollAnimation direction="up" delay={0.35}>
-            <StudentComments />
-          </ScrollAnimation>
+        <ScrollAnimation direction="up" delay={0.25}>
+          <StudentComments />
+        </ScrollAnimation>
 
-          <ScrollAnimation direction="up" delay={0.4}>
-            <Questions />
-          </ScrollAnimation>
-        </motion.div>
+        <ScrollAnimation direction="up" delay={0.3}>
+          <Questions />
+        </ScrollAnimation>
       </div>
-
-      {/* فوتر اختصاصی وب‌سایت */}
-      <Footer />
     </>
   );
 }
