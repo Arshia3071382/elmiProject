@@ -30,7 +30,12 @@ export default function AppHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-2.5 flex items-center justify-between shadow-sm">
+      {/* 
+        تغییرات:
+        - حذف backdrop-blur-md برای جلوگیری از باگ GPU Rendering در Safari iOS
+        - استفاده از z-30 و bg-white
+      */}
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-2.5 flex items-center justify-between shadow-sm">
         {/* دکمه پروفایل / ورود */}
         <button
           onClick={handleProfileClick}

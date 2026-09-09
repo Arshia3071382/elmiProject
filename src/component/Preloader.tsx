@@ -9,7 +9,6 @@ interface PreloaderRocketProps {
 }
 
 export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
-  // بررسی مستقیم sessionStorage در زمان initialization برای جلوگیری از ری‌رندر اضافه
   const [loading, setLoading] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return !sessionStorage.getItem("hasSeenPreloader");
@@ -21,7 +20,6 @@ export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
   const [isLaunching, setIsLaunching] = useState(false);
 
   useEffect(() => {
-    // اگر قبلاً دیده شده، همان لحظه onComplete اجرا شود
     if (!loading) {
       if (onComplete) onComplete();
       return;
@@ -57,7 +55,16 @@ export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, y: "-100%" }}
           transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white text-slate-800 overflow-hidden transform-gpu will-change-transform"
+          /* 
+            اصلاحات مخصوص iOS:
+            ۱. z-[9999999] جهت اطمینان از بالاترین لایه
+            ۲. style transform translateZ جهت فعال‌سازی لایه GPU مستقل در Safari/Chrome iOS
+          */
+          className="fixed inset-0 z-[9999999] flex flex-col items-center justify-center bg-white text-slate-800 overflow-hidden transform-gpu will-change-transform isolate"
+          style={{
+            transform: "translate3d(0, 0, 9999px)",
+            WebkitTransform: "translate3d(0, 0, 9999px)",
+          }}
         >
           <div className="absolute inset-0 opacity-30 bg-[radial-gradient(#38BDF8_1.5px,transparent_1.5px)] [background-size:28px_28px] pointer-events-none" />
 
@@ -107,7 +114,6 @@ export default function PreloaderRocket({ onComplete }: PreloaderRocketProps) {
                 آماده پرتاب
               </span>
 
-              {/* شمارش معکوس و متن حرکت با افکت شفق قطبی */}
               <motion.div
                 key={String(count)}
                 initial={{ scale: 0.4, opacity: 0, y: 10 }}
