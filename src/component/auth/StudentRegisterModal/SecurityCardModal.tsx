@@ -1,163 +1,660 @@
-// components/auth/StudentRegisterModal/SecurityCardModal.tsx
+// components/auth/StudentRegisterModal.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck, Download, Loader2, AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, User, CreditCard, Phone, Lock, Eye, EyeOff, ShieldCheck, Download, ArrowLeft, KeyRound, Trophy, AlertTriangle } from "lucide-react";
+import RulesModal from "./RulesModal";
 
-interface SecurityCardModalProps {
-  data: {
-    fullName: string;
-    question: string;
-    answer: string;
-    nationalId: string;
-  };
-  onConfirm: () => void;
+// تابع کمکی برای تبدیل ارقام فارسی و عربی به انگلیسی و فیلتر کردن غیر اعداد
+const toEnglishDigits = (str: string): string => {
+  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+  let converted = str;
+  for (let i = 0; i < 10; i++) {
+    converted = converted.replace(persianNumbers[i], i.toString()).replace(arabicNumbers[i], i.toString());
+  }
+  return converted.replace(/\D/g, "");
+};
+
+// تابع اعتبارسنجی کد ملی ایران
+export const isValidNationalId = (id: string): boolean => {
+  if (!/^\d{10}$/.test(id)) return false;
+  const check = parseInt(id[9], 10);
+  const sum = id
+    .split("")
+    .slice(0, 9)
+    .reduce((acc, x, i) => acc + parseInt(x, 10) * (10 - i), 0);
+  const remainder = sum % 11;
+  return (
+    (remainder < 2 && check === remainder) ||
+    (remainder >= 2 && check === 11 - remainder)
+  );
+};
+
+interface StudentRegisterModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-export const SecurityCardModal = ({ data, onConfirm }: SecurityCardModalProps) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+export default function StudentRegisterModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  onSwitchToLogin,
+}: StudentRegisterModalProps) {
+  const router = useRouter();
 
-  const handleSaveImage = () => {
-    if (!cardRef.current) return;
-    setIsDownloading(true);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | "security-card">(1);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
 
+  // استیت نگهداری تصویر کارت امنیتی به صورت Data URL
+  const [securityCardImage, setSecurityCardImage] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    nationalId: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    securityPin: "", // کد ۶ رقمی عددی
+    favoritePlayer: "", // ۳ حرف انگلیسی بازیکن
+    acceptRules: false,
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const updateField = (field: string, value: any) => {
+    let processedValue = value;
+
+    if (field === "securityPin") {
+      processedValue = toEnglishDigits(value).slice(0, 6);
+    } else if (field === "favoritePlayer") {
+      processedValue = value.replace(/[^A-Za-z]/g, "").slice(0, 3);
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleNextStep = () => {
+    if (step === 1) {
+      if (!formData.firstName.trim() || !formData.lastName.trim()) {
+        setErrors({
+          firstName: !formData.firstName.trim() ? "نام الزامی است." : "",
+          lastName: !formData.lastName.trim() ? "نام خانوادگی الزامی است." : "",
+        });
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      const cleanedId = formData.nationalId.replace(/\D/g, "");
+      const cleanedPhone = formData.phone.replace(/\D/g, "");
+
+      if (!cleanedId || !cleanedPhone || !isValidNationalId(cleanedId) || !/^09[0-9]{9}$/.test(cleanedPhone)) {
+        setErrors({
+          nationalId: !cleanedId ? "کد ملی الزامی است." : !isValidNationalId(cleanedId) ? "کد ملی نامعتبر است." : "",
+          phone: !cleanedPhone ? "شماره همراه الزامی است." : !/^09[0-9]{9}$/.test(cleanedPhone) ? "شماره همراه نامعتبر است." : "",
+        });
+        return;
+      }
+      setStep(3);
+    } else if (step === 3) {
+      if (
+        formData.password.length < 6 ||
+        formData.password !== formData.confirmPassword
+      ) {
+        setErrors({
+          password: formData.password.length < 6 ? "رمز عبور باید حداقل ۶ کاراکتر باشد." : "",
+          confirmPassword: formData.password !== formData.confirmPassword ? "تکرار رمز عبور مطابقت ندارد." : "",
+        });
+        return;
+      }
+      setStep(4);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (step === 2) setStep(1);
+    else if (step === 3) setStep(2);
+    else if (step === 4) setStep(3);
+  };
+
+  // تابع تولید تصویر کارت امنیتی دقیقاً مطابق با طراحی نمونه ارسالی (بدون کد ملی)
+  const generateSecurityCardDataUrl = (fullName: string, pin: string, player: string): string => {
     const canvas = document.createElement("canvas");
     canvas.width = 600;
     canvas.height = 420;
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
-      const gradient = ctx.createLinearGradient(0, 0, 600, 420);
-      gradient.addColorStop(0, "#0f172a");
-      gradient.addColorStop(0.5, "#1e293b");
-      gradient.addColorStop(1, "#0f172a");
-      ctx.fillStyle = gradient;
+      // پس‌زمینه کارت (سفید / شیری مشابه عکس)
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const borderPadding = 20;
-      ctx.strokeStyle = "#10b981";
-      ctx.lineWidth = 4;
-      ctx.strokeRect(borderPadding, borderPadding, canvas.width - borderPadding * 2, canvas.height - borderPadding * 2);
+      // کادر دور کارت با گوشه‌های گرد
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
 
-      ctx.strokeStyle = "rgba(16, 185, 129, 0.3)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(borderPadding + 8, borderPadding + 8, canvas.width - borderPadding * 2 - 16, canvas.height - borderPadding * 2 - 16);
+      // هدر صورتی ملایم بالای کارت
+      ctx.fillStyle = "#fff1f2";
+      ctx.fillRect(15, 15, canvas.width - 30, 110);
 
-      ctx.fillStyle = "#10b981";
-      ctx.font = "bold 24px Tahoma, sans-serif";
+      // عنوان اصلی کارت
+      ctx.fillStyle = "#be123c";
+      ctx.font = "bold 22px iranBold, sans-serif";
       ctx.direction = "rtl";
-      ctx.textAlign = "right";
-      ctx.fillText("🛡️ کارت اطلاعات امنیتی", 560, 55);
+      ctx.textAlign = "center";
+      ctx.fillText("کارت امنیتی مهم", canvas.width / 2, 65);
 
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "13px Tahoma, sans-serif";
-      ctx.fillText("این اطلاعات برای بازیابی حساب کاربری شما ضروری است", 560, 80);
+      // متن هشدار زیر عنوان
+      ctx.fillStyle = "#e11d48";
+      ctx.font = "14px iranSans-r, sans-serif";
+      ctx.fillText("حتماً از این کارت اسکرین‌شات بگیرید یا آن را ذخیره کنید!", canvas.width / 2, 98);
 
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
+      // خط جداکننده هدر
+      ctx.strokeStyle = "#fecdd3";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(40, 95);
-      ctx.lineTo(560, 95);
+      ctx.moveTo(40, 125);
+      ctx.lineTo(canvas.width - 40, 125);
       ctx.stroke();
 
-      ctx.fillStyle = "#e2e8f0";
-      ctx.font = "16px Tahoma, sans-serif";
-      ctx.fillText(`نام و نام خانوادگی: ${data.fullName}`, 560, 135);
-      ctx.fillText(`کد ملی: ${data.nationalId}`, 560, 175);
+      // بخش فیلدها
+      ctx.textAlign = "right";
 
-      ctx.fillStyle = "#10b981";
-      ctx.font = "bold 16px Tahoma, sans-serif";
-      ctx.fillText(`سوال امنیتی: ${data.question}`, 560, 235);
+      // ۱. نام کودک / کاربر
+      ctx.fillStyle = "#64748b";
+      ctx.font = "13px iranSans-r, sans-serif";
+      ctx.fillText("نام کودک:", 530, 165);
 
-      ctx.fillStyle = "#f59e0b";
-      ctx.font = "bold 20px Tahoma, sans-serif";
-      ctx.fillText(`🔑 کلمه شخصی: ${data.answer}`, 560, 285);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 18px iranBold, sans-serif";
+      ctx.fillText(fullName, 530, 195);
 
-      ctx.fillStyle = "#ef4444";
-      ctx.font = "13px Tahoma, sans-serif";
-      ctx.fillText("⚠️ این کارت را در جای امن نگهداری کنید.", 560, 335);
+      // خط زیرین فیلد اول
+      ctx.strokeStyle = "#f1f5f9";
+      ctx.beginPath();
+      ctx.moveTo(50, 215);
+      ctx.lineTo(canvas.width - 50, 215);
+      ctx.stroke();
 
-      ctx.fillStyle = "rgba(148, 163, 184, 0.3)";
-      ctx.font = "11px Tahoma, sans-serif";
-      ctx.fillText("تاریخ ایجاد: " + new Date().toLocaleDateString("fa-IR"), 560, 385);
+      // ۲. سوال محرمانه (کد امنیتی ۶ رقمی)
+      ctx.fillStyle = "#64748b";
+      ctx.font = "13px iranSans-r, sans-serif";
+      ctx.fillText("سوال محرمانه: کد امنیتی ۶ رقمی شخصی", 530, 245);
 
-      const imageURI = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.download = `Security-Card-${data.nationalId}.png`;
-      link.href = imageURI;
-      link.click();
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 18px iranBold, sans-serif";
+      ctx.fillText(pin, 530, 275);
+
+      // خط زیرین فیلد دوم
+      ctx.beginPath();
+      ctx.moveTo(50, 295);
+      ctx.lineTo(canvas.width - 50, 295);
+      ctx.stroke();
+
+      // ۳. پاسخ محرمانه (بازیکن فوتبال)
+      ctx.fillStyle = "#64748b";
+      ctx.font = "13px iranSans-r, sans-serif";
+      ctx.fillText("پاسخ محرمانه: ۳ حرف اول بازیکن فوتبال مورد علاقه", 530, 325);
+
+      ctx.fillStyle = "#059669";
+      ctx.font = "bold 18px iranBold, sans-serif";
+      ctx.fillText(player.toUpperCase(), 530, 355);
+
+      // خط چین پایین فیلد سوم
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(50, 370);
+      ctx.lineTo(canvas.width - 50, 370);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // فوتر کارت
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "11px iranSans-r, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("سامانه مدیریت منتظران", canvas.width / 2, 398);
+
+      return canvas.toDataURL("image/png");
     }
-    setIsDownloading(false);
+    return "";
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.securityPin.trim() || formData.securityPin.length !== 6) {
+      newErrors.securityPin = "کد امنیتی باید دقیقاً یک عدد ۶ رقمی باشد.";
+    }
+
+    if (!formData.favoritePlayer.trim() || formData.favoritePlayer.length !== 3) {
+      newErrors.favoritePlayer = "لطفاً دقیقاً ۳ حرف انگلیسی از اسم بازیکن وارد کنید.";
+    }
+
+    if (!formData.acceptRules) {
+      newErrors.rules = "پذیرش قوانین الزامی است.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...newErrors }));
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMessage("");
+
+      const cleanPin = formData.securityPin.trim();
+      const cleanPlayer = formData.favoritePlayer.trim().toLowerCase();
+      const finalSecurityAnswer = `${cleanPin}-${cleanPlayer}`;
+
+      const payload = {
+        username: `user_${formData.nationalId}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        nationalId: formData.nationalId,
+        phone: formData.phone,
+        password: formData.password,
+        securityQuestion: "۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال",
+        securityAnswer: finalSecurityAnswer,
+      };
+
+      const res = await fetch("/api/auth/student/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "خطا در ثبت‌نام دانش‌آموز");
+      }
+
+      // تولید تصویر کارت امنیتی دقیقاً مطابق با عکس ارسالی (بدون کدملی)
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      const cardImage = generateSecurityCardDataUrl(
+        fullName,
+        formData.securityPin,
+        formData.favoritePlayer
+      );
+      setSecurityCardImage(cardImage);
+
+      setStep("security-card");
+    } catch (err: any) {
+      setErrorMessage(err.message || "ارتباط با سرور برقرار نشد.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveImage = () => {
+    if (!securityCardImage) return;
+    const link = document.createElement("a");
+    link.href = securityCardImage;
+    link.download = `security-card-${formData.nationalId}.png`;
+    link.click();
+  };
+
+  const handleFinish = () => {
+    onSuccess?.();
+    onClose();
+    setStep(1);
+    setSecurityCardImage(null);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      nationalId: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      securityPin: "",
+      favoritePlayer: "",
+      acceptRules: false,
+    });
+    router.push("/student/dashboard");
+    router.refresh();
+  };
+
+  if (!isOpen) return null;
+
+  const stepNumber = typeof step === "number" ? step : 4;
+  const progressPercentage = (stepNumber / 4) * 100;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md" dir="rtl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" dir="rtl">
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-white"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+      />
+
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 25 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 25 }}
+        className="relative w-full max-w-[540px] max-h-[90vh] overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-8 z-10"
       >
-        <div className="text-center mb-4">
-          <ShieldCheck className="w-14 h-14 text-emerald-400 mx-auto mb-2 animate-pulse" />
-          <h3 className="text-xl font-bold font-[iranBold] text-emerald-400">
-            اطلاعات امنیتی حساب شما
-          </h3>
-          <p className="text-xs text-slate-300 mt-1 font-[iranSans-r]">
-            لطفاً این اطلاعات را در جای امن نگهداری کنید
-          </p>
-        </div>
-
-        <div
-          ref={cardRef}
-          className="bg-slate-800/90 border border-emerald-500/30 rounded-2xl p-5 my-4 space-y-3 font-[iranSans-r] text-sm"
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer"
         >
-          <div className="flex justify-between border-b border-slate-700/50 pb-2">
-            <span className="text-slate-400">دانش‌آموز:</span>
-            <span className="font-bold text-slate-200">{data.fullName}</span>
-          </div>
-          <div className="flex justify-between border-b border-slate-700/50 pb-2">
-            <span className="text-slate-400">سوال امنیتی:</span>
-            <span className="font-bold text-emerald-400 text-xs">{data.question}</span>
-          </div>
-          <div className="flex justify-between bg-slate-700/30 rounded-xl p-3 border border-amber-500/20">
-            <span className="text-slate-400">کلمه شخصی:</span>
-            <span className="font-extrabold text-amber-400 tracking-wider text-base">{data.answer}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-red-400 font-bold pt-1">
-            <AlertTriangle className="w-4 h-4" />
-            <span>حتماً اسکرین‌شات بگیرید و در حفظ و نگهداری آن کوشا باشید!</span>
-          </div>
-        </div>
+          <X className="w-4 h-4" />
+        </button>
 
-        <div className="flex flex-col gap-2 mt-5">
-          <motion.button
-            type="button"
-            onClick={handleSaveImage}
-            disabled={isDownloading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all font-[iranBold] disabled:opacity-50"
-          >
-            {isDownloading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Download className="w-5 h-5" />
+        {step !== "security-card" ? (
+          <div>
+            <div className="mb-6 pt-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
+                <span>مرحله {step} از 4</span>
+                <span>
+                  {step === 1 && "اطلاعات فردی"}
+                  {step === 2 && "کد ملی و تماس"}
+                  {step === 3 && "رمز عبور"}
+                  {step === 4 && "امنیت و قوانین"}
+                </span>
+              </div>
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <motion.div
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full"
+                  animate={{ width: `${progressPercentage}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+            </div>
+
+            <div className="mb-6 text-right">
+              <h2 className="text-2xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                ثبت‌نام دانش‌آموز
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">لطفاً اطلاعات خود را دقیق وارد کنید</p>
+            </div>
+
+            {errorMessage && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs">
+                {errorMessage}
+              </div>
             )}
-            {isDownloading ? "در حال ذخیره..." : "ذخیره تصویر کارت در گالری"}
-          </motion.button>
 
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition-all font-[iranBold] mt-1"
-          >
-            اسکرین‌شات گرفتم / ورود به پنل
-          </button>
-        </div>
+            <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); handleNextStep(); }}>
+              {step === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">نام</label>
+                    <div className="relative">
+                      <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => updateField("firstName", e.target.value)}
+                        placeholder="مثال: علی"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.firstName && <p className="text-rose-500 text-[11px] mt-1">{errors.firstName}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">نام خانوادگی</label>
+                    <div className="relative">
+                      <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => updateField("lastName", e.target.value)}
+                        placeholder="مثال: محمدی"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.lastName && <p className="text-rose-500 text-[11px] mt-1">{errors.lastName}</p>}
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">کد ملی (۱۰ رقم)</label>
+                    <div className="relative">
+                      <CreditCard className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={10}
+                        value={formData.nationalId}
+                        onChange={(e) => updateField("nationalId", e.target.value.replace(/\D/g, ""))}
+                        placeholder="0012345678"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.nationalId && <p className="text-rose-500 text-[11px] mt-1">{errors.nationalId}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">شماره همراه</label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={11}
+                        value={formData.phone}
+                        onChange={(e) => updateField("phone", e.target.value.replace(/\D/g, ""))}
+                        placeholder="09123456789"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.phone && <p className="text-rose-500 text-[11px] mt-1">{errors.phone}</p>}
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">رمز عبور (حداقل ۶ کاراکتر)</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => updateField("password", e.target.value)}
+                        placeholder="******"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute left-3 top-3.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-rose-500 text-[11px] mt-1">{errors.password}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">تکرار رمز عبور</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={(e) => updateField("confirmPassword", e.target.value)}
+                        placeholder="******"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-3 top-3.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && <p className="text-rose-500 text-[11px] mt-1">{errors.confirmPassword}</p>}
+                  </div>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ۱. یک کد ۶ رقمی شخصی و محرمانه (فقط عدد)
+                    </label>
+                    <div className="relative">
+                      <KeyRound className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={formData.securityPin}
+                        onChange={(e) => updateField("securityPin", e.target.value)}
+                        placeholder="مثال: ۷۴۸۵۱۲"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.securityPin && <p className="text-rose-500 text-[11px] mt-1">{errors.securityPin}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ۲. سه حرف اول اسم بازیکن فوتبال مورد علاقه (فقط انگلیسی)
+                    </label>
+                    <div className="relative">
+                      <Trophy className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={3}
+                        value={formData.favoritePlayer}
+                        onChange={(e) => updateField("favoritePlayer", e.target.value)}
+                        placeholder="مثال: ron یا mes"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right uppercase focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.favoritePlayer && <p className="text-rose-500 text-[11px] mt-1">{errors.favoritePlayer}</p>}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="rules"
+                      checked={formData.acceptRules}
+                      onChange={(e) => updateField("acceptRules", e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <label htmlFor="rules" className="text-xs text-slate-600 cursor-pointer">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsRulesModalOpen(true);
+                        }}
+                        className="text-emerald-600 font-bold hover:underline inline mx-1 cursor-pointer"
+                      >
+                        قوانین و شرایط استفاده از سامانه
+                      </button>
+                      را مطالعه کرده‌ام و می‌پذیرم.
+                    </label>
+                  </div>
+                  {errors.rules && <p className="text-rose-500 text-[11px]">{errors.rules}</p>}
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                {step > 1 && (
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm cursor-pointer"
+                  >
+                    مرحله قبل
+                  </button>
+                )}
+                <button
+                  type={step === 4 ? "submit" : "button"}
+                  onClick={step === 4 ? undefined : handleNextStep}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {loading ? "در حال ثبت‌نام..." : step === 4 ? "تکمیل ثبت‌نام" : "مرحله بعد"}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="space-y-6 text-center">
+            <div className="flex items-center justify-center text-emerald-600 mb-2">
+              <ShieldCheck className="w-12 h-12" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800">ثبت‌نام با موفقیت انجام شد</h3>
+            <p className="text-xs text-slate-500">کارت امنیتی شما آماده است. آن را دانلود کنید یا به داشبورد بروید.</p>
+
+            {/* نمایش تصویر تولید شده کارت امنیتی از طریق Canvas دقیقاً مطابق نمونه */}
+            {securityCardImage && (
+              <div className="flex justify-center">
+                <img
+                  src={securityCardImage}
+                  alt="Security Card"
+                  className="w-full max-w-[480px] rounded-2xl shadow-lg border border-slate-200"
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleSaveImage}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-emerald-600/30 cursor-pointer"
+              >
+                <Download className="w-4 h-4" /> ذخیره عکس در گالری
+              </button>
+              <button
+                type="button"
+                onClick={handleFinish}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 text-sm cursor-pointer"
+              >
+                اسکرین‌شات گرفتم / ورود به برنامه <ArrowLeft className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {onSwitchToLogin && step !== "security-card" && (
+          <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+            قبلاً ثبت‌نام کرده‌اید؟{" "}
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer"
+            >
+              وارد شوید
+            </button>
+          </div>
+        )}
       </motion.div>
+
+      {/* اتصال کامل مودال قوانین و شرایط */}
+      <RulesModal
+        isOpen={isRulesModalOpen}
+        onClose={() => setIsRulesModalOpen(false)}
+        onAccept={() => {
+          setFormData((prev) => ({ ...prev, acceptRules: true }));
+          setIsRulesModalOpen(false);
+        }}
+      />
     </div>
   );
-};
+}

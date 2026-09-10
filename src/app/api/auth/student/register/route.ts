@@ -45,7 +45,6 @@ export async function POST(req: Request) {
       securityAnswer,
     } = body;
 
-    // بررسی فیلدهای اجباری شامل سوال و پاسخ امنیتی
     if (!username || !nationalId || !phone || !password || !securityQuestion || !securityAnswer) {
       return NextResponse.json(
         { success: false, message: "تمام اطلاعات اجباری شامل سوال و پاسخ امنیتی را وارد کنید." },
@@ -56,8 +55,6 @@ export async function POST(req: Request) {
     const cleanNationalId = normalizeNationalId(nationalId);
     const cleanUsername = username.trim();
     const cleanPhone = phone.trim();
-
-    // پاکسازی پاسخ امنیتی (حذف فاصله‌های اضافی و یکسان‌سازی حروف کوچک)
     const cleanSecurityAnswer = securityAnswer.trim().toLowerCase();
 
     if (!isValidNationalId(cleanNationalId)) {
@@ -152,12 +149,17 @@ export async function POST(req: Request) {
       await gradeStudentRecord.save();
     }
 
-    // 🔒 ۷. ساخت توکن JWT امن برای ورود خودکار پس از ثبت‌نام
+    // 🔒 ۷. ساخت توکن JWT امن با هماهنگی کامل نقش و نام‌گذاری
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
     );
     
-    const token = await new SignJWT({ userId: newStudent._id.toString() })
+    const token = await new SignJWT({ 
+      userId: newStudent._id.toString(),
+      id: newStudent._id.toString(),
+      username: newStudent.username,
+      role: "student" 
+    })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("7d")
       .sign(secret);
@@ -168,14 +170,17 @@ export async function POST(req: Request) {
       redirectTo: "/student/dashboard",
     });
 
-    // ست کردن کوکی با توکن امن JWT
-    response.cookies.set("studentToken", token, {
+    // تنظیمات کوکی همسان‌سازی شده با نام student_token
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "lax" as const,
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
-    });
+    };
+
+    response.cookies.set("student_token", token, cookieOptions);
+    response.cookies.set("token", token, cookieOptions);
 
     return response;
   } catch (error: any) {

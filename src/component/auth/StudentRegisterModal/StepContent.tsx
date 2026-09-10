@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { User, CreditCard, Phone, Lock, BookOpen } from "lucide-react";
 import { FormInput } from "./FormInput";
 import PasswordStrength from "./PasswordStrength"; // اصلاح شد: به صورت Default Import
-import { SecurityQuestionSelect } from "./SecurityQuestionSelect";
 import { RulesCheckbox } from "./RulesCheckbox";
 import { NavigationButtons } from "./NavigationButtons ";
 
@@ -134,11 +133,7 @@ export const StepContent = ({
 
   const renderStep4 = () => (
     <>
-      <SecurityQuestionSelect
-        value={formData.securityQuestion}
-        onChange={(val) => onFieldChange("securityQuestion", val)}
-        questions={securityQuestions}
-      />
+     
       <FormInput
         label="کلمه مهم شخصی (پاسخ سوال)"
         value={formData.securityAnswer}
