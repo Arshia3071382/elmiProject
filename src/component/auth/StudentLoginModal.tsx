@@ -41,8 +41,11 @@ export default function StudentLoginModal({
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
   const [forgotIdentifier, setForgotIdentifier] = useState("");
-  const [fetchedQuestion, setFetchedQuestion] = useState("");
-  const [securityAnswer, setSecurityAnswer] = useState("");
+  
+  // مرحله ۲: جداسازی کد ۶ رقمی و سه حرف بازیکن
+  const [securityCode, setSecurityCode] = useState("");
+  const [playerCode, setPlayerCode] = useState("");
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -66,10 +69,11 @@ export default function StudentLoginModal({
     setIsForgotPasswordOpen(false);
     setForgotStep(1);
     setForgotIdentifier("");
-    setFetchedQuestion("");
-    setSecurityAnswer("");
+    setSecurityCode("");
+    setPlayerCode("");
     setNewPassword("");
     setConfirmNewPassword("");
+    setShowNewPassword(false);
     setForgotStatus("idle");
     setForgotError("");
   };
@@ -134,19 +138,19 @@ export default function StudentLoginModal({
         }, 1000);
       } else {
         setStatus("error");
-        setErrorMessage(data.error || "نام کاربری یا رمز عبور اشتباه است.");
+        // اصلاح نام فیلد خطا از data.error به data.message مطابق پاسخ سرور
+        setErrorMessage(data.message || data.error || "نام کاربری یا رمز عبور اشتباه است.");
       }
-    } catch {
+    } catch (err) {
       setStatus("error");
       setErrorMessage("مشکل در ارتباط با سرور. لطفاً دوباره تلاش کنید.");
     }
   };
 
-  // handlers بازیابی رمز عبور
-  const handleFetchSecurityQuestion = async (e: React.FormEvent) => {
+  const handleCheckIdentifier = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotIdentifier.trim()) {
-      setForgotError("لطفاً کد ملی یا شماره همراه خود را وارد کنید.");
+      setForgotError("لطفاً کد ملی یا شماره همراه را وارد کنید.");
       return;
     }
 
@@ -157,18 +161,17 @@ export default function StudentLoginModal({
       const res = await fetch("/api/auth/student/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "getQuestion", identifier: forgotIdentifier.trim() }),
+        body: JSON.stringify({ action: "checkUser", identifier: forgotIdentifier.trim() }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setFetchedQuestion(data.question);
         setForgotStep(2);
         setForgotStatus("idle");
       } else {
         setForgotStatus("error");
-        setForgotError(data.message || "کاربری با این مشخصات یافت نشد.");
+        setForgotError(data.message || "کد ملی یا شماره تماس وارد شده یافت نشد.");
       }
     } catch {
       setForgotStatus("error");
@@ -178,10 +181,14 @@ export default function StudentLoginModal({
 
   const handleVerifyAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!securityAnswer.trim()) {
-      setForgotError("ورود کلمه شخصی الزامی است.");
+    if (!securityCode.trim() || !playerCode.trim()) {
+      setForgotError("لطفاً هر دو فیلد را پر کنید.");
       return;
     }
+
+    const cleanSecurityCode = securityCode.trim();
+    const cleanPlayerCode = playerCode.trim().toLowerCase();
+    const combinedAnswer = `${cleanSecurityCode}${cleanPlayerCode}`;
 
     setForgotStatus("loading");
     setForgotError("");
@@ -193,7 +200,8 @@ export default function StudentLoginModal({
         body: JSON.stringify({
           action: "verifyAnswer",
           identifier: forgotIdentifier.trim(),
-          answer: securityAnswer.trim(),
+          securityQuestion: "کد ۶ رقمی و سه حرف بازیکن",
+          securityAnswer: combinedAnswer,
         }),
       });
 
@@ -204,11 +212,11 @@ export default function StudentLoginModal({
         setForgotStatus("idle");
       } else {
         setForgotStatus("error");
-        setForgotError(data.message || "کلمه شخصی وارد شده اشتباه است.");
+        setForgotError(data.message || "اطلاعات امنیتی وارد شده نادرست است.");
       }
     } catch {
       setForgotStatus("error");
-      setForgotError("خطا در بررسی پاسخ.");
+      setForgotError("خطا در ارتباط با سرور.");
     }
   };
 
@@ -218,30 +226,35 @@ export default function StudentLoginModal({
       setForgotError("رمز عبور جدید را وارد کنید.");
       return;
     }
-    if (newPassword.length < 6 || newPassword.length > 8) {
-      setForgotError("رمز عبور باید بین ۶ تا ۸ کاراکتر باشد.");
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,8}$/;
+    if (!passwordRegex.test(newPassword)) {
+      setForgotError("رمز عبور باید بین ۶ تا ۸ کاراکتر و شامل حروف بزرگ، حروف کوچک و عدد انگلیسی باشد.");
       return;
     }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(newPassword)) {
-      setForgotError("رمز عبور باید شامل حروف کوچک، بزرگ و عدد باشد.");
-      return;
-    }
+
     if (newPassword !== confirmNewPassword) {
       setForgotError("تکرار رمز عبور جدید مطابقت ندارد.");
       return;
     }
 
+    const cleanSecurityCode = securityCode.trim();
+    const cleanPlayerCode = playerCode.trim().toLowerCase();
+    const combinedAnswer = `${cleanSecurityCode}${cleanPlayerCode}`;
+
     setForgotStatus("loading");
     setForgotError("");
 
     try {
+      // ۱. ارسال درخواست تغییر رمز عبور به سرور
       const res = await fetch("/api/auth/student/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "resetPassword",
           identifier: forgotIdentifier.trim(),
-          answer: securityAnswer.trim(),
+          securityQuestion: "کد ۶ رقمی و سه حرف بازیکن",
+          securityAnswer: combinedAnswer,
           newPassword,
         }),
       });
@@ -250,11 +263,38 @@ export default function StudentLoginModal({
 
       if (res.ok && data.success) {
         setForgotStatus("success");
-        setTimeout(() => {
-          resetForgotPasswordState();
-          setPhone(forgotIdentifier);
-          setPassword(newPassword);
-        }, 1200);
+
+        // ۲. بلافاصله پس از تغییر موفق، درخواست ورود خودکار را ارسال کن
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: forgotIdentifier.trim(), password: newPassword }),
+          credentials: "include",
+        });
+
+        const loginData = await loginRes.json();
+
+        if (loginRes.ok && loginData.success) {
+          if (loginData.student?.nationalId) {
+            localStorage.setItem("studentNationalId", loginData.student.nationalId);
+          }
+          localStorage.setItem("studentPhone", forgotIdentifier.trim());
+
+          // ۳. بستن مدال‌ها و هدایت به داشبورد
+          setTimeout(() => {
+            resetForgotPasswordState();
+            onClose(); // بستن مدال ورود اصلی
+            window.location.href = loginData.redirectUrl || "/student/dashboard";
+          }, 1000);
+        } else {
+          setForgotStatus("error");
+          setForgotError("رمز عبور تغییر کرد، اما ورود خودکار انجام نشد. لطفاً به صورت دستی وارد شوید.");
+          setTimeout(() => {
+            resetForgotPasswordState();
+            setPhone(forgotIdentifier);
+            setPassword(newPassword);
+          }, 2000);
+        }
       } else {
         setForgotStatus("error");
         setForgotError(data.message || "تغییر رمز عبور با خطا مواجه شد.");
@@ -264,13 +304,11 @@ export default function StudentLoginModal({
       setForgotError("خطا در تغییر رمز عبور.");
     }
   };
-
   return (
     <>
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -279,22 +317,14 @@ export default function StudentLoginModal({
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             />
 
-            {/* Modal Box */}
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               className="relative w-full max-w-[450px] max-h-[90vh] overflow-y-auto overflow-x-hidden 
-                bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl p-2 sm:p-3 z-10
-                [&::-webkit-scrollbar]:w-2
-                [&::-webkit-scrollbar-track]:bg-transparent
-                [&::-webkit-scrollbar-thumb]:bg-slate-300
-                [&::-webkit-scrollbar-thumb]:rounded-full
-                scrollbar-thin
-                scrollbar-thumb-slate-300"
+                bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl p-2 sm:p-3 z-10"
             >
               <div className="p-4 sm:p-5 relative">
-                {/* دکمه بستن */}
                 <button
                   type="button"
                   onClick={handleResetAndClose}
@@ -305,7 +335,6 @@ export default function StudentLoginModal({
                   <X className="w-4 h-4" />
                 </button>
 
-                {/* هدر */}
                 <div className="mb-6 text-right">
                   <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 bg-clip-text text-transparent font-[iranBold]">
                     ورود به حساب کاربری
@@ -315,7 +344,6 @@ export default function StudentLoginModal({
                   </p>
                 </div>
 
-                {/* فرم اصلی ورود */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
                     <AuthInput
@@ -351,7 +379,6 @@ export default function StudentLoginModal({
                       }
                       disabled={status === "loading" || status === "success"}
                     />
-                    {/* دکمه فراموشی رمز عبور */}
                     <div className="text-left mt-1.5">
                       <button
                         type="button"
@@ -419,7 +446,7 @@ export default function StudentLoginModal({
         )}
       </AnimatePresence>
 
-      {/* مدال بازیابی رمز عبور با سوال امنیتی */}
+      {/* مدال بازیابی رمز عبور */}
       <AnimatePresence>
         {isForgotPasswordOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
@@ -440,7 +467,7 @@ export default function StudentLoginModal({
               <button
                 type="button"
                 onClick={resetForgotPasswordState}
-                className="absolute left-4 top-4 text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-full transition-all"
+                className="absolute left-4 top-4 text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-full transition-all cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -452,9 +479,9 @@ export default function StudentLoginModal({
 
               {/* Step 1: Identifier */}
               {forgotStep === 1 && (
-                <form onSubmit={handleFetchSecurityQuestion} className="space-y-4">
+                <form onSubmit={handleCheckIdentifier} className="space-y-4">
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    برای بازیابی رمز، کد ملی یا شماره همراه ثبت‌شده خود را وارد کنید تا سوال امنیتی شما استعلام شود.
+                    برای بازیابی رمز، ابتدا کد ملی یا شماره همراه خود را وارد کنید.
                   </p>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">کد ملی / شماره همراه</label>
@@ -472,29 +499,41 @@ export default function StudentLoginModal({
                   <button
                     type="submit"
                     disabled={forgotStatus === "loading"}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {forgotStatus === "loading" ? <Loader2 className="w-5 h-5 animate-spin" /> : "استعلام سوال امنیتی"}
+                    {forgotStatus === "loading" ? <Loader2 className="w-5 h-5 animate-spin" /> : "مرحله بعد"}
                   </button>
                 </form>
               )}
 
-              {/* Step 2: Answer Question */}
+              {/* Step 2: Separate 6-digit code and 3-letter player code */}
               {forgotStep === 2 && (
                 <form onSubmit={handleVerifyAnswer} className="space-y-4">
-                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                    <span className="block text-[11px] text-indigo-500 font-bold mb-1">سوال امنیتی شما:</span>
-                    <p className="text-sm font-bold text-indigo-950">{fetchedQuestion}</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    کد ۶ رقمی شخصی و سه حرف اول بازیکن فوتبال مورد علاقه خود را وارد کنید.
+                  </p>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">کد ۶ رقمی شخصی</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={securityCode}
+                      onChange={(e) => setSecurityCode(e.target.value)}
+                      placeholder="مثال: 123456"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 text-left dir-ltr"
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">کلمه مهم شخصی (پاسخ)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">سه حرف اول بازیکن (انگلیسی)</label>
                     <input
                       type="text"
-                      value={securityAnswer}
-                      onChange={(e) => setSecurityAnswer(e.target.value)}
-                      placeholder="کلمه شخصی را وارد کنید"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500"
+                      maxLength={3}
+                      value={playerCode}
+                      onChange={(e) => setPlayerCode(e.target.value)}
+                      placeholder="مثال: rma"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 text-left dir-ltr uppercase"
                     />
                   </div>
 
@@ -504,16 +543,16 @@ export default function StudentLoginModal({
                     <button
                       type="button"
                       onClick={() => setForgotStep(1)}
-                      className="w-1/3 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs"
+                      className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all"
                     >
                       مرحله قبل
                     </button>
                     <button
                       type="submit"
                       disabled={forgotStatus === "loading"}
-                      className="w-2/3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1"
+                      className="w-2/3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer transition-all"
                     >
-                      {forgotStatus === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : "تایید پاسخ"}
+                      {forgotStatus === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : "مرحله بعد"}
                     </button>
                   </div>
                 </form>
@@ -522,26 +561,38 @@ export default function StudentLoginModal({
               {/* Step 3: New Password */}
               {forgotStep === 3 && (
                 <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
-                  <div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    رمز عبور جدید باید بین ۶ تا ۸ کاراکتر و شامل حروف بزرگ، حروف کوچک و عدد انگلیسی باشد.
+                  </p>
+                  
+                  <div className="relative">
                     <label className="block text-xs font-bold text-slate-700 mb-1">رمز عبور جدید</label>
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      maxLength={8}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="******"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 text-left dir-ltr"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="رمز جدید (مثال: Ab1234)"
+                        className="w-full px-4 py-2.5 pl-10 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 text-left dir-ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">تکرار رمز عبور جدید</label>
                     <input
                       type={showNewPassword ? "text" : "password"}
-                      maxLength={8}
                       value={confirmNewPassword}
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="******"
+                      placeholder="تکرار رمز جدید"
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 text-left dir-ltr"
                     />
                   </div>
@@ -549,15 +600,15 @@ export default function StudentLoginModal({
                   {forgotError && <p className="text-xs text-red-500">{forgotError}</p>}
 
                   {forgotStatus === "success" && (
-                    <p className="text-xs text-emerald-600 font-bold">رمز عبور با موفقیت تغییر یافت. جای‌گذاری در فرم لاگین...</p>
+                    <p className="text-xs text-emerald-600 font-bold">رمز عبور با موفقیت تغییر یافت. ورود به پنل...</p>
                   )}
 
                   <button
                     type="submit"
                     disabled={forgotStatus === "loading" || forgotStatus === "success"}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {forgotStatus === "loading" ? <Loader2 className="w-5 h-5 animate-spin" /> : "ذخیره رمز عبور جدید"}
+                    {forgotStatus === "loading" ? <Loader2 className="w-5 h-5 animate-spin" /> : "تایید و ورود به پنل"}
                   </button>
                 </form>
               )}

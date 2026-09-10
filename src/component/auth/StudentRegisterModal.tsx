@@ -4,17 +4,18 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { X, User, CreditCard, Phone, Lock, BookOpen, ShieldCheck, Download, ArrowLeft } from "lucide-react";
+import { X, User, CreditCard, Phone, Lock, BookOpen, ShieldCheck, Download, ArrowLeft, KeyRound, Trophy } from "lucide-react";
 
-// لیست سوالات امنیتی
-export const SECURITY_QUESTIONS = [
-  "کلمه مهم شخصی",
-  "عدد مهم شخصی",
-  "نام اولین کتاب غیردرسی که خواندید؟",
-  "کد پستی یا شماره پلاک اولین خانه‌ای که یادش هستید؟",
-  "نام سریالی که حداقل ۲ بار کامل آن را دیده‌اید؟",
-  "اسم عجیب‌ترین یا غافلگیرکننده‌ترین هدیه‌ای که گرفتید؟",
-];
+// تابع کمکی برای تبدیل ارقام فارسی و عربی به انگلیسی و فیلتر کردن غیر اعداد
+const toEnglishDigits = (str: string): string => {
+  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+  let converted = str;
+  for (let i = 0; i < 10; i++) {
+    converted = converted.replace(persianNumbers[i], i.toString()).replace(arabicNumbers[i], i.toString());
+  }
+  return converted.replace(/\D/g, "");
+};
 
 // تابع اعتبارسنجی کد ملی ایران
 export const isValidNationalId = (id: string): boolean => {
@@ -57,8 +58,8 @@ export default function StudentRegisterModal({
     phone: "",
     password: "",
     confirmPassword: "",
-    securityQuestion: SECURITY_QUESTIONS[0],
-    securityAnswer: "",
+    securityPin: "", // کد ۶ رقمی عددی
+    favoritePlayer: "", // ۳ حرف انگلیسی بازیکن
     acceptRules: false,
   });
 
@@ -67,7 +68,15 @@ export default function StudentRegisterModal({
   const [showConfirmPassword] = useState(false);
 
   const updateField = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    let processedValue = value;
+
+    if (field === "securityPin") {
+      processedValue = toEnglishDigits(value).slice(0, 6);
+    } else if (field === "favoritePlayer") {
+      processedValue = value.replace(/[^A-Za-z]/g, "").slice(0, 3);
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: processedValue }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -118,12 +127,22 @@ export default function StudentRegisterModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.securityAnswer.trim()) {
-      setErrors((prev) => ({ ...prev, securityAnswer: "ورود پاسخ امنیتی الزامی است." }));
-      return;
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.securityPin.trim() || formData.securityPin.length !== 6) {
+      newErrors.securityPin = "کد امنیتی باید دقیقاً یک عدد ۶ رقمی باشد.";
     }
+
+    if (!formData.favoritePlayer.trim() || formData.favoritePlayer.length !== 3) {
+      newErrors.favoritePlayer = "لطفاً دقیقاً ۳ حرف انگلیسی از اسم بازیکن وارد کنید.";
+    }
+
     if (!formData.acceptRules) {
-      setErrors((prev) => ({ ...prev, rules: "پذیرش قوانین الزامی است." }));
+      newErrors.rules = "پذیرش قوانین الزامی است.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...newErrors }));
       return;
     }
 
@@ -131,19 +150,26 @@ export default function StudentRegisterModal({
       setLoading(true);
       setErrorMessage("");
 
+      // ساخت پاسخ امنیتی استاندارد (پین + خط تیره + حروف کوچک بازیکن بدون فاصله اضافی)
+      const cleanPin = formData.securityPin.trim();
+      const cleanPlayer = formData.favoritePlayer.trim().toLowerCase();
+      const finalSecurityAnswer = `${cleanPin}-${cleanPlayer}`;
+
+      const payload = {
+        username: `user_${formData.nationalId}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        nationalId: formData.nationalId,
+        phone: formData.phone,
+        password: formData.password,
+        securityQuestion: "۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال",
+        securityAnswer: finalSecurityAnswer,
+      };
+
       const res = await fetch("/api/auth/student/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: `user_${formData.nationalId}`,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          nationalId: formData.nationalId,
-          phone: formData.phone,
-          password: formData.password,
-          securityQuestion: formData.securityQuestion,
-          securityAnswer: formData.securityAnswer,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -184,11 +210,11 @@ export default function StudentRegisterModal({
       ctx.fillText(`کد ملی (نام کاربری): ${formData.nationalId}`, 560, 175);
 
       ctx.fillStyle = "#38bdf8";
-      ctx.fillText(`سوال امنیتی: ${formData.securityQuestion}`, 560, 235);
+      ctx.fillText(`کد امنیتی ۶ رقمی: ${formData.securityPin}`, 560, 235);
 
       ctx.fillStyle = "#f43f5e";
       ctx.font = "bold 18px sans-serif";
-      ctx.fillText(`پاسخ امنیتی (کلمه شخصی): ${formData.securityAnswer}`, 560, 285);
+      ctx.fillText(`بازیکن فوتبال مورد علاقه (۳ حرف): ${formData.favoritePlayer.toUpperCase()}`, 560, 285);
 
       const image = canvas.toDataURL("image/png");
       const link = document.createElement("a");
@@ -209,8 +235,8 @@ export default function StudentRegisterModal({
       phone: "",
       password: "",
       confirmPassword: "",
-      securityQuestion: SECURITY_QUESTIONS[0],
-      securityAnswer: "",
+      securityPin: "",
+      favoritePlayer: "",
       acceptRules: false,
     });
     router.push("/student/dashboard");
@@ -385,31 +411,41 @@ export default function StudentRegisterModal({
               {step === 4 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">سوال امنیتی</label>
-                    <select
-                      value={formData.securityQuestion}
-                      onChange={(e) => updateField("securityQuestion", e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
-                    >
-                      {SECURITY_QUESTIONS.map((q, idx) => (
-                        <option key={idx} value={q}>{q}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">پاسخ امنیتی (کلمه شخصی)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ۱. یک کد ۶ رقمی شخصی و محرمانه (فقط عدد)
+                    </label>
                     <div className="relative">
-                      <BookOpen className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <KeyRound className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
                       <input
                         type="text"
-                        value={formData.securityAnswer}
-                        onChange={(e) => updateField("securityAnswer", e.target.value)}
-                        placeholder="پاسخ بدون فاصله"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                        maxLength={6}
+                        value={formData.securityPin}
+                        onChange={(e) => updateField("securityPin", e.target.value)}
+                        placeholder="مثال: ۷۴۸۵۱۲"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
                       />
                     </div>
-                    {errors.securityAnswer && <p className="text-rose-500 text-[11px] mt-1">{errors.securityAnswer}</p>}
+                    {errors.securityPin && <p className="text-rose-500 text-[11px] mt-1">{errors.securityPin}</p>}
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      ۲. سه حرف اول اسم بازیکن فوتبال مورد علاقه (فقط انگلیسی)
+                    </label>
+                    <div className="relative">
+                      <Trophy className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={3}
+                        value={formData.favoritePlayer}
+                        onChange={(e) => updateField("favoritePlayer", e.target.value)}
+                        placeholder="مثال: ron یا mes"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right uppercase focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    {errors.favoritePlayer && <p className="text-rose-500 text-[11px] mt-1">{errors.favoritePlayer}</p>}
+                  </div>
+
                   <div className="flex items-center gap-2 pt-2">
                     <input
                       type="checkbox"
@@ -465,12 +501,12 @@ export default function StudentRegisterModal({
                 <span className="font-bold text-slate-800 dir-ltr">{formData.nationalId}</span>
               </div>
               <div className="text-xs space-y-1">
-                <span className="text-sky-600 block">سوال امنیتی:</span>
-                <p className="font-semibold text-slate-700">{formData.securityQuestion}</p>
+                <span className="text-sky-600 block">کد امنیتی ۶ رقمی:</span>
+                <p className="font-bold text-slate-700 dir-ltr text-right">{formData.securityPin}</p>
               </div>
               <div className="text-xs space-y-1 pt-1">
-                <span className="text-rose-600 block">پاسخ امنیتی:</span>
-                <p className="font-bold text-rose-600">{formData.securityAnswer}</p>
+                <span className="text-rose-600 block">بازیکن مورد علاقه (۳ حرف انگلیسی):</span>
+                <p className="font-bold text-rose-600 uppercase dir-ltr text-right">{formData.favoritePlayer}</p>
               </div>
             </div>
 

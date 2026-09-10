@@ -1,110 +1,146 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import dbConnect from "./../../../../../../lib/dbConnect";
 import Student from "./../../../../../../models/Student";
-import bcrypt from "bcryptjs";
-
-// تبدیل ارقام فارسی و عربی به انگلیسی جهت اعتبارسنجی دقیق
-const toEnglishDigits = (str: string) => {
-  return str
-    .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString())
-    .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
-};
 
 export async function POST(req: Request) {
-  await dbConnect();
-
   try {
-    const body = await req.json().catch(() => null);
-    if (!body) {
+    await dbConnect();
+    const body = await req.json();
+    const { action, identifier, securityQuestion, securityAnswer, securityCode, playerCode, newPassword } = body;
+
+    if (!action || !identifier) {
       return NextResponse.json(
-        { success: false, message: "اطلاعات ارسالی نامعتبر است." },
+        { success: false, message: "اطلاعات ارسالی ناقص است." },
         { status: 400 }
       );
     }
 
-    const { action, nationalId, answer, newPassword } = body;
-    const cleanNationalId = toEnglishDigits(String(nationalId || "")).trim();
+    const cleanIdentifier = identifier.trim().replace(/\D/g, "");
+    
+    const student = await Student.findOne({
+      $or: [
+        { nationalId: identifier.trim() },
+        { phone: cleanIdentifier },
+        { username: identifier.trim() }
+      ]
+    });
 
-    // ۱. دریافت سوال امنیتی با کد ملی
-    if (action === "getQuestion") {
-      if (!cleanNationalId) {
-        return NextResponse.json(
-          { success: false, message: "کد ملی الزامی است." },
-          { status: 400 }
-        );
-      }
-
-      const student = await Student.findOne({ nationalId: cleanNationalId });
-
-      if (!student || !student.securityQuestion) {
-        return NextResponse.json(
-          { success: false, message: "دانش‌آموزی با این کد ملی یا سوال امنیتی یافت نشد." },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json({ success: true, question: student.securityQuestion });
+    if (!student) {
+      return NextResponse.json(
+        { success: false, message: "کاربری با این مشخصات یافت نشد." },
+        { status: 404 }
+      );
     }
 
-    // ۲. بررسی پاسخ عددی
-    if (action === "verifyAnswer") {
-      const student = await Student.findOne({ nationalId: cleanNationalId });
-
-      if (!student || !student.securityAnswer) {
-        return NextResponse.json(
-          { success: false, message: "اطلاعات دانش‌آموز یافت نشد." },
-          { status: 404 }
-        );
-      }
-
-      const savedAnswer = toEnglishDigits(String(student.securityAnswer)).trim();
-      const inputAnswer = toEnglishDigits(String(answer || "")).trim();
-
-      if (savedAnswer !== inputAnswer) {
-        return NextResponse.json(
-          { success: false, message: "پاسخ عددی وارد شده اشتباه است." },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({ success: true });
+    if (action === "checkUser") {
+      return NextResponse.json({ 
+        success: true, 
+        message: "کاربر یافت شد.",
+        securityQuestion: student.securityQuestion 
+      });
     }
 
-    // ۳. تغییر رمز عبور
-    if (action === "resetPassword") {
-      const student = await Student.findOne({ nationalId: cleanNationalId });
-
-      if (!student || !student.securityAnswer) {
-        return NextResponse.json(
-          { success: false, message: "دانش‌آموز یافت نشد." },
-          { status: 404 }
-        );
+    if (action === "verifyAnswer" || action === "resetPassword") {
+      const sCode = (securityCode || "").trim();
+      const pCode = (playerCode || "").trim().toLowerCase();
+      
+      let rawAns = (securityAnswer || "").trim();
+      
+      let derivedSCode = sCode;
+      let derivedPCode = pCode;
+      
+      if (!sCode && rawAns) {
+        const match = rawAns.match(/^(\d{6})[\s-]?(.+)$/);
+        if (match) {
+          derivedSCode = match[1];
+          derivedPCode = match[2].trim().toLowerCase();
+        }
       }
 
-      const savedAnswer = toEnglishDigits(String(student.securityAnswer)).trim();
-      const inputAnswer = toEnglishDigits(String(answer || "")).trim();
+      const combinedWithHyphen = derivedSCode && derivedPCode ? `${derivedSCode}-${derivedPCode}` : "";
+      const combined = derivedSCode && derivedPCode ? `${derivedSCode}${derivedPCode}` : rawAns.toLowerCase();
+      const combinedWithSpace = derivedSCode && derivedPCode ? `${derivedSCode} ${derivedPCode}` : rawAns;
 
-      if (savedAnswer !== inputAnswer) {
+      let possiblePlaintexts: string[] = [
+        combinedWithHyphen,
+        combined,
+        combinedWithSpace,
+        rawAns,
+        rawAns.toLowerCase(),
+        rawAns.replace(/\s+/g, ""),
+        sCode, 
+        pCode
+      ].filter(Boolean);
+
+      possiblePlaintexts = Array.from(new Set(possiblePlaintexts));
+
+      if (!student.securityAnswerHash) {
         return NextResponse.json(
-          { success: false, message: "اعتبارسنجی پاسخ ناموفق بود." },
+          { success: false, message: "اطلاعات امنیتی برای این کاربر ثبت نشده است." },
           { status: 400 }
         );
       }
 
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      student.password = hashedPassword;
-      student.passwordHash = hashedPassword;
+      let isAnswerValid = false;
+      for (const text of possiblePlaintexts) {
+        const match = await bcrypt.compare(text, student.securityAnswerHash);
+        if (match) {
+          isAnswerValid = true;
+          break;
+        }
+      }
+
+      if (!isAnswerValid) {
+        return NextResponse.json(
+          { success: false, message: "اطلاعات امنیتی وارد شده نادرست است." },
+          { status: 400 }
+        );
+      }
+
+      if (action === "verifyAnswer") {
+        return NextResponse.json({ success: true, message: "پاسخ امنیتی تایید شد." });
+      }
+
+      if (!newPassword) {
+        return NextResponse.json(
+          { success: false, message: "رمز عبور جدید وارد نشده است." },
+          { status: 400 }
+        );
+      }
+
+      // قانون جدید رمز عبور: ۶ تا ۸ کاراکتر شامل حروف بزرگ، کوچک و عدد
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,8}$/;
+      if (!passwordRegex.test(newPassword)) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: "رمز عبور باید بین ۶ تا ۸ کاراکتر و شامل حداقل یک حرف بزرگ، یک حرف کوچک و یک عدد انگلیسی باشد." 
+          },
+          { status: 400 }
+        );
+      }
+
+      const salt = await bcrypt.genSalt(12);
+      student.passwordHash = await bcrypt.hash(newPassword, salt);
       await student.save();
 
       return NextResponse.json({
         success: true,
-        message: "رمز عبور با موفقیت تغییر یافت.",
+        message: "رمز عبور با موفقیت تغییر یافت."
       });
     }
 
-    return NextResponse.json({ success: false, message: "درخواست نامعتبر است." }, { status: 400 });
-  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "عملیات نامعتبر است." },
+      { status: 400 }
+    );
+
+  } catch (error: any) {
     console.error("Forgot Password Error:", error);
-    return NextResponse.json({ success: false, message: "خطای سرور رخ داده است." }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "خطای سرور در پردازش درخواست." },
+      { status: 500 }
+    );
   }
 }

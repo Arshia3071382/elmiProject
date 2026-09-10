@@ -7,9 +7,10 @@ import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
 export async function POST(req: Request) {
-  await dbConnect();
-
   try {
+    // انتقال اتصال به دیتابیس به داخل بلاک try برای جلوگیری از کرش سرور
+    await dbConnect();
+
     const body = await req.json().catch(() => null);
     if (!body) {
       return NextResponse.json(
@@ -110,7 +111,6 @@ export async function POST(req: Request) {
       ],
     });
 
-    // پشتیبانی همزمان از password و passwordHash بر اساس اسکیمای دیتابیس
     const studentPassword = student?.password || student?.passwordHash;
 
     if (student && studentPassword) {

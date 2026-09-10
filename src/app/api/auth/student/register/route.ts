@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     // بررسی فیلدهای اجباری شامل سوال و پاسخ امنیتی
     if (!username || !nationalId || !phone || !password || !securityQuestion || !securityAnswer) {
       return NextResponse.json(
-        { success: false, message: "تمام اطلاعات اجباری شامل سوال و کلمه شخصی را وارد کنید." },
+        { success: false, message: "تمام اطلاعات اجباری شامل سوال و پاسخ امنیتی را وارد کنید." },
         { status: 400 }
       );
     }
@@ -57,16 +57,16 @@ export async function POST(req: Request) {
     const cleanUsername = username.trim();
     const cleanPhone = phone.trim();
 
-    // پاکسازی کلمه شخصی (حذف اسپیس‌ها و یکسان‌سازی حروف)
-    const cleanSecurityAnswer = securityAnswer.replace(/\s+/g, "").toLowerCase();
+    // پاکسازی پاسخ امنیتی (حذف فاصله‌های اضافی و یکسان‌سازی حروف کوچک)
+    const cleanSecurityAnswer = securityAnswer.trim().toLowerCase();
 
     if (!isValidNationalId(cleanNationalId)) {
       return NextResponse.json({ success: false, message: "کد ملی وارد شده معتبر نیست." }, { status: 400 });
     }
 
-    if (cleanSecurityAnswer.length < 2) {
+    if (cleanSecurityAnswer.length < 5) {
       return NextResponse.json(
-        { success: false, message: "کلمه شخصی باید حداقل ۲ کاراکتر باشد." },
+        { success: false, message: "پاسخ امنیتی نامعتبر است." },
         { status: 400 }
       );
     }
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۵. هش کردن ایمن رمز عبور و کلمه شخصی امنیتی
+    // ۵. هش کردن ایمن رمز عبور و پاسخ امنیتی
     const passwordHash = await bcrypt.hash(password, 12);
     const securityAnswerHash = await bcrypt.hash(cleanSecurityAnswer, 12);
 
