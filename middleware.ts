@@ -4,10 +4,13 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const adminToken = request.cookies.get("admin_token")?.value || request.cookies.get("token")?.value;
-  const seniorAdminToken = request.cookies.get("senior_admin_token")?.value;
-  const teacherToken = request.cookies.get("teacher_token")?.value || request.cookies.get("token")?.value;
-  const studentToken = request.cookies.get("student_token")?.value || request.cookies.get("token")?.value;
+  // استخراج دقیق و مستقل توکن‌ها (جلوگیری از نفوذ متقابل نقش‌ها)
+  const adminToken = request.cookies.get("admin_token")?.value;
+  const seniorAdminToken = 
+    request.cookies.get("senior_admin_token")?.value || 
+    request.cookies.get("senior_token")?.value;
+  const teacherToken = request.cookies.get("teacher_token")?.value;
+  const studentToken = request.cookies.get("student_token")?.value;
 
   // محافظت از پنل ادمین کل
   if (pathname.startsWith("/admin")) {
@@ -16,16 +19,16 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // محافظت از پنل مدیر ارشد
+  // محافظت از پنل مدیر ارشد (معین ارشد)
   if (pathname.startsWith("/senior-admin")) {
-    if (!seniorAdminToken && !adminToken) {
+    if (!seniorAdminToken) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
   // محافظت از پنل اساتید
   if (pathname.startsWith("/teacher")) {
-    if (!teacherToken && !adminToken) {
+    if (!teacherToken) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
@@ -38,6 +41,7 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
+  // جلوگیری از کش شدن صفحات در مرورگر برای کارکرد صحیح دکمه Back
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");

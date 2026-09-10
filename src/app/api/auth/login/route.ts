@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "./../../../../../lib/dbConnect";
 import Admin from "./../../../../../models/Admin";
+import SeniorAdmin from "./../../../../../models/SeniorAdmin";
 import Student from "./../../../../../models/Student";
 import Teacher from "./../../../../../models/Teacher";
 import bcrypt from "bcryptjs";
@@ -22,7 +23,6 @@ export async function POST(request: Request) {
     const cleanUsername = String(username).trim();
     const cleanPassword = String(password);
 
-    // تنظیمات استاندارد و امن کوکی (پشتیبانی پویا از لوکال و پروداکشن)
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -36,17 +36,17 @@ export async function POST(request: Request) {
     );
 
     // ----------------------------------------------------
-    // ۱. بررسی ادمین (Admin)
+    // ۱. بررسی معین ارشد (SeniorAdmin)
     // ----------------------------------------------------
-    const admin = await Admin.findOne({
+    const seniorAdminUser = await SeniorAdmin.findOne({
       $or: [{ username: cleanUsername }, { email: cleanUsername }],
     });
 
-    if (admin && (await bcrypt.compare(cleanPassword, admin.password))) {
+    if (seniorAdminUser && (await bcrypt.compare(cleanPassword, seniorAdminUser.password || seniorAdminUser.passwordHash))) {
       const token = await new SignJWT({
-        userId: admin._id.toString(),
-        username: admin.username,
-        role: "admin",
+        userId: seniorAdminUser._id.toString(),
+        username: seniorAdminUser.username,
+        role: "senior-admin",
       })
         .setProtectedHeader({ alg: "HS256" })
         .setExpirationTime("7d")
@@ -54,19 +54,66 @@ export async function POST(request: Request) {
 
       const response = NextResponse.json({
         success: true,
-        role: "admin",
-        redirectUrl: "/admin/dashboard",
-        message: "ورود ادمین با موفقیت انجام شد.",
+        role: "senior-admin",
+        redirectUrl: "/senior-admin",
+        message: "ورود معین ارشد با موفقیت انجام شد.",
       });
 
-      response.cookies.set("admin_token", token, cookieOptions);
+      response.cookies.set("senior_token", token, cookieOptions);
+      response.cookies.set("senior_admin_token", token, cookieOptions);
       response.cookies.set("token", token, cookieOptions);
 
       return response;
     }
 
     // ----------------------------------------------------
-    // ۲. بررسی استاد (Teacher)
+    // ۲. بررسی ادمین معمولی (Admin)
+    // ----------------------------------------------------
+    const adminUser = await Admin.findOne({
+      $or: [{ username: cleanUsername }, { email: cleanUsername }],
+    });
+
+    if (adminUser && (await bcrypt.compare(cleanPassword, adminUser.password))) {
+      const roleValue = String(adminUser.role || "").toLowerCase().trim();
+      const isSenior = 
+        roleValue === "senior" || 
+        roleValue === "senior_admin" || 
+        roleValue === "senior-admin" || 
+        roleValue === "معین" || 
+        roleValue.includes("senior");
+
+      const finalRole = isSenior ? "senior-admin" : "admin";
+      const redirectUrl = isSenior ? "/senior-admin" : "/admin";
+
+      const token = await new SignJWT({
+        userId: adminUser._id.toString(),
+        username: adminUser.username,
+        role: finalRole,
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("7d")
+        .sign(secret);
+
+      const response = NextResponse.json({
+        success: true,
+        role: finalRole,
+        redirectUrl: redirectUrl,
+        message: isSenior ? "ورود معین ارشد با موفقیت انجام شد." : "ورود ادمین با موفقیت انجام شد.",
+      });
+
+      if (isSenior) {
+        response.cookies.set("senior_token", token, cookieOptions);
+        response.cookies.set("senior_admin_token", token, cookieOptions);
+      } else {
+        response.cookies.set("admin_token", token, cookieOptions);
+      }
+      response.cookies.set("token", token, cookieOptions);
+
+      return response;
+    }
+
+    // ----------------------------------------------------
+    // ۳. بررسی استاد (Teacher)
     // ----------------------------------------------------
     const teacher = await Teacher.findOne({
       $or: [{ phone: cleanUsername }, { username: cleanUsername }, { email: cleanUsername }],
@@ -101,7 +148,7 @@ export async function POST(request: Request) {
     }
 
     // ----------------------------------------------------
-    // ۳. بررسی دانش‌آموز (Student)
+    // ۴. بررسی دانش‌آموز (Student)
     // ----------------------------------------------------
     const student = await Student.findOne({
       $or: [

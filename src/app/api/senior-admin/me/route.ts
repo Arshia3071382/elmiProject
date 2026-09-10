@@ -10,7 +10,11 @@ export async function GET() {
     await dbConnect();
 
     const cookieStore = await cookies();
-    const token = cookieStore.get("senior_admin_token")?.value;
+    // بررسی انعطاف‌پذیر نام کوکی‌های مختلف (برای جلوگیری از عدم تطابق نام کوکی لاگین و این API)
+    const token = 
+      cookieStore.get("senior_admin_token")?.value || 
+      cookieStore.get("senior_token")?.value || 
+      cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json(

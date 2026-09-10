@@ -99,7 +99,8 @@ export async function POST(req: Request) {
 
       await admin.save();
 
-      await setAuthCookie(admin.username);
+      // ارسال کل شیء admin برای ذخیره صحیح userId و username در توکن
+      await setAuthCookie(admin);
 
       return NextResponse.json({
         success: true,
@@ -162,7 +163,8 @@ export async function POST(req: Request) {
 
       await admin.save();
 
-      await setAuthCookie(admin.username);
+      // ارسال کل شیء admin برای ذخیره صحیح userId و username در توکن
+      await setAuthCookie(admin);
 
       return NextResponse.json({
         success: true,
@@ -194,15 +196,19 @@ export async function POST(req: Request) {
   }
 }
 
-// 🔒 تابع تنظیم کوکی با توکن امن JWT و امضای دیجیتال
-async function setAuthCookie(username: string) {
+// 🔒 تابع تنظیم کوکی با توکن امن JWT و امضای دیجیتال (اصلاح‌شده برای ثبت شناسه کاربر)
+async function setAuthCookie(admin: any) {
   const cookieStore = await cookies();
 
   const secret = new TextEncoder().encode(
     process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
   );
 
-  const token = await new SignJWT({ username })
+  const token = await new SignJWT({ 
+    userId: admin._id.toString(), 
+    username: admin.username,
+    role: admin.role 
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .sign(secret);
@@ -211,7 +217,7 @@ async function setAuthCookie(username: string) {
 
   cookieStore.set("senior_admin_token", token, {
     httpOnly: true,
-    secure: isProduction, 
+    secure: isProduction,      
     sameSite: "lax",      
     path: "/",
     maxAge: 60 * 60 * 24 * 7, // 7 روز

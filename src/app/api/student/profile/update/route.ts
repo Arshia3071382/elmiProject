@@ -10,18 +10,18 @@ export async function PUT(req: Request) {
 
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("studentToken");
-
+    const token = cookieStore.get("student_token") || cookieStore.get("token");
     if (!token || !token.value) {
       return NextResponse.json(
         { success: false, message: "دسترسی غیرمجاز. لطفاً دوباره وارد شوید." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // 🔒 رمزگشایی و اعتبارسنجی توکن JWT امن
     const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+      process.env.JWT_SECRET ||
+        "elmi_super_secret_jwt_key_2026_secure_random_string",
     );
 
     let studentId = "";
@@ -30,8 +30,11 @@ export async function PUT(req: Request) {
       studentId = payload.userId as string;
     } catch (e) {
       return NextResponse.json(
-        { success: false, message: "توکن نامعتبر یا منقضی شده است. لطفاً دوباره وارد شوید." },
-        { status: 401 }
+        {
+          success: false,
+          message: "توکن نامعتبر یا منقضی شده است. لطفاً دوباره وارد شوید.",
+        },
+        { status: 401 },
       );
     }
 
@@ -39,7 +42,7 @@ export async function PUT(req: Request) {
     if (!student) {
       return NextResponse.json(
         { success: false, message: "دانش‌آموز یافت نشد." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -80,7 +83,7 @@ export async function PUT(req: Request) {
     console.error("Profile Update Error:", err);
     return NextResponse.json(
       { success: false, message: err.message || "خطای سرور رخ داد." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

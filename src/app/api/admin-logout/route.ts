@@ -1,15 +1,30 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function POST() {
   try {
-    const cookieStore = await cookies();
+    const response = NextResponse.json({
+      success: true,
+      message: "با موفقیت خارج شدید",
+    });
 
-    // پاک‌سازی تمام نام‌های احتمالی کوکی ادمین با تنظیم MaxAge صفر
-    const tokenNames = ["admin_token", "admin__token", "adminToken"];
-    
+    // لیست کامل و جامع تمام کوکی‌های احتمالی در تمامی پنل‌ها
+    const tokenNames = [
+      "token",
+      "admin_token",
+      "admin__token",
+      "adminToken",
+      "senior_token",
+      "senior_admin_token",
+      "seniorToken",
+      "teacher_token",
+      "teacherToken",
+      "student_token",
+      "studentToken",
+    ];
+
+    // پاک‌سازی کامل تمام کوکی‌ها با تنظیم MaxAge روی صفر
     for (const name of tokenNames) {
-      cookieStore.set({
+      response.cookies.set({
         name,
         value: "",
         path: "/",
@@ -21,11 +36,7 @@ export async function POST() {
       });
     }
 
-    const response = NextResponse.json({
-      success: true,
-      message: "با موفقیت خارج شدید",
-    });
-
+    // هدرهای ضد کش برای جلوگیری از ماندگاری صفحه در تاریخچه مرورگر
     response.headers.set(
       "Cache-Control",
       "no-store, no-cache, must-revalidate, proxy-revalidate"
