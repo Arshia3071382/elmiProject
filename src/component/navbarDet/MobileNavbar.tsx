@@ -126,7 +126,7 @@ export default function MobileNavbar({ logo }: MobileNavbarProps) {
     <>
       <header
         dir="rtl"
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 lg:hidden ${
+        className={`fixed inset-x-0 top-0 z-30 transition-all duration-500 lg:hidden ${
           isScrolled ? "pt-1.5" : "pt-2"
         }`}
       >
