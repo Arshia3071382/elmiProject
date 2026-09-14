@@ -105,12 +105,12 @@ export default function StudentRegisterModal({
     onClose();
   };
 
-  const updateField = (field: keyof typeof formData, value: any) => {
-    let processedValue = value;
+  const updateField = (field: keyof typeof formData, value: string | boolean) => {
+    let processedValue: string | boolean = value;
 
-    if (field === "securityPin") {
+    if (field === "securityPin" && typeof value === "string") {
       processedValue = toEnglishDigits(value).slice(0, 6);
-    } else if (field === "favoritePlayer") {
+    } else if (field === "favoritePlayer" && typeof value === "string") {
       processedValue = value.replace(/[^A-Za-z]/g, "").slice(0, 3);
     }
 
@@ -294,6 +294,8 @@ export default function StudentRegisterModal({
       return;
     }
 
+    const controller = new AbortController();
+
     try {
       setLoading(true);
       setErrorMessage("");
@@ -316,6 +318,7 @@ export default function StudentRegisterModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
       const data = await res.json();
@@ -333,7 +336,10 @@ export default function StudentRegisterModal({
 
       setStep("security-card");
     } catch (err: any) {
-      setErrorMessage(err.message || "ارتباط با سرور برقرار نشد.");
+      if (err.name !== "AbortError") {
+        console.error("Student Registration Error:", err);
+        setErrorMessage(err.message || "ارتباط با سرور برقرار نشد.");
+      }
     } finally {
       setLoading(false);
     }
