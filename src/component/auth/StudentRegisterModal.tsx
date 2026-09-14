@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { X, User, CreditCard, Phone, Lock, Eye, EyeOff, ShieldCheck, Download, ArrowLeft, KeyRound, Trophy } from "lucide-react";
 import RulesModal from "./StudentRegisterModal/RulesModal";
@@ -48,6 +49,8 @@ export default function StudentRegisterModal({
 }: StudentRegisterModalProps) {
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+
   const [step, setStep] = useState<1 | 2 | 3 | 4 | "security-card">(1);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -71,32 +74,19 @@ export default function StudentRegisterModal({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // قفل کردن کامل صفحه و مخفی‌سازی اسکرول و نوارهای زیرین در موبایل (به‌خصوص آیفون)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // قفل کردن اسکرول صفحه هنگام باز بودن مودال
   useEffect(() => {
     if (isOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
-      }
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -377,333 +367,336 @@ export default function StudentRegisterModal({
     router.refresh();
   };
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
   const stepNumber = typeof step === "number" ? step : 4;
   const progressPercentage = (stepNumber / 4) * 100;
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto" dir="rtl">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={handleResetAndClose}
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
-      />
-
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 25 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 25 }}
-        className="relative w-full max-w-[500px] bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-7 z-10 my-auto max-h-[90vh] overflow-y-auto"
-      >
-        <button
-          type="button"
+  return createPortal(
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto" dir="rtl">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={handleResetAndClose}
-          className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer z-20"
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
+        />
+
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 25 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 25 }}
+          className="relative w-full max-w-[500px] bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-7 z-10 my-auto max-h-[90vh] overflow-y-auto"
         >
-          <X className="w-4 h-4" />
-        </button>
+          <button
+            type="button"
+            onClick={handleResetAndClose}
+            className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer z-20"
+          >
+            <X className="w-4 h-4" />
+          </button>
 
-        {step !== "security-card" ? (
-          <div>
-            <div className="mb-5 pt-1">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
-                <span>مرحله {step} از 4</span>
-                <span>
-                  {step === 1 && "اطلاعات فردی"}
-                  {step === 2 && "کد ملی و تماس"}
-                  {step === 3 && "رمز عبور"}
-                  {step === 4 && "امنیت و قوانین"}
-                </span>
+          {step !== "security-card" ? (
+            <div>
+              <div className="mb-5 pt-1">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
+                  <span>مرحله {step} از 4</span>
+                  <span>
+                    {step === 1 && "اطلاعات فردی"}
+                    {step === 2 && "کد ملی و تماس"}
+                    {step === 3 && "رمز عبور"}
+                    {step === 4 && "امنیت و قوانین"}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <motion.div
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full"
+                    animate={{ width: `${progressPercentage}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
               </div>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <motion.div
-                  className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full"
-                  animate={{ width: `${progressPercentage}%` }}
-                  transition={{ duration: 0.3 }}
-                />
+
+              <div className="mb-5 text-right">
+                <h2 className="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                  ثبت‌نام دانش‌آموز
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">لطفاً اطلاعات خود را دقیق وارد کنید</p>
               </div>
-            </div>
 
-            <div className="mb-5 text-right">
-              <h2 className="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                ثبت‌نام دانش‌آموز
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">لطفاً اطلاعات خود را دقیق وارد کنید</p>
-            </div>
-
-            {errorMessage && (
-              <div className="mb-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs">
-                {errorMessage}
-              </div>
-            )}
-
-            <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); handleNextStep(); }}>
-              {step === 1 && (
-                <div className="space-y-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">نام</label>
-                    <div className="relative">
-                      <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        value={formData.firstName}
-                        onChange={(e) => updateField("firstName", e.target.value)}
-                        placeholder="مثال: علی"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                    {errors.firstName && <p className="text-rose-500 text-[11px] mt-0.5">{errors.firstName}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">نام خانوادگی</label>
-                    <div className="relative">
-                      <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        value={formData.lastName}
-                        onChange={(e) => updateField("lastName", e.target.value)}
-                        placeholder="مثال: محمدی"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                    {errors.lastName && <p className="text-rose-500 text-[11px] mt-0.5">{errors.lastName}</p>}
-                  </div>
+              {errorMessage && (
+                <div className="mb-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs">
+                  {errorMessage}
                 </div>
               )}
 
-              {step === 2 && (
-                <div className="space-y-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">کد ملی (۱۰ رقم)</label>
-                    <div className="relative">
-                      <CreditCard className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        maxLength={10}
-                        value={formData.nationalId}
-                        onChange={(e) => updateField("nationalId", e.target.value.replace(/\D/g, ""))}
-                        placeholder="0012345678"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                      />
+              <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); handleNextStep(); }}>
+                {step === 1 && (
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">نام</label>
+                      <div className="relative">
+                        <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={formData.firstName}
+                          onChange={(e) => updateField("firstName", e.target.value)}
+                          placeholder="مثال: علی"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {errors.firstName && <p className="text-rose-500 text-[11px] mt-0.5">{errors.firstName}</p>}
                     </div>
-                    {errors.nationalId && <p className="text-rose-500 text-[11px] mt-0.5">{errors.nationalId}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">شماره همراه</label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        maxLength={11}
-                        value={formData.phone}
-                        onChange={(e) => updateField("phone", e.target.value.replace(/\D/g, ""))}
-                        placeholder="09123456789"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                      />
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">نام خانوادگی</label>
+                      <div className="relative">
+                        <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={formData.lastName}
+                          onChange={(e) => updateField("lastName", e.target.value)}
+                          placeholder="مثال: محمدی"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {errors.lastName && <p className="text-rose-500 text-[11px] mt-0.5">{errors.lastName}</p>}
                     </div>
-                    {errors.phone && <p className="text-rose-500 text-[11px] mt-0.5">{errors.phone}</p>}
                   </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      رمز عبور (۶ تا ۸ کاراکتر، شامل حروف بزرگ، کوچک و عدد)
-                    </label>
-                    <div className="relative">
-                      <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={(e) => updateField("password", e.target.value)}
-                        placeholder="Abc123"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute left-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-rose-500 text-[11px] mt-0.5">{errors.password}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">تکرار رمز عبور</label>
-                    <div className="relative">
-                      <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={formData.confirmPassword}
-                        onChange={(e) => updateField("confirmPassword", e.target.value)}
-                        placeholder="Abc123"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute left-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.confirmPassword && <p className="text-rose-500 text-[11px] mt-0.5">{errors.confirmPassword}</p>}
-                  </div>
-                </div>
-              )}
-
-              {step === 4 && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      ۱. یک کد ۶ رقمی شخصی و محرمانه (فقط عدد)
-                    </label>
-                    <div className="relative">
-                      <KeyRound className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={formData.securityPin}
-                        onChange={(e) => updateField("securityPin", e.target.value)}
-                        placeholder="مثال: ۷۴۸۵۱۲"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                    {errors.securityPin && <p className="text-rose-500 text-[11px] mt-0.5">{errors.securityPin}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      ۲. سه حرف اول اسم بازیکن فوتبال مورد علاقه (فقط انگلیسی)
-                    </label>
-                    <div className="relative">
-                      <Trophy className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
-                      <input
-                        type="text"
-                        maxLength={3}
-                        value={formData.favoritePlayer}
-                        onChange={(e) => updateField("favoritePlayer", e.target.value)}
-                        placeholder="مثال: ron یا mes"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right uppercase focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                    {errors.favoritePlayer && <p className="text-rose-500 text-[11px] mt-0.5">{errors.favoritePlayer}</p>}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="checkbox"
-                      id="rules"
-                      checked={formData.acceptRules}
-                      onChange={(e) => updateField("acceptRules", e.target.checked)}
-                      className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
-                    />
-                    <label htmlFor="rules" className="text-xs text-slate-600 cursor-pointer">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setIsRulesModalOpen(true);
-                        }}
-                        className="text-emerald-600 font-bold hover:underline inline mx-1 cursor-pointer"
-                      >
-                        قوانین و شرایط استفاده از سامانه
-                      </button>
-                      را مطالعه کرده‌ام و می‌پذیرم.
-                    </label>
-                  </div>
-                  {errors.rules && <p className="text-rose-500 text-[11px]">{errors.rules}</p>}
-                </div>
-              )}
-
-              <div className="flex gap-3 mt-5">
-                {step > 1 && (
-                  <button
-                    type="button"
-                    onClick={handlePrevStep}
-                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm cursor-pointer"
-                  >
-                    مرحله قبل
-                  </button>
                 )}
+
+                {step === 2 && (
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">کد ملی (۱۰ رقم)</label>
+                      <div className="relative">
+                        <CreditCard className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          maxLength={10}
+                          value={formData.nationalId}
+                          onChange={(e) => updateField("nationalId", e.target.value.replace(/\D/g, ""))}
+                          placeholder="0012345678"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {errors.nationalId && <p className="text-rose-500 text-[11px] mt-0.5">{errors.nationalId}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">شماره همراه</label>
+                      <div className="relative">
+                        <Phone className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          maxLength={11}
+                          value={formData.phone}
+                          onChange={(e) => updateField("phone", e.target.value.replace(/\D/g, ""))}
+                          placeholder="09123456789"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {errors.phone && <p className="text-rose-500 text-[11px] mt-0.5">{errors.phone}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && (
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        رمز عبور (۶ تا ۸ کاراکتر، شامل حروف بزرگ، کوچک و عدد)
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={(e) => updateField("password", e.target.value)}
+                          placeholder="Abc123"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute left-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {errors.password && <p className="text-rose-500 text-[11px] mt-0.5">{errors.password}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">تکرار رمز عبور</label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={formData.confirmPassword}
+                          onChange={(e) => updateField("confirmPassword", e.target.value)}
+                          placeholder="Abc123"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute left-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {errors.confirmPassword && <p className="text-rose-500 text-[11px] mt-0.5">{errors.confirmPassword}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {step === 4 && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        ۱. یک کد ۶ رقمی شخصی و محرمانه (فقط عدد)
+                      </label>
+                      <div className="relative">
+                        <KeyRound className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={formData.securityPin}
+                          onChange={(e) => updateField("securityPin", e.target.value)}
+                          placeholder="مثال: ۷۴۸۵۱۲"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {errors.securityPin && <p className="text-rose-500 text-[11px] mt-0.5">{errors.securityPin}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        ۲. سه حرف اول اسم بازیکن فوتبال مورد علاقه (فقط انگلیسی)
+                      </label>
+                      <div className="relative">
+                        <Trophy className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
+                        <input
+                          type="text"
+                          maxLength={3}
+                          value={formData.favoritePlayer}
+                          onChange={(e) => updateField("favoritePlayer", e.target.value)}
+                          placeholder="مثال: ron یا mes"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right uppercase focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {errors.favoritePlayer && <p className="text-rose-500 text-[11px] mt-0.5">{errors.favoritePlayer}</p>}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="rules"
+                        checked={formData.acceptRules}
+                        onChange={(e) => updateField("acceptRules", e.target.checked)}
+                        className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <label htmlFor="rules" className="text-xs text-slate-600 cursor-pointer">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setIsRulesModalOpen(true);
+                          }}
+                          className="text-emerald-600 font-bold hover:underline inline mx-1 cursor-pointer"
+                        >
+                          قوانین و شرایط استفاده از سامانه
+                        </button>
+                        را مطالعه کرده‌ام و می‌پذیرم.
+                      </label>
+                    </div>
+                    {errors.rules && <p className="text-rose-500 text-[11px]">{errors.rules}</p>}
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-5">
+                  {step > 1 && (
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm cursor-pointer"
+                    >
+                      مرحله قبل
+                    </button>
+                  )}
+                  <button
+                    type={step === 4 ? "submit" : "button"}
+                    onClick={step === 4 ? undefined : handleNextStep}
+                    disabled={loading}
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {loading ? "در حال ثبت‌نام..." : step === 4 ? "تکمیل ثبت‌نام" : "مرحله بعد"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div className="space-y-4 text-center">
+              <div className="mb-2 text-right">
+                <h2 className="text-lg font-extrabold text-slate-800">کارت امنیتی شما آماده است</h2>
+                <p className="text-xs text-slate-500 mt-0.5">لطفاً پیش از ورود، این کارت را ذخیره کنید</p>
+              </div>
+
+              {securityCardImage && (
+                <div className="flex justify-center">
+                  <img
+                    src={securityCardImage}
+                    alt="Security Card"
+                    className="w-full max-w-[440px] rounded-2xl shadow-md border border-slate-200"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2.5 pt-1">
                 <button
-                  type={step === 4 ? "submit" : "button"}
-                  onClick={step === 4 ? undefined : handleNextStep}
-                  disabled={loading}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+                  type="button"
+                  onClick={handleSaveImage}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-600/20 cursor-pointer"
                 >
-                  {loading ? "در حال ثبت‌نام..." : step === 4 ? "تکمیل ثبت‌نام" : "مرحله بعد"}
+                  <Download className="w-4 h-4" /> ذخیره عکس در گالری
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinish}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
+                >
+                  <span>متوجه شدم / ورود</span> <ArrowLeft className="w-4 h-4" />
                 </button>
               </div>
-            </form>
-          </div>
-        ) : (
-          <div className="space-y-4 text-center">
-            <div className="mb-2 text-right">
-              <h2 className="text-lg font-extrabold text-slate-800">کارت امنیتی شما آماده است</h2>
-              <p className="text-xs text-slate-500 mt-0.5">لطفاً پیش از ورود، این کارت را ذخیره کنید</p>
             </div>
+          )}
 
-            {securityCardImage && (
-              <div className="flex justify-center">
-                <img
-                  src={securityCardImage}
-                  alt="Security Card"
-                  className="w-full max-w-[440px] rounded-2xl shadow-md border border-slate-200"
-                />
-              </div>
-            )}
-
-            <div className="flex gap-2.5 pt-1">
+          {onSwitchToLogin && step !== "security-card" && (
+            <div className="mt-4 pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
+              قبلاً ثبت‌نام کرده‌اید؟{" "}
               <button
                 type="button"
-                onClick={handleSaveImage}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-600/20 cursor-pointer"
+                onClick={() => {
+                  handleResetAndClose();
+                  onSwitchToLogin();
+                }}
+                className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer"
               >
-                <Download className="w-4 h-4" /> ذخیره عکس در گالری
-              </button>
-              <button
-                type="button"
-                onClick={handleFinish}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
-              >
-                <span>متوجه شدم / ورود</span> <ArrowLeft className="w-4 h-4" />
+                وارد شوید
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </motion.div>
 
-        {onSwitchToLogin && step !== "security-card" && (
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
-            قبلاً ثبت‌نام کرده‌اید؟{" "}
-            <button
-              type="button"
-              onClick={() => {
-                handleResetAndClose();
-                onSwitchToLogin();
-              }}
-              className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer"
-            >
-              وارد شوید
-            </button>
-          </div>
-        )}
-      </motion.div>
-
-      <RulesModal
-        isOpen={isRulesModalOpen}
-        onClose={() => setIsRulesModalOpen(false)}
-        onAccept={() => {
-          setFormData((prev) => ({ ...prev, acceptRules: true }));
-          setIsRulesModalOpen(false);
-        }}
-      />
-    </div>
+        <RulesModal
+          isOpen={isRulesModalOpen}
+          onClose={() => setIsRulesModalOpen(false)}
+          onAccept={() => {
+            setFormData((prev) => ({ ...prev, acceptRules: true }));
+            setIsRulesModalOpen(false);
+          }}
+        />
+      </div>
+    </AnimatePresence>,
+    document.body
   );
 }
