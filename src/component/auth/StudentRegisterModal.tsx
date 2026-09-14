@@ -71,14 +71,32 @@ export default function StudentRegisterModal({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // قفل کردن کامل صفحه و مخفی‌سازی اسکرول و نوارهای زیرین در موبایل (به‌خصوص آیفون)
   useEffect(() => {
     if (isOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
+      }
     }
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -208,20 +226,19 @@ export default function StudentRegisterModal({
       ctx.font = "bold 20px sans-serif";
       ctx.direction = "rtl";
       ctx.textAlign = "center";
-      ctx.fillText("کارت امنیتی مهم", canvas.width / 2, 82);
+      ctx.fillText("کارت امنیتی مهم - سامانه علمی منتظران", canvas.width / 2, 82);
 
       ctx.fillStyle = "#e11d48";
       ctx.font = "13px sans-serif";
       ctx.fillText("حتماً از این کارت اسکرین‌شات بگیرید یا آن را ذخیره کنید!", canvas.width / 2, 108);
 
       ctx.textAlign = "right";
-
-      const startX = 500;
-      const endX = 100;
+      const startX = 520;
+      const endX = 80;
 
       ctx.fillStyle = "#64748b";
       ctx.font = "12px sans-serif";
-      ctx.fillText("نام کودک:", startX, 155);
+      ctx.fillText("نام دانش‌آموز:", startX, 155);
 
       ctx.fillStyle = "#0f172a";
       ctx.font = "bold 16px sans-serif";
@@ -236,10 +253,10 @@ export default function StudentRegisterModal({
 
       ctx.fillStyle = "#64748b";
       ctx.font = "12px sans-serif";
-      ctx.fillText("سوال محرمانه:", startX, 222);
+      ctx.fillText("سوالات امنیتی بازیابی:", startX, 222);
 
       ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 15px sans-serif";
+      ctx.font = "bold 14px sans-serif";
       ctx.fillText("۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال", startX, 245);
 
       ctx.beginPath();
@@ -249,11 +266,11 @@ export default function StudentRegisterModal({
 
       ctx.fillStyle = "#64748b";
       ctx.font = "12px sans-serif";
-      ctx.fillText("پاسخ محرمانه:", startX, 288);
+      ctx.fillText("پاسخ‌های محرمانه شما:", startX, 288);
 
       ctx.fillStyle = "#059669";
       ctx.font = "bold 20px sans-serif";
-      ctx.fillText(`${pin} - ${player.toUpperCase()}`, startX, 315);
+      ctx.fillText(`${pin}  -  ${player.toUpperCase()}`, startX, 315);
 
       ctx.strokeStyle = "#cbd5e1";
       ctx.setLineDash([4, 4]);
@@ -266,7 +283,7 @@ export default function StudentRegisterModal({
       ctx.fillStyle = "#94a3b8";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("سامانه علمی منتظران", canvas.width / 2, 385);
+      ctx.fillText("elmi-project.ir - تمامی حقوق محفوظ است", canvas.width / 2, 385);
 
       return canvas.toDataURL("image/png");
     }
@@ -366,25 +383,25 @@ export default function StudentRegisterModal({
   const progressPercentage = (stepNumber / 4) * 100;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6" dir="rtl">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto" dir="rtl">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={handleResetAndClose}
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+        className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
       />
 
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 25 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 25 }}
-        className="relative w-full max-w-[500px] bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-7 z-10 overflow-hidden"
+        className="relative w-full max-w-[500px] bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-7 z-10 my-auto max-h-[90vh] overflow-y-auto"
       >
         <button
           type="button"
           onClick={handleResetAndClose}
-          className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer"
+          className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer z-20"
         >
           <X className="w-4 h-4" />
         </button>
@@ -628,6 +645,11 @@ export default function StudentRegisterModal({
           </div>
         ) : (
           <div className="space-y-4 text-center">
+            <div className="mb-2 text-right">
+              <h2 className="text-lg font-extrabold text-slate-800">کارت امنیتی شما آماده است</h2>
+              <p className="text-xs text-slate-500 mt-0.5">لطفاً پیش از ورود، این کارت را ذخیره کنید</p>
+            </div>
+
             {securityCardImage && (
               <div className="flex justify-center">
                 <img
@@ -651,7 +673,7 @@ export default function StudentRegisterModal({
                 onClick={handleFinish}
                 className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
               >
-                <span>اسکرین‌شات گرفتم / ورود</span> <ArrowLeft className="w-4 h-4" />
+                <span>متوجه شدم / ورود</span> <ArrowLeft className="w-4 h-4" />
               </button>
             </div>
           </div>
