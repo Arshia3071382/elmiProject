@@ -43,9 +43,7 @@ export default function AppHeader({
 
   return (
     <>
-      {/* 
-        هدر اصلی
-      */}
+      {/* هدر اصلی */}
       <header className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-2.5 flex items-center justify-between shadow-sm">
         {/* دکمه منوی همبرگری (سمت راست) */}
         <button
@@ -86,18 +84,18 @@ export default function AppHeader({
       {/* 
         منوی همبرگری کشویی (Drawer Navigation)
       */}
-      {/* Backdrop (پس‌زمینه تاریک) */}
+      {/* Backdrop (پس‌زمینه تاریک) با z-index بالاتر */}
       {isDrawerOpen && (
         <div
           onClick={() => setIsDrawerOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300"
+          className="fixed inset-0 z-[999] bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300"
         />
       )}
 
-      {/* کشو منو */}
+      {/* کشو منو با z-index بالاتر از تمام المان‌های صفحه */}
       <aside
         dir="rtl"
-        className={`fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col justify-between ${
+        className={`fixed top-0 right-0 bottom-0 z-[1000] w-[82%] max-w-xs bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col justify-between ${
           isDrawerOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -157,7 +155,7 @@ export default function AppHeader({
             <nav className="space-y-1">
               {/* درباره ما */}
               <Link
-                href="/aboutUs"
+                href="/about"
                 onClick={() => setIsDrawerOpen(false)}
                 className="flex items-center justify-between p-2.5 rounded-2xl text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
               >
@@ -172,7 +170,7 @@ export default function AppHeader({
 
               {/* ارتباط با ما */}
               <Link
-                href="/contactUs"
+                href="/contact"
                 onClick={() => setIsDrawerOpen(false)}
                 className="flex items-center justify-between p-2.5 rounded-2xl text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
               >
@@ -202,7 +200,7 @@ export default function AppHeader({
 
               {/* آشنایی با لیگ نخبگان */}
               <Link
-                href="/league-guide"
+                href="/elite-league/about"
                 onClick={() => setIsDrawerOpen(false)}
                 className="flex items-center justify-between p-2.5 rounded-2xl text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
               >
