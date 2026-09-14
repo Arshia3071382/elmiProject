@@ -152,9 +152,7 @@ function PWAAppHome() {
           onNotificationClick={() => {
             window.location.href = "/notices";
           }}
-          onMenuClick={() => {
-            window.location.href = "/student/dashboard";
-          }}
+          /* onMenuClick برداشته شد تا کشوی Drawer هدر اجرا شود */
         />
       }
       hero={
