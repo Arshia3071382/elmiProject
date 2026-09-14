@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   LockKeyhole,
@@ -26,6 +27,12 @@ export default function StudentLoginModal({
   onClose,
   onSwitchToRegister,
 }: StudentLoginModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -149,7 +156,7 @@ export default function StudentLoginModal({
         setStatus("error");
         setErrorMessage(data.message || data.error || "نام کاربری یا رمز عبور اشتباه است.");
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setErrorMessage("مشکل در ارتباط با سرور. لطفاً دوباره تلاش کنید.");
     }
@@ -310,11 +317,13 @@ export default function StudentLoginModal({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  // استفاده از createPortal برای انتقال مودال مستقیم به بدنه صفحه (document.body) جهت رفع قطعی مشکل z-index در سلفاری آیفون
+  return createPortal(
     <>
       <AnimatePresence>
         {isOpen && (
-          // استفاده از z-[99999] برای قرار گرفتن بالاتر از هدر، باتم‌بار و سایر المان‌های صفحه
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
             <motion.div
               initial={{ opacity: 0 }}
@@ -453,7 +462,7 @@ export default function StudentLoginModal({
         )}
       </AnimatePresence>
 
-      {/* مدال بازیابی رمز عبور با همان z-index بسیار بالا */}
+      {/* مدال بازیابی رمز عبور */}
       <AnimatePresence>
         {isForgotPasswordOpen && (
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
@@ -623,6 +632,7 @@ export default function StudentLoginModal({
           </div>
         )}
       </AnimatePresence>
-    </>
+    </>,
+    document.body
   );
 }

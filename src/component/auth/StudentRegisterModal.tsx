@@ -53,7 +53,6 @@ export default function StudentRegisterModal({
   const [errorMessage, setErrorMessage] = useState("");
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
 
-  // استیت نگهداری تصویر کارت امنیتی به صورت Data URL
   const [securityCardImage, setSecurityCardImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -63,8 +62,8 @@ export default function StudentRegisterModal({
     phone: "",
     password: "",
     confirmPassword: "",
-    securityPin: "", // کد ۶ رقمی عددی
-    favoritePlayer: "", // ۳ حرف انگلیسی بازیکن
+    securityPin: "",
+    favoritePlayer: "",
     acceptRules: false,
   });
 
@@ -72,7 +71,6 @@ export default function StudentRegisterModal({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // قفل کردن اسکرول صفحه هنگام باز بودن مودال
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -84,7 +82,6 @@ export default function StudentRegisterModal({
     };
   }, [isOpen]);
 
-  // تابع جامع برای ریست کردن کامل فرم، ارورها و استیت‌ها
   const handleResetAndClose = () => {
     if (loading) return;
     setStep(1);
@@ -108,7 +105,7 @@ export default function StudentRegisterModal({
     onClose();
   };
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: keyof typeof formData, value: any) => {
     let processedValue = value;
 
     if (field === "securityPin") {
@@ -208,13 +205,13 @@ export default function StudentRegisterModal({
       ctx.restore();
 
       ctx.fillStyle = "#9f1239";
-      ctx.font = "bold 20px iranBold, sans-serif";
+      ctx.font = "bold 20px sans-serif";
       ctx.direction = "rtl";
       ctx.textAlign = "center";
       ctx.fillText("کارت امنیتی مهم", canvas.width / 2, 82);
 
       ctx.fillStyle = "#e11d48";
-      ctx.font = "13px iranSans-r, sans-serif";
+      ctx.font = "13px sans-serif";
       ctx.fillText("حتماً از این کارت اسکرین‌شات بگیرید یا آن را ذخیره کنید!", canvas.width / 2, 108);
 
       ctx.textAlign = "right";
@@ -223,11 +220,11 @@ export default function StudentRegisterModal({
       const endX = 100;
 
       ctx.fillStyle = "#64748b";
-      ctx.font = "12px iranSans-r, sans-serif";
+      ctx.font = "12px sans-serif";
       ctx.fillText("نام کودک:", startX, 155);
 
       ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 16px iranBold, sans-serif";
+      ctx.font = "bold 16px sans-serif";
       ctx.fillText(fullName, startX, 178);
 
       ctx.strokeStyle = "#f1f5f9";
@@ -238,11 +235,11 @@ export default function StudentRegisterModal({
       ctx.stroke();
 
       ctx.fillStyle = "#64748b";
-      ctx.font = "12px iranSans-r, sans-serif";
+      ctx.font = "12px sans-serif";
       ctx.fillText("سوال محرمانه:", startX, 222);
 
       ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 15px iranBold, sans-serif";
+      ctx.font = "bold 15px sans-serif";
       ctx.fillText("۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال", startX, 245);
 
       ctx.beginPath();
@@ -251,11 +248,11 @@ export default function StudentRegisterModal({
       ctx.stroke();
 
       ctx.fillStyle = "#64748b";
-      ctx.font = "12px iranSans-r, sans-serif";
+      ctx.font = "12px sans-serif";
       ctx.fillText("پاسخ محرمانه:", startX, 288);
 
       ctx.fillStyle = "#059669";
-      ctx.font = "bold 20px iranBold, sans-serif";
+      ctx.font = "bold 20px sans-serif";
       ctx.fillText(`${pin} - ${player.toUpperCase()}`, startX, 315);
 
       ctx.strokeStyle = "#cbd5e1";
@@ -267,7 +264,7 @@ export default function StudentRegisterModal({
       ctx.setLineDash([]);
 
       ctx.fillStyle = "#94a3b8";
-      ctx.font = "12px iranSans-r, sans-serif";
+      ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("سامانه علمی منتظران", canvas.width / 2, 385);
 
@@ -306,7 +303,6 @@ export default function StudentRegisterModal({
       const finalSecurityAnswer = `${cleanPin}-${cleanPlayer}`;
 
       const payload = {
-        username: `user_${formData.nationalId}`,
         firstName: formData.firstName,
         lastName: formData.lastName,
         nationalId: formData.nationalId,
@@ -364,7 +360,6 @@ export default function StudentRegisterModal({
   const progressPercentage = (stepNumber / 4) * 100;
 
   return (
-    // استفاده از z-[99999] برای قرار گرفتن بالاتر از هدر، نوبار و سایر المان‌های صفحه
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6" dir="rtl">
       <motion.div
         initial={{ opacity: 0 }}
