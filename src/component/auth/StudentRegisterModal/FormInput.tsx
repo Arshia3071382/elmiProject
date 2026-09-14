@@ -52,7 +52,9 @@ export const FormInput = ({
         maxLength={maxLength}
         dir={dir}
         className={`w-full px-4 py-3 rounded-2xl border ${
-          error ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-emerald-500"
+          error
+            ? "border-red-400 focus:border-red-500"
+            : "border-slate-200 focus:border-emerald-500"
         } focus:outline-none focus:ring-2 ${
           error ? "focus:ring-red-200" : "focus:ring-emerald-200"
         } transition-all text-sm font-[iranSans-r] ${Icon ? "pr-12" : ""} ${showToggle ? "pl-12" : ""} ${className}`}
@@ -63,7 +65,11 @@ export const FormInput = ({
           onClick={onToggleShow}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
         >
-          {isShowing ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          {isShowing ? (
+            <EyeOff className="w-5 h-5" />
+          ) : (
+            <Eye className="w-5 h-5" />
+          )}
         </button>
       )}
     </div>

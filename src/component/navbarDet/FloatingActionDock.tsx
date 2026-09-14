@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Trophy, BookOpen } from "lucide-react";
 
 const DOCK_ITEMS = [
@@ -39,12 +39,18 @@ const DOCK_ITEMS = [
   },
 ];
 
-export default function FloatingActionDock() {
+interface FloatingActionDockProps {
+  isModalOpen?: boolean; // اضافه شدن این پراپ برای کنترل نمایش هنگام باز بودن مودال
+}
+
+export default function FloatingActionDock({ isModalOpen = false }: FloatingActionDockProps) {
   const pathname = usePathname();
+
+  // اگر مودال باز باشد، کلاً این بخش رندر نمی‌شود تا روی صفحه قرار نگیرد
+  if (isModalOpen) return null;
 
   return (
     <div className="relative z-30 mt-3.5 flex justify-center pb-2">
-      {/* جعبه فرورفته اصلی */}
       <div className="relative flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-slate-200/60 p-2 backdrop-blur-2xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.8)]">
         {DOCK_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -69,7 +75,6 @@ export default function FloatingActionDock() {
                 }}
               >
                 <Icon className={`h-5 w-5 shrink-0 ${item.iconColor}`} />
-                {/* متن فقط در سایز sm به بالا نمایش داده می‌شود و در موبایل مخفی است */}
                 <span
                   className={`text-xs font-bold ${item.iconColor} hidden sm:inline-block`}
                 >
