@@ -1,7 +1,7 @@
 // components/auth/StudentRegisterModal.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { X, User, CreditCard, Phone, Lock, Eye, EyeOff, ShieldCheck, Download, ArrowLeft, KeyRound, Trophy } from "lucide-react";
@@ -72,6 +72,42 @@ export default function StudentRegisterModal({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // قفل کردن اسکرول صفحه هنگام باز بودن مودال
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  // تابع جامع برای ریست کردن کامل فرم، ارورها و استیت‌ها
+  const handleResetAndClose = () => {
+    if (loading) return;
+    setStep(1);
+    setLoading(false);
+    setErrorMessage("");
+    setSecurityCardImage(null);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      nationalId: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      securityPin: "",
+      favoritePlayer: "",
+      acceptRules: false,
+    });
+    setErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    onClose();
+  };
+
   const updateField = (field: string, value: any) => {
     let processedValue = value;
 
@@ -110,12 +146,14 @@ export default function StudentRegisterModal({
       }
       setStep(3);
     } else if (step === 3) {
-      if (
-        formData.password.length < 6 ||
-        formData.password !== formData.confirmPassword
-      ) {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,8}$/;
+      const isPasswordValid = passwordRegex.test(formData.password);
+
+      if (!isPasswordValid || formData.password !== formData.confirmPassword) {
         setErrors({
-          password: formData.password.length < 6 ? "رمز عبور باید حداقل ۶ کاراکتر باشد." : "",
+          password: !isPasswordValid 
+            ? "رمز عبور باید بین ۶ تا ۸ کاراکتر و شامل حروف بزرگ، کوچک و عدد انگلیسی باشد." 
+            : "",
           confirmPassword: formData.password !== formData.confirmPassword ? "تکرار رمز عبور مطابقت ندارد." : "",
         });
         return;
@@ -130,28 +168,23 @@ export default function StudentRegisterModal({
     else if (step === 4) setStep(3);
   };
 
-  // تابع تولید تصویر کارت امنیتی دقیقاً مطابق با طراحی نمونه و بدون اسکرول
   const generateSecurityCardDataUrl = (fullName: string, pin: string, player: string): string => {
     const canvas = document.createElement("canvas");
     canvas.width = 600;
-    canvas.height = 450; // اندازه متناسب به صورت کارت جمع‌وجور بدون نیاز به اسکرول
+    canvas.height = 450;
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
-      // پس‌زمینه کلی کارت (سفید)
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // حاشیه دور کارت
       ctx.strokeStyle = "#e2e8f0";
       ctx.lineWidth = 2;
       ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
 
-      // هدر صورتی رنگ بالا
       ctx.fillStyle = "#fff1f2";
       ctx.fillRect(12, 12, canvas.width - 24, 115);
 
-      // رسم آیکون سپر (Shield)
       ctx.save();
       ctx.translate(canvas.width / 2, 40);
       ctx.fillStyle = "#e11d48";
@@ -165,7 +198,6 @@ export default function StudentRegisterModal({
       ctx.closePath();
       ctx.fill();
       
-      // چک‌مارک داخل سپر
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -175,25 +207,21 @@ export default function StudentRegisterModal({
       ctx.stroke();
       ctx.restore();
 
-      // عنوان اصلی در هدر
       ctx.fillStyle = "#9f1239";
       ctx.font = "bold 20px iranBold, sans-serif";
       ctx.direction = "rtl";
       ctx.textAlign = "center";
       ctx.fillText("کارت امنیتی مهم", canvas.width / 2, 82);
 
-      // متن هشدار زیر عنوان
       ctx.fillStyle = "#e11d48";
       ctx.font = "13px iranSans-r, sans-serif";
       ctx.fillText("حتماً از این کارت اسکرین‌شات بگیرید یا آن را ذخیره کنید!", canvas.width / 2, 108);
 
-      // --- بخش فیلدها با فونت خوانا و بسیار واضح ---
       ctx.textAlign = "right";
 
       const startX = 500;
       const endX = 100;
 
-      // ۱. نام کودک
       ctx.fillStyle = "#64748b";
       ctx.font = "12px iranSans-r, sans-serif";
       ctx.fillText("نام کودک:", startX, 155);
@@ -202,7 +230,6 @@ export default function StudentRegisterModal({
       ctx.font = "bold 16px iranBold, sans-serif";
       ctx.fillText(fullName, startX, 178);
 
-      // خط زیرین فیلد اول
       ctx.strokeStyle = "#f1f5f9";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -210,7 +237,6 @@ export default function StudentRegisterModal({
       ctx.lineTo(startX, 192);
       ctx.stroke();
 
-      // ۲. سوال محرمانه
       ctx.fillStyle = "#64748b";
       ctx.font = "12px iranSans-r, sans-serif";
       ctx.fillText("سوال محرمانه:", startX, 222);
@@ -219,13 +245,11 @@ export default function StudentRegisterModal({
       ctx.font = "bold 15px iranBold, sans-serif";
       ctx.fillText("۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال", startX, 245);
 
-      // خط زیرین فیلد دوم
       ctx.beginPath();
       ctx.moveTo(endX, 258);
       ctx.lineTo(startX, 258);
       ctx.stroke();
 
-      // ۳. پاسخ محرمانه (کاملاً واضح و پررنگ)
       ctx.fillStyle = "#64748b";
       ctx.font = "12px iranSans-r, sans-serif";
       ctx.fillText("پاسخ محرمانه:", startX, 288);
@@ -234,7 +258,6 @@ export default function StudentRegisterModal({
       ctx.font = "bold 20px iranBold, sans-serif";
       ctx.fillText(`${pin} - ${player.toUpperCase()}`, startX, 315);
 
-      // خط چین پایین بخش پاسخ‌ها
       ctx.strokeStyle = "#cbd5e1";
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
@@ -243,7 +266,6 @@ export default function StudentRegisterModal({
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // فوتر کارت با نام درخواستی
       ctx.fillStyle = "#94a3b8";
       ctx.font = "12px iranSans-r, sans-serif";
       ctx.textAlign = "center";
@@ -305,7 +327,6 @@ export default function StudentRegisterModal({
         throw new Error(data.message || "خطا در ثبت‌نام دانش‌آموز");
       }
 
-      // تولید و ذخیره تصویر کارت امنیتی در استیت جهت نمایش در UI
       const fullName = `${formData.firstName} ${formData.lastName}`;
       const cardImage = generateSecurityCardDataUrl(
         fullName,
@@ -332,20 +353,7 @@ export default function StudentRegisterModal({
 
   const handleFinish = () => {
     onSuccess?.();
-    onClose();
-    setStep(1);
-    setSecurityCardImage(null);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      nationalId: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      securityPin: "",
-      favoritePlayer: "",
-      acceptRules: false,
-    });
+    handleResetAndClose();
     router.push("/student/dashboard");
     router.refresh();
   };
@@ -356,12 +364,13 @@ export default function StudentRegisterModal({
   const progressPercentage = (stepNumber / 4) * 100;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" dir="rtl">
+    // استفاده از z-[99999] برای قرار گرفتن بالاتر از هدر، نوبار و سایر المان‌های صفحه
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6" dir="rtl">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={handleResetAndClose}
         className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
       />
 
@@ -373,7 +382,7 @@ export default function StudentRegisterModal({
       >
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleResetAndClose}
           className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer"
         >
           <X className="w-4 h-4" />
@@ -485,14 +494,16 @@ export default function StudentRegisterModal({
               {step === 3 && (
                 <div className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">رمز عبور (حداقل ۶ کاراکتر)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      رمز عبور (۶ تا ۸ کاراکتر، شامل حروف بزرگ، کوچک و عدد)
+                    </label>
                     <div className="relative">
                       <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
                       <input
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
                         onChange={(e) => updateField("password", e.target.value)}
-                        placeholder="******"
+                        placeholder="Abc123"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
                       />
                       <button
@@ -513,7 +524,7 @@ export default function StudentRegisterModal({
                         type={showConfirmPassword ? "text" : "password"}
                         value={formData.confirmPassword}
                         onChange={(e) => updateField("confirmPassword", e.target.value)}
-                        placeholder="******"
+                        placeholder="Abc123"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
                       />
                       <button
@@ -616,7 +627,6 @@ export default function StudentRegisterModal({
           </div>
         ) : (
           <div className="space-y-4 text-center">
-            {/* نمایش تصویر تولید شده کارت امنیتی بدون نیاز به اسکرول و بسیار واضح */}
             {securityCardImage && (
               <div className="flex justify-center">
                 <img
@@ -651,7 +661,10 @@ export default function StudentRegisterModal({
             قبلاً ثبت‌نام کرده‌اید؟{" "}
             <button
               type="button"
-              onClick={onSwitchToLogin}
+              onClick={() => {
+                handleResetAndClose();
+                onSwitchToLogin();
+              }}
               className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer"
             >
               وارد شوید
@@ -660,7 +673,6 @@ export default function StudentRegisterModal({
         )}
       </motion.div>
 
-      {/* اتصال کامل مودال قوانین و شرایط */}
       <RulesModal
         isOpen={isRulesModalOpen}
         onClose={() => setIsRulesModalOpen(false)}

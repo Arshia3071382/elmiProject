@@ -26,7 +26,6 @@ export default function StudentLoginModal({
   onClose,
   onSwitchToRegister,
 }: StudentLoginModalProps) {
-  // Login form states
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,12 +36,10 @@ export default function StudentLoginModal({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Forgot password modal states
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
   const [forgotIdentifier, setForgotIdentifier] = useState("");
   
-  // مرحله ۲: جداسازی کد ۶ رقمی و سه حرف بازیکن
   const [securityCode, setSecurityCode] = useState("");
   const [playerCode, setPlayerCode] = useState("");
 
@@ -52,6 +49,18 @@ export default function StudentLoginModal({
 
   const [forgotStatus, setForgotStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [forgotError, setForgotError] = useState("");
+
+  // قفل کردن اسکرول صفحه هنگام باز بودن مودال‌ها
+  useEffect(() => {
+    if (isOpen || isForgotPasswordOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, isForgotPasswordOpen]);
 
   const handleResetAndClose = () => {
     if (status === "loading") return;
@@ -138,7 +147,6 @@ export default function StudentLoginModal({
         }, 1000);
       } else {
         setStatus("error");
-        // اصلاح نام فیلد خطا از data.error به data.message مطابق پاسخ سرور
         setErrorMessage(data.message || data.error || "نام کاربری یا رمز عبور اشتباه است.");
       }
     } catch (err) {
@@ -246,7 +254,6 @@ export default function StudentLoginModal({
     setForgotError("");
 
     try {
-      // ۱. ارسال درخواست تغییر رمز عبور به سرور
       const res = await fetch("/api/auth/student/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -264,7 +271,6 @@ export default function StudentLoginModal({
       if (res.ok && data.success) {
         setForgotStatus("success");
 
-        // ۲. بلافاصله پس از تغییر موفق، درخواست ورود خودکار را ارسال کن
         const loginRes = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -280,10 +286,9 @@ export default function StudentLoginModal({
           }
           localStorage.setItem("studentPhone", forgotIdentifier.trim());
 
-          // ۳. بستن مدال‌ها و هدایت به داشبورد
           setTimeout(() => {
             resetForgotPasswordState();
-            onClose(); // بستن مدال ورود اصلی
+            onClose();
             window.location.href = loginData.redirectUrl || "/student/dashboard";
           }, 1000);
         } else {
@@ -304,17 +309,19 @@ export default function StudentLoginModal({
       setForgotError("خطا در تغییر رمز عبور.");
     }
   };
+
   return (
     <>
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
+          // استفاده از z-[99999] برای قرار گرفتن بالاتر از هدر، باتم‌بار و سایر المان‌های صفحه
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleResetAndClose}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
             />
 
             <motion.div
@@ -446,10 +453,10 @@ export default function StudentLoginModal({
         )}
       </AnimatePresence>
 
-      {/* مدال بازیابی رمز عبور */}
+      {/* مدال بازیابی رمز عبور با همان z-index بسیار بالا */}
       <AnimatePresence>
         {isForgotPasswordOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 font-[iranSans-r]" dir="rtl">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -477,7 +484,7 @@ export default function StudentLoginModal({
                 <h3 className="text-xl font-extrabold">بازیابی رمز عبور</h3>
               </div>
 
-              {/* Step 1: Identifier */}
+              {/* Step 1 */}
               {forgotStep === 1 && (
                 <form onSubmit={handleCheckIdentifier} className="space-y-4">
                   <p className="text-xs text-slate-500 leading-relaxed">
@@ -506,7 +513,7 @@ export default function StudentLoginModal({
                 </form>
               )}
 
-              {/* Step 2: Separate 6-digit code and 3-letter player code */}
+              {/* Step 2 */}
               {forgotStep === 2 && (
                 <form onSubmit={handleVerifyAnswer} className="space-y-4">
                   <p className="text-xs text-slate-500 leading-relaxed">
@@ -558,7 +565,7 @@ export default function StudentLoginModal({
                 </form>
               )}
 
-              {/* Step 3: New Password */}
+              {/* Step 3 */}
               {forgotStep === 3 && (
                 <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
                   <p className="text-xs text-slate-500 leading-relaxed">
