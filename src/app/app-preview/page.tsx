@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import AppHome from '@/component/app/AppHome'
 import AppHeader from '@/component/app/AppHeader'
 import AppHero from '@/component/app/AppHero'
+import AppCountdownBanner from '@/component/app/AppCountdownBanner'
 import AppQuickActions from '@/component/app/AppQuickActions'
 import AppLeagueCard from '@/component/app/AppLeagueCard'
 import AppQuickAccess from '@/component/app/AppQuickAccess'
@@ -19,7 +20,6 @@ export default function AppPreviewPage() {
         <AppHome
           header={
             <AppHeader
-              onNotificationClick={() => alert('کلیک روی اعلان‌ها')}
               onMenuClick={() => alert('کلیک روی منو')}
             />
           }
@@ -32,9 +32,19 @@ export default function AppPreviewPage() {
             />
           }
           quickActions={
-            <AppQuickActions
-              onActionClick={(id) => alert(`کلیک روی اکشن: ${id}`)}
-            />
+            <div className="space-y-4">
+              {/* بنر شمارش معکوس پایان لیگ نخبگان - اصلاح تاریخ به ۱ خرداد ۱۴۰۶ */}
+              <AppCountdownBanner
+                targetDate="2027-05-22T00:00:00"
+                targetUrl="/elite-league"
+                imageSrc="/image/appHero.jpg"
+              />
+
+              {/* اکشن‌های سریع */}
+              <AppQuickActions
+                onActionClick={(id) => alert(`کلیک روی اکشن: ${id}`)}
+              />
+            </div>
           }
           leagueCard={
             <AppLeagueCard

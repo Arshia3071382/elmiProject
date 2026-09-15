@@ -15,6 +15,7 @@ import ScrollAnimation from "@/component/ScrollAnimation";
 import AppHome from "@/component/app/AppHome";
 import AppHeader from "@/component/app/AppHeader";
 import AppHero from "@/component/app/AppHero";
+import AppCountdownBanner from "@/component/app/AppCountdownBanner";
 import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
@@ -147,14 +148,7 @@ function PWAAppHome() {
 
   return (
     <AppHome
-      header={
-        <AppHeader
-          onNotificationClick={() => {
-            window.location.href = "/notices";
-          }}
-          /* onMenuClick برداشته شد تا کشوی Drawer هدر اجرا شود */
-        />
-      }
+      header={<AppHeader />}
       hero={
         <AppHero
           studentName={studentData.name}
@@ -166,14 +160,24 @@ function PWAAppHome() {
         />
       }
       quickActions={
-        <AppQuickActions
-          onActionClick={(id) => {
-            if (id === "quizzes") window.location.href = "/league/grade";
-            if (id === "league") window.location.href = "/elite-league";
-            if (id === "courses") window.location.href = "/courses";
-            if (id === "goftino") window.location.href = "/chat-guidance/chat";
-          }}
-        />
+        <div className="space-y-4">
+          {/* بنر شمارش معکوس پایان لیگ نخبگان */}
+          <AppCountdownBanner
+            targetDate="2026-03-20T00:00:00"
+            targetUrl="/elite-league"
+            imageSrc="/image/appHero.jpg"
+          />
+
+          {/* اکشن‌های سریع PWA */}
+          <AppQuickActions
+            onActionClick={(id) => {
+              if (id === "quizzes") window.location.href = "/league/grade";
+              if (id === "league") window.location.href = "/elite-league";
+              if (id === "courses") window.location.href = "/courses";
+              if (id === "goftino") window.location.href = "/chat-guidance/chat";
+            }}
+          />
+        </div>
       }
       leagueCard={
         <AppLeagueCard

@@ -5,6 +5,7 @@ import React from 'react'
 interface AppHomeProps {
   header?: React.ReactNode
   hero?: React.ReactNode
+  banner?: React.ReactNode // افزودن پراپ بنر
   quickActions?: React.ReactNode
   leagueCard?: React.ReactNode
   quickAccess?: React.ReactNode
@@ -14,6 +15,7 @@ interface AppHomeProps {
 export default function AppHome({
   header,
   hero,
+  banner,
   quickActions,
   leagueCard,
   quickAccess,
@@ -27,6 +29,10 @@ export default function AppHome({
       {/* Main Content Area */}
       <main className="flex-1 px-4 pt-4 space-y-5">
         {hero && <section className="w-full">{hero}</section>}
+        
+        {/* بخش اختصاصی بنر شمارش معکوس */}
+        {banner && <section className="w-full">{banner}</section>}
+        
         {quickActions && <section className="w-full">{quickActions}</section>}
         {leagueCard && <section className="w-full">{leagueCard}</section>}
         {quickAccess && <section className="w-full">{quickAccess}</section>}
