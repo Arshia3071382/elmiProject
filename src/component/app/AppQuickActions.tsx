@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { ClipboardCheck, Tv, Rocket, MessageCircle } from 'lucide-react'
+import { FileText, Trophy, BookOpen, MessageSquare } from 'lucide-react'
 
 interface QuickActionItem {
   id: string
@@ -22,35 +22,35 @@ export default function AppQuickActions({ onActionClick }: AppQuickActionsProps)
   const actions: QuickActionItem[] = [
     {
       id: 'quizzes',
-      title: 'نتایج آزمون',
-      href: '/',
-      icon: <ClipboardCheck className="w-6 h-6" />,
-      bgColor: 'bg-emerald-50',
-      textColor: 'text-emerald-500',
+      title: 'آزمون',
+      href: '/under-construction',
+      icon: <FileText className="w-5 h-5 stroke-[1.75]" />,
+      bgColor: 'bg-cyan-50/80',
+      textColor: 'text-cyan-600',
     },
     {
       id: 'league',
-      title: 'پخش زنده',
-      href: '/live',
-      icon: <Tv className="w-6 h-6" />,
-      bgColor: 'bg-rose-50',
-      textColor: 'text-rose-500',
+      title: 'لیگ نخبگان',
+      href: '/elite-league',
+      icon: <Trophy className="w-5 h-5 stroke-[1.75]" />,
+      bgColor: 'bg-amber-50/80',
+      textColor: 'text-amber-500',
     },
     {
       id: 'courses',
-      title: 'برهان',
-      href: '/borhan',
-      icon: <Rocket className="w-6 h-6" />,
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-500',
+      title: 'دوره آموزشی',
+      href: '/courses',
+      icon: <BookOpen className="w-5 h-5 stroke-[1.75]" />,
+      bgColor: 'bg-emerald-50/80',
+      textColor: 'text-emerald-600',
     },
     {
       id: 'goftino',
       title: 'گفتینو',
       href: '/chat-guidance',
-      icon: <MessageCircle className="w-6 h-6" />,
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-500',
+      icon: <MessageSquare className="w-5 h-5 stroke-[1.75]" />,
+      bgColor: 'bg-sky-50/80',
+      textColor: 'text-sky-500',
     },
   ]
 
@@ -60,7 +60,7 @@ export default function AppQuickActions({ onActionClick }: AppQuickActionsProps)
         <Link
           key={item.id}
           href={item.href}
-          onClick={(e) => {
+          onClick={() => {
             if (item.onClick) {
               item.onClick()
             }
@@ -68,14 +68,14 @@ export default function AppQuickActions({ onActionClick }: AppQuickActionsProps)
               onActionClick(item.id)
             }
           }}
-          className="flex flex-col items-center justify-center p-3 bg-white rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all active:scale-95 group"
+          className="flex flex-col items-center justify-center p-3 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm hover:border-slate-200 hover:shadow-md transition-all active:scale-95 group"
         >
           <div
-            className={`w-12 h-12 rounded-2xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-2 transition-transform group-hover:scale-105`}
+            className={`w-12 h-12 rounded-2xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-2 transition-transform duration-200 group-hover:scale-110`}
           >
             {item.icon}
           </div>
-          <span className="text-xs font-medium text-slate-700 tracking-tight">
+          <span className="text-xs font-medium text-slate-700 tracking-tight whitespace-nowrap">
             {item.title}
           </span>
         </Link>

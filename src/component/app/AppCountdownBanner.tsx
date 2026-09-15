@@ -11,16 +11,18 @@ interface AppCountdownBannerProps {
 }
 
 export default function AppCountdownBanner({
-  // ۱ خرداد ۱۴۰۶ شمسی (2027-05-22)
-  targetDate = "2027-05-22T00:00:00Z",
+  // ۱ خرداد ۱۴۰۶ (استفاده از فرمت ایزو بدون Z یا با جایگزینی امن در تابع)
+  targetDate = "2027-05-22T00:00:00",
   targetUrl = "/elite-league",
   imageSrc = "/image/appHero.jpg",
 }: AppCountdownBannerProps) {
   
-  // تابع محاسبه زمان باقی‌مانده
+  // تابع محاسبه زمان باقی‌مانده (کاملاً ایمن برای Safari و Vercel)
   const getTimeRemaining = useCallback((targetISO: string) => {
-    const target = new Date(targetISO).getTime();
-    const now = new Date().getTime();
+    // جایگزینی space به جای T برای سازگاری کامل با مرورگرها
+    const formattedDate = targetISO.replace(/-/g, "/").replace("T", " ");
+    const target = new Date(formattedDate).getTime();
+    const now = Date.now();
     const difference = target - now;
 
     if (isNaN(target) || difference <= 0) {
@@ -36,12 +38,13 @@ export default function AppCountdownBanner({
   }, []);
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // محاسبه بلافاصله به محض اجرا در کلاینت
+    setIsMounted(true);
+    
+    // اولین محاسبه بلافاصله روی کلاینت
     setTimeLeft(getTimeRemaining(targetDate));
-    setIsLoaded(true);
 
     const interval = setInterval(() => {
       setTimeLeft(getTimeRemaining(targetDate));
@@ -50,8 +53,8 @@ export default function AppCountdownBanner({
     return () => clearInterval(interval);
   }, [targetDate, getTimeRemaining]);
 
-  // نمایش حالت رزرو (Skeleton یا صفر) در حین رندر اولیه سرور برای جلوگیری از خطای Hydration
-  const displayTime = isLoaded ? timeLeft : { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  // تا زمانی که کامپوننت روی کلاینت سوار نشده باشد، مقادیر صفر نمایش داده می‌شوند
+  const displayTime = isMounted ? timeLeft : { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
   return (
     <Link
@@ -71,7 +74,6 @@ export default function AppCountdownBanner({
 
       {/* افکت شهاب‌سنگ‌های طبیعی در پس‌زمینه */}
       <div className="absolute inset-0 z-1 pointer-events-none overflow-hidden">
-        {/* شهاب‌سنگ اصلی */}
         <div className="absolute -top-6 -right-10 w-[140px] sm:w-[180px] h-[2px] rotate-[215deg] animate-[naturalMeteor_3s_ease-out_infinite] opacity-0">
           <div
             className="w-full h-full rounded-full"
@@ -83,7 +85,6 @@ export default function AppCountdownBanner({
           <div className="absolute top-1/2 left-0 -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_3px_rgba(253,230,138,0.9),0_0_16px_6px_rgba(249,115,22,0.6)]" />
         </div>
 
-        {/* شهاب‌سنگ دوم */}
         <div className="absolute top-4 right-[20%] w-[100px] h-[1.5px] rotate-[215deg] animate-[naturalMeteor_4.2s_ease-out_infinite_1.5s] opacity-0">
           <div
             className="w-full h-full rounded-full"
@@ -95,7 +96,6 @@ export default function AppCountdownBanner({
           <div className="absolute top-1/2 left-0 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_2px_rgba(56,189,248,0.9)]" />
         </div>
 
-        {/* شهاب‌سنگ سوم */}
         <div className="absolute -top-2 right-[50%] w-[120px] h-[1.5px] rotate-[215deg] animate-[naturalMeteor_3.5s_ease-out_infinite_0.8s] opacity-0">
           <div
             className="w-full h-full rounded-full"
@@ -110,7 +110,6 @@ export default function AppCountdownBanner({
         <div className="absolute top-2 right-4 w-16 h-16 bg-amber-500/20 rounded-full blur-xl animate-pulse" />
       </div>
 
-      {/* استایل انیمیشن حرکت شهاب‌سنگ */}
       <style jsx>{`
         @keyframes naturalMeteor {
           0% {
