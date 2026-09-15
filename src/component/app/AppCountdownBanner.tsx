@@ -11,17 +11,15 @@ interface AppCountdownBannerProps {
 }
 
 export default function AppCountdownBanner({
-  // ۱ خرداد ۱۴۰۶ (استفاده از فرمت ایزو بدون Z یا با جایگزینی امن در تابع)
-  targetDate = "2027-05-22T00:00:00",
+  // تاریخ استاندارد همراه با تعیین دقیق منطقه زمانی ایران (+03:30)
+  targetDate = "2027-05-22T00:00:00+03:30",
   targetUrl = "/elite-league",
   imageSrc = "/image/appHero.jpg",
 }: AppCountdownBannerProps) {
   
-  // تابع محاسبه زمان باقی‌مانده (کاملاً ایمن برای Safari و Vercel)
   const getTimeRemaining = useCallback((targetISO: string) => {
-    // جایگزینی space به جای T برای سازگاری کامل با مرورگرها
-    const formattedDate = targetISO.replace(/-/g, "/").replace("T", " ");
-    const target = new Date(formattedDate).getTime();
+    // تبدیل امن تاریخ برای تمامی مرورگرها و سرورها
+    const target = new Date(targetISO).getTime();
     const now = Date.now();
     const difference = target - now;
 
@@ -43,7 +41,7 @@ export default function AppCountdownBanner({
   useEffect(() => {
     setIsMounted(true);
     
-    // اولین محاسبه بلافاصله روی کلاینت
+    // محاسبه فوری به محض لود شدن در کلاینت
     setTimeLeft(getTimeRemaining(targetDate));
 
     const interval = setInterval(() => {
@@ -53,7 +51,6 @@ export default function AppCountdownBanner({
     return () => clearInterval(interval);
   }, [targetDate, getTimeRemaining]);
 
-  // تا زمانی که کامپوننت روی کلاینت سوار نشده باشد، مقادیر صفر نمایش داده می‌شوند
   const displayTime = isMounted ? timeLeft : { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
   return (
@@ -72,7 +69,7 @@ export default function AppCountdownBanner({
         />
       </div>
 
-      {/* افکت شهاب‌سنگ‌های طبیعی در پس‌زمینه */}
+      {/* افکت شهاب‌سنگ‌ها */}
       <div className="absolute inset-0 z-1 pointer-events-none overflow-hidden">
         <div className="absolute -top-6 -right-10 w-[140px] sm:w-[180px] h-[2px] rotate-[215deg] animate-[naturalMeteor_3s_ease-out_infinite] opacity-0">
           <div
