@@ -2,9 +2,10 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Home, FileText, Sparkles, PhoneCall, User, LucideIcon } from 'lucide-react'
 
-export type TabType = 'home' | 'quizzes' | 'about' | 'contact' | 'profile'
+export type TabType = 'home' | 'quizzes' | 'league' | 'courses' | 'about' | 'contact' | 'profile'
 
 interface TabItem {
   id: TabType
@@ -20,9 +21,11 @@ interface AppBottomNavProps {
 }
 
 export default function AppBottomNav({
-  activeTab = 'home',
+  activeTab,
   onTabChange,
 }: AppBottomNavProps) {
+  const pathname = usePathname()
+
   const tabs: TabItem[] = [
     { id: 'profile', label: 'پروفایل', href: '/student', icon: User },
     { id: 'quizzes', label: 'آزمون', href: '/under-construction', icon: FileText },
@@ -31,14 +34,20 @@ export default function AppBottomNav({
     { id: 'contact', label: 'ارتباط با ما', href: '/contactUs', icon: PhoneCall },
   ]
 
+  // تشخیص خودکار تب فعال بر اساس مسیر URL جاری
+  const getIsActive = (tab: TabItem) => {
+    if (activeTab) return activeTab === tab.id
+    if (tab.href === '/') return pathname === '/'
+    return pathname.startsWith(tab.href)
+  }
+
   return (
-    // کانتینر شناور استاندارد موبایل با پشتیبانی از Safe-Area
     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 pointer-events-none">
       <nav className="max-w-md mx-auto bg-white/90 backdrop-blur-lg border border-slate-200/80 rounded-3xl shadow-xl shadow-slate-200/50 pointer-events-auto px-3 py-1.5">
         <div className="flex items-center justify-around relative">
           {tabs.map((tab) => {
             const Icon = tab.icon
-            const isActive = activeTab === tab.id
+            const isActive = getIsActive(tab)
 
             if (tab.isCenter) {
               return (
