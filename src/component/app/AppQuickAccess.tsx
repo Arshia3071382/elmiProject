@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { Medal, BookOpenCheck, Calendar, Tv, Zap } from 'lucide-react'
+import { Radio, RadioIcon as LiveIcon, Hourglass, Lightbulb, Compass, Store, HelpCircle } from 'lucide-react'
 
-interface QuickAccessItem {
+interface ShowcaseItem {
   id: string
   title: string
   icon: React.ReactNode
@@ -17,34 +17,48 @@ interface AppQuickAccessProps {
 }
 
 export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
-  const items: QuickAccessItem[] = [
+  const items: ShowcaseItem[] = [
     {
-      id: 'honors',
-      title: 'افتخارات من',
-      icon: <Medal className="w-5 h-5" />,
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
+      id: 'showcase',
+      title: 'ویترین',
+      icon: <Store className="w-5 h-5" />,
+      bgColor: 'bg-amber-50',
+      textColor: 'text-amber-600',
     },
     {
-      id: 'notes',
-      title: 'یادداشت‌ها',
-      icon: <BookOpenCheck className="w-5 h-5" />,
+      id: 'radio',
+      title: 'رادیو علمی',
+      icon: <Radio className="w-5 h-5" />,
+      bgColor: 'bg-purple-50',
+      textColor: 'text-purple-600',
+    },
+    {
+      id: 'live',
+      title: 'پخش زنده',
+      icon: <LiveIcon className="w-5 h-5" />,
       bgColor: 'bg-rose-50',
       textColor: 'text-rose-500',
     },
     {
-      id: 'calendar',
-      title: 'تقویم رویدادها',
-      icon: <Calendar className="w-5 h-5" />,
-      bgColor: 'bg-emerald-50',
-      textColor: 'text-emerald-500',
+      id: 'curiosity',
+      title: 'ایستگاه کنجکاوی',
+      icon: <HelpCircle className="w-5 h-5" />,
+      bgColor: 'bg-teal-50',
+      textColor: 'text-teal-600',
     },
     {
-      id: 'videos',
-      title: 'ویدیوهای آموزشی',
-      icon: <Tv className="w-5 h-5" />,
+      id: 'countdown',
+      title: 'روزشمار',
+      icon: <Hourglass className="w-5 h-5" />,
+      bgColor: 'bg-blue-50',
+      textColor: 'text-blue-600',
+    },
+    {
+      id: 'borhan',
+      title: 'برهان',
+      icon: <Lightbulb className="w-5 h-5" />,
       bgColor: 'bg-indigo-50',
-      textColor: 'text-indigo-500',
+      textColor: 'text-indigo-600',
     },
   ]
 
@@ -52,14 +66,14 @@ export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
     <div className="space-y-3">
       {/* Title */}
       <div className="flex items-center gap-1.5 px-1">
-        <Zap className="w-4 h-4 text-blue-600 fill-blue-600" />
+        <Compass className="w-4 h-4 text-blue-600 fill-blue-50" />
         <h4 className="text-xs font-bold text-slate-800 tracking-tight">
-          دسترسی سریع
+          قطب‌نمای علمی
         </h4>
       </div>
 
-      {/* Grid Items */}
-      <div className="grid grid-cols-4 gap-2.5">
+      {/* Grid Items (2 سطر 3 تایی) */}
+      <div className="grid grid-cols-3 gap-2.5">
         {items.map((item) => (
           <button
             key={item.id}
@@ -67,10 +81,10 @@ export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
               if (item.onClick) item.onClick()
               else if (onItemClick) onItemClick(item.id)
             }}
-            className="flex flex-col items-center justify-center p-2.5 bg-white rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all active:scale-95 group"
+            className="flex flex-col items-center justify-center p-3 bg-white rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all active:scale-95 group"
           >
             <div
-              className={`w-10 h-10 rounded-xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-1.5 transition-transform group-hover:scale-105`}
+              className={`w-11 h-11 rounded-xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-2 transition-transform group-hover:scale-105`}
             >
               {item.icon}
             </div>

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { FileText, Trophy, BookOpen, MessageSquare } from 'lucide-react'
+import { FileText, Trophy, BookOpen, MessageSquare, Zap } from 'lucide-react'
 
 interface QuickActionItem {
   id: string
@@ -55,31 +55,42 @@ export default function AppQuickActions({ onActionClick }: AppQuickActionsProps)
   ]
 
   return (
-    <div className="grid grid-cols-4 gap-3">
-      {actions.map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          onClick={() => {
-            if (item.onClick) {
-              item.onClick()
-            }
-            if (onActionClick) {
-              onActionClick(item.id)
-            }
-          }}
-          className="flex flex-col items-center justify-center p-3 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm hover:border-slate-200 hover:shadow-md transition-all active:scale-95 group"
-        >
-          <div
-            className={`w-12 h-12 rounded-2xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-2 transition-transform duration-200 group-hover:scale-110`}
+    <div className="space-y-3">
+      {/* Title */}
+      <div className="flex items-center gap-1.5 px-1">
+        <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+        <h4 className="text-xs font-bold text-slate-800 tracking-tight">
+          دسترسی سریع
+        </h4>
+      </div>
+
+      {/* Grid Items */}
+      <div className="grid grid-cols-4 gap-3">
+        {actions.map((item) => (
+          <Link
+            key={item.id}
+            href={item.href}
+            onClick={() => {
+              if (item.onClick) {
+                item.onClick()
+              }
+              if (onActionClick) {
+                onActionClick(item.id)
+              }
+            }}
+            className="flex flex-col items-center justify-center p-3 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm hover:border-slate-200 hover:shadow-md transition-all active:scale-95 group"
           >
-            {item.icon}
-          </div>
-          <span className="text-xs font-medium text-slate-700 tracking-tight whitespace-nowrap">
-            {item.title}
-          </span>
-        </Link>
-      ))}
+            <div
+              className={`w-12 h-12 rounded-2xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-2 transition-transform duration-200 group-hover:scale-110`}
+            >
+              {item.icon}
+            </div>
+            <span className="text-xs font-medium text-slate-700 tracking-tight whitespace-nowrap">
+              {item.title}
+            </span>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }
