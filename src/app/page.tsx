@@ -166,9 +166,9 @@ function PWAAppHome() {
       }
       quickActions={
         <div className="space-y-4">
-          {/* بنر شمارش معکوس پایان لیگ نخبگان - اصلاح شده */}
+          {/* بنر شمارش معکوس با تاریخ دقیق ۱ خرداد ۱۴۰۶ ساعت ۰۰:۰۰ (۲۲ می ۲۰۲۷) با Timezone ایران */}
           <AppCountdownBanner
-            targetDate="2027-03-20T00:00:00+03:30"
+            targetDate="2027-05-22T00:00:00+03:30"
             targetUrl="/elite-league"
             imageSrc="/image/appHero.jpg"
           />
