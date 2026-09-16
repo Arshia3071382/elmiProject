@@ -34,7 +34,6 @@ export async function POST(req: Request) {
     await dbConnect();
     const body = await req.json();
     const {
-      username,
       nationalId,
       phone,
       password,
@@ -45,7 +44,8 @@ export async function POST(req: Request) {
       securityAnswer,
     } = body;
 
-    if (!username || !nationalId || !phone || !password || !securityQuestion || !securityAnswer) {
+    // بررسی اطلاعات اجباری
+    if (!nationalId || !phone || !password || !securityQuestion || !securityAnswer) {
       return NextResponse.json(
         { success: false, message: "تمام اطلاعات اجباری شامل سوال و پاسخ امنیتی را وارد کنید." },
         { status: 400 }
@@ -53,9 +53,21 @@ export async function POST(req: Request) {
     }
 
     const cleanNationalId = normalizeNationalId(nationalId);
-    const cleanUsername = username.trim();
     const cleanPhone = phone.trim();
     const cleanSecurityAnswer = securityAnswer.trim().toLowerCase();
+    
+    // استخراج و بررسی کد ۶ رقمی پین از پاسخ امنیتی (فرمت: پین-بازیکن)
+    const securityPin = cleanSecurityAnswer.split("-")[0];
+
+    if (!/^\d{6}$/.test(securityPin)) {
+      return NextResponse.json(
+        { success: false, field: "securityPin", message: "کد امنیتی ۶ رقمی نامعتبر است." },
+        { status: 400 }
+      );
+    }
+
+    // تولید خودکار نام کاربری به صورت امن و یکتا بر اساس کد ملی
+    const cleanUsername = body.username ? body.username.trim() : `user_${cleanNationalId}`;
 
     if (!isValidNationalId(cleanNationalId)) {
       return NextResponse.json({ success: false, message: "کد ملی وارد شده معتبر نیست." }, { status: 400 });
@@ -81,14 +93,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۲. بررسی تکراری نبودن نام کاربری
+    // ۲. بررسی تکراری نبودن نام کاربری تولید شده
     const existingStudentByUsername = await Student.findOne({ username: cleanUsername });
     if (existingStudentByUsername) {
       return NextResponse.json(
         { 
           success: false, 
           field: "username", 
-          message: "این نام کاربری قبلاً انتخاب شده است." 
+          message: "این حساب کاربری قبلاً ایجاد شده است." 
         },
         { status: 409 }
       );
@@ -107,7 +119,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۴. بررسی جدول لیگ
+    // ۴. بررسی تکراری نبودن کد ۶ رقمی امنیتی (یونیک بودن پین)
+    const existingStudentByPin = await Student.findOne({ securityPin });
+    if (existingStudentByPin) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          field: "securityPin", 
+          message: "این کد امنیتی ۶ رقمی قبلاً توسط کاربر دیگری انتخاب شده است. لطفاً کد دیگری وارد کنید." 
+        },
+        { status: 409 }
+      );
+    }
+
+    // ۵. بررسی جدول لیگ
     const allGradeStudents = await GradeStudent.find({});
     const gradeStudentRecord = allGradeStudents.find(
       (gs) => normalizeNationalId(gs.nationalId) === cleanNationalId
@@ -124,11 +149,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // ۵. هش کردن ایمن رمز عبور و پاسخ امنیتی
+    // ۶. هش کردن ایمن رمز عبور و پاسخ امنیتی
     const passwordHash = await bcrypt.hash(password, 12);
     const securityAnswerHash = await bcrypt.hash(cleanSecurityAnswer, 12);
 
-    // ۶. ساخت حساب کاربری جدید
+    // ۷. ساخت حساب کاربری جدید با ذخیره کد پین یکتا
     const newStudent = await Student.create({
       username: cleanUsername,
       firstName: finalFirstName,
@@ -137,6 +162,7 @@ export async function POST(req: Request) {
       phone: cleanPhone,
       passwordHash,
       securityQuestion: securityQuestion.trim(),
+      securityPin, // ذخیره و قفل کردن پین به صورت یکتا
       securityAnswerHash,
       grade: finalGrade,
       isActive: true,
@@ -149,7 +175,7 @@ export async function POST(req: Request) {
       await gradeStudentRecord.save();
     }
 
-    // 🔒 ۷. ساخت توکن JWT امن با هماهنگی کامل نقش و نام‌گذاری
+    // 🔒 ۸. ساخت توکن JWT امن با هماهنگی کامل نقش و نام‌گذاری
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
     );
@@ -184,7 +210,6 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error: any) {
-    console.error("Student Registration Error:", error);
     return NextResponse.json({ success: false, message: error.message || "خطای سرور داخلی رخ داد." }, { status: 500 });
   }
 }

@@ -5,21 +5,25 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { X, User, CreditCard, Phone, Lock, Eye, EyeOff, ShieldCheck, Download, ArrowLeft, KeyRound, Trophy } from "lucide-react";
-import RulesModal from "./StudentRegisterModal/RulesModal";
+import { X, ShieldAlert, Download, ArrowLeft } from "lucide-react";
 
-// تابع کمکی برای تبدیل ارقام فارسی و عربی به انگلیسی و فیلتر کردن غیر اعداد
+import { StepOnePersonal } from "./student-register/StepOnePersonal";
+import { StepTwoContact } from "./student-register/StepTwoContact";
+import { StepThreePassword } from "./student-register/StepThreePassword";
+import { StepFourSecurity } from "./student-register/StepFourSecurity";
+
 const toEnglishDigits = (str: string): string => {
   const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
   const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
   let converted = str;
   for (let i = 0; i < 10; i++) {
-    converted = converted.replace(persianNumbers[i], i.toString()).replace(arabicNumbers[i], i.toString());
+    converted = converted
+      .replace(persianNumbers[i], i.toString())
+      .replace(arabicNumbers[i], i.toString());
   }
   return converted.replace(/\D/g, "");
 };
 
-// تابع اعتبارسنجی کد ملی ایران
 export const isValidNationalId = (id: string): boolean => {
   if (!/^\d{10}$/.test(id)) return false;
   const check = parseInt(id[9], 10);
@@ -48,14 +52,11 @@ export default function StudentRegisterModal({
   onSwitchToLogin,
 }: StudentRegisterModalProps) {
   const router = useRouter();
-
   const [mounted, setMounted] = useState(false);
-
   const [step, setStep] = useState<1 | 2 | 3 | 4 | "security-card">(1);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
-
   const [securityCardImage, setSecurityCardImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -71,20 +72,13 @@ export default function StudentRegisterModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // قفل کردن اسکرول صفحه هنگام باز بودن مودال
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -108,24 +102,23 @@ export default function StudentRegisterModal({
       acceptRules: false,
     });
     setErrors({});
-    setShowPassword(false);
-    setShowConfirmPassword(false);
     onClose();
   };
 
-  const updateField = (field: keyof typeof formData, value: string | boolean) => {
-    let processedValue: string | boolean = value;
-
-    if (field === "securityPin" && typeof value === "string") {
+  const updateField = (field: string, value: string | boolean) => {
+    let processedValue = value;
+    if (field === "nationalId" && typeof value === "string") {
+      processedValue = toEnglishDigits(value).slice(0, 10);
+    } else if (field === "phone" && typeof value === "string") {
+      processedValue = toEnglishDigits(value).slice(0, 11);
+    } else if (field === "securityPin" && typeof value === "string") {
       processedValue = toEnglishDigits(value).slice(0, 6);
     } else if (field === "favoritePlayer" && typeof value === "string") {
       processedValue = value.replace(/[^A-Za-z]/g, "").slice(0, 3);
     }
 
     setFormData((prev) => ({ ...prev, [field]: processedValue }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const handleNextStep = () => {
@@ -137,143 +130,92 @@ export default function StudentRegisterModal({
         });
         return;
       }
+      setErrors({});
       setStep(2);
     } else if (step === 2) {
-      const cleanedId = formData.nationalId.replace(/\D/g, "");
-      const cleanedPhone = formData.phone.replace(/\D/g, "");
-
-      if (!cleanedId || !cleanedPhone || !isValidNationalId(cleanedId) || !/^09[0-9]{9}$/.test(cleanedPhone)) {
+      if (!isValidNationalId(formData.nationalId) || !/^09[0-9]{9}$/.test(formData.phone)) {
         setErrors({
-          nationalId: !cleanedId ? "کد ملی الزامی است." : !isValidNationalId(cleanedId) ? "کد ملی نامعتبر است." : "",
-          phone: !cleanedPhone ? "شماره همراه الزامی است." : !/^09[0-9]{9}$/.test(cleanedPhone) ? "شماره همراه نامعتبر است." : "",
+          nationalId: !isValidNationalId(formData.nationalId) ? "کد ملی نامعتبر است." : "",
+          phone: !/^09[0-9]{9}$/.test(formData.phone) ? "شماره همراه نامعتبر است." : "",
         });
         return;
       }
+      setErrors({});
       setStep(3);
     } else if (step === 3) {
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,8}$/;
-      const isPasswordValid = passwordRegex.test(formData.password);
-
-      if (!isPasswordValid || formData.password !== formData.confirmPassword) {
+      if (!passwordRegex.test(formData.password) || formData.password !== formData.confirmPassword) {
         setErrors({
-          password: !isPasswordValid 
-            ? "رمز عبور باید بین ۶ تا ۸ کاراکتر و شامل حروف بزرگ، کوچک و عدد انگلیسی باشد." 
-            : "",
+          password: !passwordRegex.test(formData.password) ? "رمز عبور بین ۶ تا ۸ کاراکتر و شامل حروف بزرگ، کوچک و عدد باشد." : "",
           confirmPassword: formData.password !== formData.confirmPassword ? "تکرار رمز عبور مطابقت ندارد." : "",
         });
         return;
       }
+      setErrors({});
       setStep(4);
     }
   };
 
   const handlePrevStep = () => {
-    if (step === 2) setStep(1);
-    else if (step === 3) setStep(2);
-    else if (step === 4) setStep(3);
+    const numericStep = Number(step);
+    if (!isNaN(numericStep) && numericStep > 1) {
+      setStep((numericStep - 1) as 1 | 2 | 3 | 4);
+    }
   };
 
   const generateSecurityCardDataUrl = (fullName: string, pin: string, player: string): string => {
     const canvas = document.createElement("canvas");
-    canvas.width = 600;
-    canvas.height = 450;
+    canvas.width = 750;
+    canvas.height = 500;
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+      ctx.fillStyle = "#fff1f2";
+      ctx.fillRect(16, 16, canvas.width - 32, 130);
+
+      ctx.fillStyle = "#9f1239";
+      ctx.font = "bold 24px Vazirmatn, Tahoma, sans-serif";
+      ctx.direction = "rtl";
+      ctx.textAlign = "center";
+      ctx.fillText("کارت امنیتی محرمانه - سامانه علمی منتظران", canvas.width / 2, 85);
+
+      const startX = 670;
+      const endX = 80;
+
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#475569";
+      ctx.font = "15px Vazirmatn, Tahoma, sans-serif";
+      ctx.fillText("نام و نام خانوادگی دانش‌آموز:", startX, 185);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 20px Vazirmatn, Tahoma, sans-serif";
+      ctx.fillText(fullName, startX, 218);
 
       ctx.strokeStyle = "#e2e8f0";
       ctx.lineWidth = 2;
-      ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
-
-      ctx.fillStyle = "#fff1f2";
-      ctx.fillRect(12, 12, canvas.width - 24, 115);
-
-      ctx.save();
-      ctx.translate(canvas.width / 2, 40);
-      ctx.fillStyle = "#e11d48";
       ctx.beginPath();
-      ctx.moveTo(0, -16);
-      ctx.lineTo(14, -8);
-      ctx.lineTo(14, 4);
-      ctx.quadraticCurveTo(14, 16, 0, 23);
-      ctx.quadraticCurveTo(-14, 16, -14, 4);
-      ctx.lineTo(-14, -8);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-5, 1);
-      ctx.lineTo(-1, 6);
-      ctx.lineTo(7, -3);
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = "#9f1239";
-      ctx.font = "bold 20px sans-serif";
-      ctx.direction = "rtl";
-      ctx.textAlign = "center";
-      ctx.fillText("کارت امنیتی مهم - سامانه علمی منتظران", canvas.width / 2, 82);
-
-      ctx.fillStyle = "#e11d48";
-      ctx.font = "13px sans-serif";
-      ctx.fillText("حتماً از این کارت اسکرین‌شات بگیرید یا آن را ذخیره کنید!", canvas.width / 2, 108);
-
-      ctx.textAlign = "right";
-      const startX = 520;
-      const endX = 80;
-
-      ctx.fillStyle = "#64748b";
-      ctx.font = "12px sans-serif";
-      ctx.fillText("نام دانش‌آموز:", startX, 155);
-
-      ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 16px sans-serif";
-      ctx.fillText(fullName, startX, 178);
-
-      ctx.strokeStyle = "#f1f5f9";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(endX, 192);
-      ctx.lineTo(startX, 192);
+      ctx.moveTo(endX, 245);
+      ctx.lineTo(startX, 245);
       ctx.stroke();
 
-      ctx.fillStyle = "#64748b";
-      ctx.font = "12px sans-serif";
-      ctx.fillText("سوالات امنیتی بازیابی:", startX, 222);
-
-      ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 14px sans-serif";
-      ctx.fillText("۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال", startX, 245);
-
-      ctx.beginPath();
-      ctx.moveTo(endX, 258);
-      ctx.lineTo(startX, 258);
-      ctx.stroke();
-
-      ctx.fillStyle = "#64748b";
-      ctx.font = "12px sans-serif";
-      ctx.fillText("پاسخ‌های محرمانه شما:", startX, 288);
+      ctx.fillStyle = "#475569";
+      ctx.font = "15px Vazirmatn, Tahoma, sans-serif";
+      ctx.fillText("پاسخ‌های امنیتی شما (کد پین - بازیکن):", startX, 305);
 
       ctx.fillStyle = "#059669";
-      ctx.font = "bold 20px sans-serif";
-      ctx.fillText(`${pin}  -  ${player.toUpperCase()}`, startX, 315);
+      ctx.font = "bold 26px monospace, sans-serif";
+      ctx.fillText(`${pin}   -   ${player.toUpperCase()}`, startX, 345);
 
-      ctx.strokeStyle = "#cbd5e1";
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(endX, 340);
-      ctx.lineTo(startX, 340);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("elmi-project.ir - تمامی حقوق محفوظ است", canvas.width / 2, 385);
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 13px Vazirmatn, Tahoma, sans-serif";
+      ctx.fillText("⚠️ توجه: این اطلاعات را در جای امنی ذخیره کنید؛ برای بازیابی حساب به آن نیاز خواهید داشت.", startX, 425);
 
       return canvas.toDataURL("image/png");
     }
@@ -287,11 +229,9 @@ export default function StudentRegisterModal({
     if (!formData.securityPin.trim() || formData.securityPin.length !== 6) {
       newErrors.securityPin = "کد امنیتی باید دقیقاً یک عدد ۶ رقمی باشد.";
     }
-
     if (!formData.favoritePlayer.trim() || formData.favoritePlayer.length !== 3) {
       newErrors.favoritePlayer = "لطفاً دقیقاً ۳ حرف انگلیسی از اسم بازیکن وارد کنید.";
     }
-
     if (!formData.acceptRules) {
       newErrors.rules = "پذیرش قوانین الزامی است.";
     }
@@ -301,52 +241,34 @@ export default function StudentRegisterModal({
       return;
     }
 
-    const controller = new AbortController();
-
     try {
       setLoading(true);
       setErrorMessage("");
 
-      const cleanPin = formData.securityPin.trim();
-      const cleanPlayer = formData.favoritePlayer.trim().toLowerCase();
-      const finalSecurityAnswer = `${cleanPin}-${cleanPlayer}`;
-
       const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        nationalId: formData.nationalId,
-        phone: formData.phone,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        nationalId: formData.nationalId.trim(),
+        phone: formData.phone.trim(),
         password: formData.password,
         securityQuestion: "۱. کد ۶ رقمی شخصی | ۲. سه حرف اول بازیکن فوتبال",
-        securityAnswer: finalSecurityAnswer,
+        securityAnswer: `${formData.securityPin.trim()}-${formData.favoritePlayer.trim().toLowerCase()}`,
       };
 
       const res = await fetch("/api/auth/student/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        signal: controller.signal,
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "خطا در ثبت‌نام دانش‌آموز");
-      }
+      if (!res.ok) throw new Error(data.message || "خطا در ثبت‌نام دانش‌آموز");
 
-      const fullName = `${formData.firstName} ${formData.lastName}`;
-      const cardImage = generateSecurityCardDataUrl(
-        fullName,
-        formData.securityPin,
-        formData.favoritePlayer
-      );
+      const cardImage = generateSecurityCardDataUrl(`${formData.firstName} ${formData.lastName}`, formData.securityPin, formData.favoritePlayer);
       setSecurityCardImage(cardImage);
-
       setStep("security-card");
     } catch (err: any) {
-      if (err.name !== "AbortError") {
-        console.error("Student Registration Error:", err);
-        setErrorMessage(err.message || "ارتباط با سرور برقرار نشد.");
-      }
+      setErrorMessage(err.message || "ارتباط با سرور برقرار نشد.");
     } finally {
       setLoading(false);
     }
@@ -375,25 +297,15 @@ export default function StudentRegisterModal({
   return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto" dir="rtl">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={handleResetAndClose}
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
-        />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleResetAndClose} className="fixed inset-0 bg-slate-950/70 backdrop-blur-md" />
 
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 25 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 25 }}
-          className="relative w-full max-w-[500px] bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-6 sm:p-7 z-10 my-auto max-h-[90vh] overflow-y-auto"
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0, y: 25 }} 
+          animate={{ scale: 1, opacity: 1, y: 0 }} 
+          exit={{ scale: 0.9, opacity: 0, y: 25 }} 
+          className={`relative w-full ${step === "security-card" ? "max-w-[480px]" : "max-w-[540px]"} bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl p-5 sm:p-6 z-10 my-auto ${step === "security-card" ? "overflow-hidden" : "max-h-[90vh] overflow-y-auto"}`}
         >
-          <button
-            type="button"
-            onClick={handleResetAndClose}
-            className="absolute left-5 top-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer z-20"
-          >
+          <button type="button" onClick={handleResetAndClose} className="absolute left-4 top-4 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer z-20">
             <X className="w-4 h-4" />
           </button>
 
@@ -402,26 +314,15 @@ export default function StudentRegisterModal({
               <div className="mb-5 pt-1">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
                   <span>مرحله {step} از 4</span>
-                  <span>
-                    {step === 1 && "اطلاعات فردی"}
-                    {step === 2 && "کد ملی و تماس"}
-                    {step === 3 && "رمز عبور"}
-                    {step === 4 && "امنیت و قوانین"}
-                  </span>
+                  <span>{step === 1 ? "اطلاعات فردی" : step === 2 ? "کد ملی و تماس" : step === 3 ? "رمز عبور" : "امنیت و قوانین"}</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <motion.div
-                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full"
-                    animate={{ width: `${progressPercentage}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
+                  <motion.div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full" animate={{ width: `${progressPercentage}%` }} transition={{ duration: 0.3 }} />
                 </div>
               </div>
 
               <div className="mb-5 text-right">
-                <h2 className="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                  ثبت‌نام دانش‌آموز
-                </h2>
+                <h2 className="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">ثبت‌نام دانش‌آموز</h2>
                 <p className="text-xs text-slate-500 mt-0.5">لطفاً اطلاعات خود را دقیق وارد کنید</p>
               </div>
 
@@ -432,239 +333,46 @@ export default function StudentRegisterModal({
               )}
 
               <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); handleNextStep(); }}>
-                {step === 1 && (
-                  <div className="space-y-3.5">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">نام</label>
-                      <div className="relative">
-                        <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                        <input
-                          type="text"
-                          value={formData.firstName}
-                          onChange={(e) => updateField("firstName", e.target.value)}
-                          placeholder="مثال: علی"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      {errors.firstName && <p className="text-rose-500 text-[11px] mt-0.5">{errors.firstName}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">نام خانوادگی</label>
-                      <div className="relative">
-                        <User className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                        <input
-                          type="text"
-                          value={formData.lastName}
-                          onChange={(e) => updateField("lastName", e.target.value)}
-                          placeholder="مثال: محمدی"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      {errors.lastName && <p className="text-rose-500 text-[11px] mt-0.5">{errors.lastName}</p>}
-                    </div>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="space-y-3.5">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">کد ملی (۱۰ رقم)</label>
-                      <div className="relative">
-                        <CreditCard className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                        <input
-                          type="text"
-                          maxLength={10}
-                          value={formData.nationalId}
-                          onChange={(e) => updateField("nationalId", e.target.value.replace(/\D/g, ""))}
-                          placeholder="0012345678"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      {errors.nationalId && <p className="text-rose-500 text-[11px] mt-0.5">{errors.nationalId}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">شماره همراه</label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                        <input
-                          type="text"
-                          maxLength={11}
-                          value={formData.phone}
-                          onChange={(e) => updateField("phone", e.target.value.replace(/\D/g, ""))}
-                          placeholder="09123456789"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      {errors.phone && <p className="text-rose-500 text-[11px] mt-0.5">{errors.phone}</p>}
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-3.5">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        رمز عبور (۶ تا ۸ کاراکتر، شامل حروف بزرگ، کوچک و عدد)
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={formData.password}
-                          onChange={(e) => updateField("password", e.target.value)}
-                          placeholder="Abc123"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute left-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      {errors.password && <p className="text-rose-500 text-[11px] mt-0.5">{errors.password}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">تکرار رمز عبور</label>
-                      <div className="relative">
-                        <Lock className="w-4 h-4 absolute right-3 top-3.5 text-slate-400" />
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={formData.confirmPassword}
-                          onChange={(e) => updateField("confirmPassword", e.target.value)}
-                          placeholder="Abc123"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-10 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute left-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                        >
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      {errors.confirmPassword && <p className="text-rose-500 text-[11px] mt-0.5">{errors.confirmPassword}</p>}
-                    </div>
-                  </div>
-                )}
-
-                {step === 4 && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        ۱. یک کد ۶ رقمی شخصی و محرمانه (فقط عدد)
-                      </label>
-                      <div className="relative">
-                        <KeyRound className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
-                        <input
-                          type="text"
-                          maxLength={6}
-                          value={formData.securityPin}
-                          onChange={(e) => updateField("securityPin", e.target.value)}
-                          placeholder="مثال: ۷۴۸۵۱۲"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      {errors.securityPin && <p className="text-rose-500 text-[11px] mt-0.5">{errors.securityPin}</p>}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        ۲. سه حرف اول اسم بازیکن فوتبال مورد علاقه (فقط انگلیسی)
-                      </label>
-                      <div className="relative">
-                        <Trophy className="w-4 h-4 absolute right-3 top-3 text-slate-400" />
-                        <input
-                          type="text"
-                          maxLength={3}
-                          value={formData.favoritePlayer}
-                          onChange={(e) => updateField("favoritePlayer", e.target.value)}
-                          placeholder="مثال: ron یا mes"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-10 pl-3 text-sm text-slate-800 dir-ltr text-right uppercase focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      {errors.favoritePlayer && <p className="text-rose-500 text-[11px] mt-0.5">{errors.favoritePlayer}</p>}
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1">
-                      <input
-                        type="checkbox"
-                        id="rules"
-                        checked={formData.acceptRules}
-                        onChange={(e) => updateField("acceptRules", e.target.checked)}
-                        className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
-                      />
-                      <label htmlFor="rules" className="text-xs text-slate-600 cursor-pointer">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setIsRulesModalOpen(true);
-                          }}
-                          className="text-emerald-600 font-bold hover:underline inline mx-1 cursor-pointer"
-                        >
-                          قوانین و شرایط استفاده از سامانه
-                        </button>
-                        را مطالعه کرده‌ام و می‌پذیرم.
-                      </label>
-                    </div>
-                    {errors.rules && <p className="text-rose-500 text-[11px]">{errors.rules}</p>}
-                  </div>
-                )}
+                {step === 1 && <StepOnePersonal formData={formData} errors={errors} updateField={updateField} />}
+                {step === 2 && <StepTwoContact formData={formData} errors={errors} updateField={updateField} />}
+                {step === 3 && <StepThreePassword formData={formData} errors={errors} updateField={updateField} />}
+                {step === 4 && <StepFourSecurity formData={formData} errors={errors} updateField={updateField} onOpenRules={() => setIsRulesModalOpen(true)} />}
 
                 <div className="flex gap-3 mt-5">
-                  {step > 1 && (
-                    <button
-                      type="button"
-                      onClick={handlePrevStep}
-                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm cursor-pointer"
-                    >
+                  {Number(step) > 1 && (
+                    <button type="button" onClick={handlePrevStep} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm cursor-pointer">
                       مرحله قبل
                     </button>
                   )}
-                  <button
-                    type={step === 4 ? "submit" : "button"}
-                    onClick={step === 4 ? undefined : handleNextStep}
-                    disabled={loading}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
-                  >
+                  <button type={step === 4 ? "submit" : "button"} onClick={step === 4 ? undefined : handleNextStep} disabled={loading} className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer">
                     {loading ? "در حال ثبت‌نام..." : step === 4 ? "تکمیل ثبت‌نام" : "مرحله بعد"}
                   </button>
                 </div>
               </form>
             </div>
           ) : (
-            <div className="space-y-4 text-center">
-              <div className="mb-2 text-right">
-                <h2 className="text-lg font-extrabold text-slate-800">کارت امنیتی شما آماده است</h2>
-                <p className="text-xs text-slate-500 mt-0.5">لطفاً پیش از ورود، این کارت را ذخیره کنید</p>
+            <div className="text-center space-y-3 pt-1">
+              {/* بخش متن هشدار درشت، نرم و زیبا */}
+              <div className="bg-gradient-to-r  from-amber-500 to-orange-500 p-3.5 rounded-2xl text-white text-base sm:text-lg font-bold flex items-center justify-center gap-2.5 shadow-lg shadow-amber-500/20 tracking-wide">
+                <span>حتماً از کارتت عکس بگیر!</span>
+                    
               </div>
 
               {securityCardImage && (
-                <div className="flex justify-center">
-                  <img
-                    src={securityCardImage}
-                    alt="Security Card"
-                    className="w-full max-w-[440px] rounded-2xl shadow-md border border-slate-200"
-                  />
+                <div className="flex justify-center my-1">
+                  <img src={securityCardImage} alt="کارت امنیتی" className="rounded-xl shadow-md border border-slate-200 max-h-[220px] w-auto object-contain" />
                 </div>
               )}
 
-              <div className="flex gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={handleSaveImage}
-                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-600/20 cursor-pointer"
-                >
-                  <Download className="w-4 h-4" /> ذخیره عکس در گالری
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button type="button" onClick={handleSaveImage} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer">
+                  <Download className="w-4 h-4 text-slate-500" />
+                  ذخیره در گالری
                 </button>
-                <button
-                  type="button"
-                  onClick={handleFinish}
-                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
-                >
-                  <span>متوجه شدم / ورود</span> <ArrowLeft className="w-4 h-4" />
+                
+                <button type="button" onClick={handleFinish} className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer">
+                  <span>عکس گرفتم / ورود</span>
+                  <ArrowLeft className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -673,30 +381,14 @@ export default function StudentRegisterModal({
           {onSwitchToLogin && step !== "security-card" && (
             <div className="mt-4 pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
               قبلاً ثبت‌نام کرده‌اید؟{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  handleResetAndClose();
-                  onSwitchToLogin();
-                }}
-                className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer"
-              >
+              <button type="button" onClick={() => { handleResetAndClose(); onSwitchToLogin(); }} className="text-emerald-600 font-extrabold hover:underline mr-1 cursor-pointer">
                 وارد شوید
               </button>
             </div>
           )}
         </motion.div>
-
-        <RulesModal
-          isOpen={isRulesModalOpen}
-          onClose={() => setIsRulesModalOpen(false)}
-          onAccept={() => {
-            setFormData((prev) => ({ ...prev, acceptRules: true }));
-            setIsRulesModalOpen(false);
-          }}
-        />
       </div>
     </AnimatePresence>,
-    document.body
+    document.body,
   );
 }

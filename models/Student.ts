@@ -10,8 +10,9 @@ export interface IStudent {
   passwordHash: string;
   grade: number;
   avatar?: string;
-  securityQuestion: string; 
-  securityAnswerHash: string; 
+  securityQuestion: string;
+  securityPin: string; // اضافه شدن پین ۶ رقمی به صورت مجزا
+  securityAnswerHash: string;
   isActive: boolean;
   isVerified: boolean;
   leagueProfile?: mongoose.Types.ObjectId;
@@ -74,6 +75,13 @@ const StudentSchema = new Schema<IStudent>(
     securityQuestion: {
       type: String,
       required: true,
+      trim: true,
+    },
+    securityPin: {
+      type: String,
+      required: true,
+      unique: true, // یکتا بودن کد ۶ رقمی امنیتی
+      index: true,
       trim: true,
     },
     securityAnswerHash: {
