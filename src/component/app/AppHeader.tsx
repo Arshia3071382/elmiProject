@@ -44,10 +44,11 @@ export default function AppHeader({
   return (
     <>
       {/* هدر اصلی */}
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-2.5 flex items-center justify-between shadow-sm" dir="rtl">
-        {/* لوگو و عنوان (سمت راست) */}
+      <header className="sticky top-0 z-30 bg-[#0d52b5] border-b border-blue-400/20 px-4 py-2.5 flex items-center justify-between shadow-md shadow-blue-900/20" dir="rtl">
+        
+        {/* سمت راست: لوگو و عنوان */}
         <div className="flex items-center gap-2.5">
-          <div className="relative w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-md shadow-blue-500/15">
+          <div className="relative w-9 h-9 rounded-full p-0.5 bg-white/20 shadow-sm">
             <div className="w-full h-full bg-white rounded-full p-1 flex items-center justify-center overflow-hidden">
               <Image
                 src="/icons/logo6.png"
@@ -60,25 +61,41 @@ export default function AppHeader({
             </div>
           </div>
           
-          <span 
-            className="text-base sm:text-lg font-[iranBold] tracking-tight select-none"
-            style={{ color: "#1F3A5F" }}
-          >
+          <span className="text-base sm:text-lg font-[iranBold] tracking-tight select-none text-white">
             عـلـــــمـی منتظرانــــ
           </span>
         </div>
 
-        {/* دکمه منوی همبرگری (سمت چپ) */}
-        <button
-          onClick={toggleDrawer}
-          className="p-2.5 rounded-full bg-gray-50 text-gray-700 active:scale-95 transition-all hover:bg-gray-100 border border-gray-100"
-          aria-label="منوی اصلی"
-        >
-          <Menu className="w-5 h-5 text-gray-700" />
-        </button>
+        {/* سمت چپ: دکمه‌های ورود/ثبت‌نام + منوی همبرگری در انتهای چپ */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsLoginOpen(true)}
+            className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 border border-white/15 text-xs font-[iranBold] active:scale-95 transition-all"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>ورود</span>
+          </button>
+          
+          <button
+            onClick={() => setIsRegisterOpen(true)}
+            className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-white text-[#0d52b5] hover:bg-blue-50 text-xs font-[iranBold] shadow-sm active:scale-95 transition-all"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>ثبت‌نام</span>
+          </button>
+
+          {/* دکمه منوی همبرگری (انتهای سمت چپ) */}
+          <button
+            onClick={toggleDrawer}
+            className="p-2 mr-1 rounded-xl bg-white/10 text-white active:scale-95 transition-all hover:bg-white/20 border border-white/10 flex items-center justify-center"
+            aria-label="منوی اصلی"
+          >
+            <Menu className="w-5 h-5 text-white" />
+          </button>
+        </div>
       </header>
 
-      {/* منوی کشویی منتقل شده به ریشه صفحه (Portal) برای حل مشکل z-index */}
+      {/* منوی کشویی منتقل شده به ریشه صفحه (Portal) */}
       {isMounted && createPortal(
         <>
           {/* پس‌زمینه تاریک (Overlay) */}
@@ -123,7 +140,7 @@ export default function AppHeader({
                 </button>
               </div>
 
-              {/* دکمه‌های ورود و ثبت‌نام */}
+              {/* دکمه‌های ورود و ثبت‌نام داخل کشو */}
               <div className="grid grid-cols-2 gap-2.5 mb-6">
                 <button
                   onClick={() => {

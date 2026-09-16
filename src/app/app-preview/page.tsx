@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import AppHome from '@/component/app/AppHome'
 import AppHeader from '@/component/app/AppHeader'
-import AppHero from '@/component/app/AppHero'
 import AppCountdownBanner from '@/component/app/AppCountdownBanner'
 import AppQuickActions from '@/component/app/AppQuickActions'
 import AppLeagueCard from '@/component/app/AppLeagueCard'
@@ -23,17 +22,9 @@ export default function AppPreviewPage() {
               onMenuClick={() => alert('کلیک روی منو')}
             />
           }
-          hero={
-            <AppHero
-              studentName="امیرحسین"
-              subtitle="هر روز یک قدم به آینده نزدیک‌تر شو."
-              buttonText="مشاهده برنامه امروز"
-              onActionClick={() => alert('مشاهده برنامه امروز')}
-            />
-          }
           quickActions={
             <div className="space-y-4">
-              {/* بنر شمارش معکوس پایان لیگ نخبگان - اصلاح تاریخ به ۱ خرداد ۱۴۰۶ */}
+              {/* بنر شمارش معکوس پایان لیگ نخبگان - تاریخ ۱ خرداد ۱۴۰۶ */}
               <AppCountdownBanner
                 targetDate="2027-05-22T00:00:00"
                 targetUrl="/elite-league"

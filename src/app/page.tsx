@@ -14,7 +14,6 @@ import ScrollAnimation from "@/component/ScrollAnimation";
 // کامپوننت‌های اختصاصی PWA
 import AppHome from "@/component/app/AppHome";
 import AppHeader from "@/component/app/AppHeader";
-import AppHero from "@/component/app/AppHero";
 import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
@@ -154,19 +153,9 @@ function PWAAppHome() {
   return (
     <AppHome
       header={<AppHeader />}
-      hero={
-        <AppHero
-          studentName={studentData.name}
-          subtitle="هر روز یک قدم به آینده نزدیک‌تر شو."
-          buttonText="مشاهده برنامه امروز"
-          onActionClick={() => {
-            window.location.href = "/student/dashboard";
-          }}
-        />
-      }
       quickActions={
-        <div className="space-y-4">
-          {/* بنر شمارش معکوس با تاریخ دقیق ۱ خرداد ۱۴۰۶ ساعت ۰۰:۰۰ (۲۲ می ۲۰۲۷) با Timezone ایران */}
+        <div className="space-y-3 pt-1 -mt-1">
+          {/* بنر شمارش معکوس با تاریخ دقیق ۱ خرداد ۱۴۰۶ */}
           <AppCountdownBanner
             targetDate="2027-05-22T00:00:00+03:30"
             targetUrl="/elite-league"

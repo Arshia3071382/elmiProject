@@ -1,155 +1,369 @@
-'use client'
+"use client";
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, Bell, Sparkles, Headset, User, LucideIcon } from 'lucide-react'
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  BookOpen,
+  Bell,
+  Sparkles,
+  Headset,
+  User,
+  Pencil,
+  LucideIcon,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-export type TabType = 'home' | 'news' | 'about' | 'contact' | 'login'
+export type TabType = "home" | "news" | "about" | "contact" | "login";
 
 interface TabItem {
-  id: TabType
-  label: string
-  href: string
-  icon: LucideIcon
-  isWavePeak?: boolean
+  id: TabType;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  activeIcon?: LucideIcon;
+  isCenter?: boolean;
 }
 
 interface AppBottomNavProps {
-  activeTab?: TabType
-  onTabChange?: (tab: TabType) => void
+  activeTab?: TabType;
+  onTabChange?: (tab: TabType) => void;
+}
+
+/*
+|--------------------------------------------------------------------------
+| آیکون کتاب نقاشی / آموزشی
+|--------------------------------------------------------------------------
+| ترکیب کتاب باز + مداد
+| برای اینکه حس یک آیکون اختصاصی‌تر داشته باشد.
+*/
+
+function DrawingBookIcon({ className = "" }: { className?: string }) {
+  return (
+    <div className={`relative ${className}`}>
+      {/* کتاب */}
+      <BookOpen className="w-6 h-6 stroke-[2.1]" />
+
+      {/* مداد کوچک */}
+      <Pencil
+        className="
+          absolute
+          -right-1
+          -bottom-0.5
+          w-[11px]
+          h-[11px]
+          stroke-[2.4]
+          rotate-[-18deg]
+        "
+      />
+    </div>
+  );
 }
 
 export default function AppBottomNav({
   activeTab,
   onTabChange,
 }: AppBottomNavProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
-  // ترتیب ۵ تایی از راست به چپ (RTL) - خانه روی موج راست
   const tabs: TabItem[] = [
-    { id: 'home', label: 'خانه', href: '/', icon: Home, isWavePeak: true },
-    { id: 'news', label: 'اخبار', href: '/news', icon: Bell },
-    { id: 'about', label: 'درباره ما', href: '/aboutUs', icon: Sparkles },
-    { id: 'contact', label: 'ارتباط با ما', href: '/contactUs', icon: Headset },
-    { id: 'login', label: 'ورود', href: '/auth/login', icon: User },
-  ]
+    {
+      id: "news",
+      label: "اخبار",
+      href: "/news",
+      icon: Bell,
+    },
+    {
+      id: "about",
+      label: "درباره ما",
+      href: "/aboutUs",
+      icon: Sparkles,
+    },
+    {
+      id: "home",
+      label: "خانه",
+      href: "/",
+      icon: BookOpen,
+      activeIcon: Home,
+      isCenter: true,
+    },
+    {
+      id: "contact",
+      label: "ارتباط با ما",
+      href: "/contactUs",
+      icon: Headset,
+    },
+    {
+      id: "login",
+      label: "ورود",
+      href: "/auth/login",
+      icon: User,
+    },
+  ];
 
   const getIsActive = (tab: TabItem) => {
-    if (activeTab) return activeTab === tab.id
-    if (tab.href === '/') return pathname === '/'
-    return pathname.startsWith(tab.href)
-  }
+    if (activeTab) {
+      return activeTab === tab.id;
+    }
+
+    if (tab.href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname.startsWith(tab.href);
+  };
 
   return (
-    <div className="fixed bottom-3 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)] px-4">
-      {/* Container اصلی هم‌عرض کارت‌ها */}
-      <div className="max-w-md mx-auto relative dir-rtl">
-        
-        {/* دکمه دایره‌ای شناور خانه - دقیقاً روی مرکز موج در سمت راست */}
-        <div className="absolute -top-4 right-[10%] -translate-x-1/2 z-20 pointer-events-auto">
+    <div
+      className="
+        fixed
+        bottom-3
+        left-0
+        right-0
+        z-50
+        pointer-events-none
+        pb-[env(safe-area-inset-bottom)]
+        px-4
+      "
+    >
+      <div
+        className="
+          max-w-md
+          mx-auto
+          relative
+          dir-rtl
+          pointer-events-auto
+        "
+      >
+        {/* =====================================================
+            Bottom Navigation
+        ===================================================== */}
+
+        <nav
+          className="
+            relative
+            bg-[#0d52b5]
+            text-white
+            rounded-3xl
+            shadow-2xl
+            shadow-blue-900/30
+            px-2
+            h-16
+            flex
+            items-center
+            justify-between
+            border
+            border-blue-400/20
+          "
+        >
           {tabs.map((tab) => {
-            if (!tab.isWavePeak) return null
-            const isActive = getIsActive(tab)
-            const Icon = tab.icon
+            const Icon = tab.icon;
+            const ActiveIcon = tab.activeIcon || tab.icon;
+            const isActive = getIsActive(tab);
+
+            /* =================================================
+               CENTER BUTTON
+            ================================================= */
+
+            if (tab.isCenter) {
+              return (
+                <Link
+                  key={tab.id}
+                  href={tab.href}
+                  onClick={() => onTabChange?.(tab.id)}
+                  className="
+                    flex
+                    flex-col
+                    items-center
+                    justify-center
+                    relative
+                    -top-3
+                    group
+                  "
+                >
+                  {/* دایره اصلی */}
+                  <div
+                    className="
+                      w-13
+                      h-13
+                      rounded-full
+                      flex
+                      items-center
+                      justify-center
+                      ring-4
+                      ring-[#0d52b5]
+                      shadow-lg
+                      transition-all
+                      duration-300
+                    "
+                  >
+                    <div
+                      className="
+                        w-full
+                        h-full
+                        rounded-full
+                        flex
+                        items-center
+                        justify-center
+                        bg-white
+                        text-[#0d52b5]
+                        shadow-md
+                        transition-all
+                        duration-300
+                        active:scale-90
+                        group-hover:bg-blue-50
+                      "
+                    >
+                      {/* =================================================
+                          Transition بین:
+                          خانه ↔ کتاب نقاشی
+                      ================================================= */}
+
+                      <AnimatePresence mode="wait" initial={false}>
+                        {isActive ? (
+                          /* -----------------------------
+                             حالت فعال: خانه
+                          ----------------------------- */
+
+                          <motion.div
+                            key="active-home"
+                            initial={{
+                              scale: 0.55,
+                              rotate: -20,
+                              opacity: 0,
+                            }}
+                            animate={{
+                              scale: 1,
+                              rotate: 0,
+                              opacity: 1,
+                            }}
+                            exit={{
+                              scale: 0.7,
+                              rotate: 20,
+                              opacity: 0,
+                            }}
+                            transition={{
+                              duration: 0.28,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                          >
+                            <ActiveIcon
+                              className="
+                                w-6
+                                h-6
+                                stroke-[2.2]
+                              "
+                            />
+                          </motion.div>
+                        ) : (
+                          /* -----------------------------
+                             حالت غیرفعال:
+                             کتاب + مداد
+                          ----------------------------- */
+
+                          <motion.div
+                            key="drawing-book"
+                            initial={{
+                              scale: 0.55,
+                              rotate: 12,
+                              opacity: 0,
+                            }}
+                            animate={{
+                              scale: 1,
+                              rotate: 0,
+                              opacity: 1,
+                            }}
+                            exit={{
+                              scale: 0.7,
+                              rotate: -12,
+                              opacity: 0,
+                            }}
+                            transition={{
+                              duration: 0.28,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                          >
+                            <DrawingBookIcon />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {/* عنوان */}
+                  <span
+                    className={`
+                      text-[10px]
+                      font-bold
+                      mt-0.5
+                      transition-colors
+                      duration-300
+                      ${isActive ? "text-white" : "text-blue-200"}
+                    `}
+                  >
+                    {tab.label}
+                  </span>
+                </Link>
+              );
+            }
+
+            /* =================================================
+               OTHER ITEMS
+            ================================================= */
 
             return (
               <Link
                 key={tab.id}
                 href={tab.href}
                 onClick={() => onTabChange?.(tab.id)}
-                className="flex flex-col items-center group focus:outline-none"
+                className="
+                  flex-1
+                  flex
+                  flex-col
+                  items-center
+                  justify-center
+                  h-full
+                  pt-1
+                  transition-all
+                  duration-200
+                  active:scale-90
+                "
               >
-                <div className="w-13 h-13 rounded-full bg-white p-1 shadow-lg flex items-center justify-center">
-                  <div
-                    className={`w-full h-full rounded-full flex items-center justify-center transition-all duration-300 active:scale-90 ${
+                <Icon
+                  className={`
+                    w-5
+                    h-5
+                    transition-all
+                    duration-200
+                    ${
                       isActive
-                        ? 'bg-[#0d52b5] text-white shadow-md shadow-blue-600/30'
-                        : 'bg-[#0d52b5] text-white hover:bg-blue-700'
-                    }`}
-                  >
-                    <Icon className="w-5.5 h-5.5 stroke-[2]" />
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+                        ? "text-white scale-110 stroke-[2.2]"
+                        : "text-blue-200/80 stroke-[1.75]"
+                    }
+                  `}
+                />
 
-        {/* نوار پس‌زمینه با طراحی موج در راست و ادامه خط صاف به چپ */}
-        <div className="relative w-full h-16 pointer-events-auto filter drop-shadow-xl">
-          <svg
-            className="w-full h-full text-[#0d52b5] fill-current"
-            viewBox="0 0 375 64"
-            preserveAspectRatio="none"
-          >
-            {/* 
-              مسیر SVG:
-              - لبه‌های گرد شناور با انحنای استاندارد
-              - قوس موج دقیقاً در منطقه ۱۰٪ تا ۳۰٪ عرض از سمت راست
-            */}
-            <path d="M 24,14 
-                     L 260,14 
-                     C 272,14 278,2 295,2 
-                     C 312,2 318,14 330,14 
-                     L 351,14 
-                     A 16,16 0 0 1 367,30 
-                     L 367,46 
-                     A 16,16 0 0 1 351,62 
-                     L 24,62 
-                     A 16,16 0 0 1 8,46 
-                     L 8,30 
-                     A 16,16 0 0 1 24,14 Z" />
-          </svg>
-
-          {/* چینش گزینه‌ها روی نوار */}
-          <nav className="absolute inset-0 flex items-center justify-between px-3 text-white">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              const isActive = getIsActive(tab)
-
-              // متن خانه در پایین موج راست
-              if (tab.isWavePeak) {
-                return (
-                  <div key={tab.id} className="w-[20%] flex flex-col items-center justify-end h-full pb-1.5">
-                    <span
-                      className={`text-[10px] font-bold transition-colors ${
-                        isActive ? 'text-white' : 'text-blue-200'
-                      }`}
-                    >
-                      {tab.label}
-                    </span>
-                  </div>
-                )
-              }
-
-              // سایر آیتم‌های ۴‌تایی
-              return (
-                <Link
-                  key={tab.id}
-                  href={tab.href}
-                  onClick={() => onTabChange?.(tab.id)}
-                  className="w-[20%] flex flex-col items-center justify-center h-full pt-1.5 transition-all active:scale-90"
+                <span
+                  className={`
+                    text-[10px]
+                    mt-1
+                    transition-colors
+                    duration-200
+                    ${
+                      isActive
+                        ? "text-white font-bold"
+                        : "text-blue-200/80 font-medium"
+                    }
+                  `}
                 >
-                  <Icon
-                    className={`w-5 h-5 transition-transform duration-200 ${
-                      isActive ? 'text-white scale-110 stroke-[2.2]' : 'text-blue-200/80 stroke-[1.75]'
-                    }`}
-                  />
-                  <span
-                    className={`text-[10px] mt-0.5 transition-colors ${
-                      isActive ? 'text-white font-bold' : 'text-blue-200/80 font-medium'
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-                </Link>
-              )
-            })}
-          </nav>
-        </div>
-
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </div>
-  )
+  );
 }
