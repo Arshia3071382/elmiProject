@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
 // کامپوننت‌های ضروری بالای صفحه
@@ -18,6 +19,7 @@ import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
+import AppPreloader from "@/component/app/AppPreloader";
 
 // لود دینامیک بنر تایمر بدون SSR جهت جلوگیری از Mismatch در سرور ورسل
 const AppCountdownBanner = dynamic(
@@ -25,7 +27,7 @@ const AppCountdownBanner = dynamic(
   { ssr: false }
 );
 
-// ۱. بهینه‌سازی Lazy Loading: غیرفعال کردن ssr جهت سبک‌سازی Main Thread در لود اولیه
+// ۱. بهینه‌سازی Lazy Loading
 const CounterStats = dynamic(() => import("@/component/CounterStats"), {
   ssr: false,
 });
@@ -77,7 +79,7 @@ function ExistingWebsiteHome() {
           <EliteLeagueBanner />
         </div>
 
-        {/* کامپوننت‌های دینامیک با فاصله مناسب عمودی (space-y) */}
+        {/* کامپوننت‌های دینامیک */}
         {isLoaded && (
           <div className="space-y-12 mt-30 sm:mt-40 sm:space-y-24">
             <ScrollAnimation direction="up" delay={0.05}>
@@ -120,6 +122,8 @@ function ExistingWebsiteHome() {
 
 // --- UI اختصاصی اپلیکیشن PWA ---
 function PWAAppHome() {
+  const router = useRouter();
+  const [showPwaPreloader, setShowPwaPreloader] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [studentData, setStudentData] = useState({
     name: "دانش‌آموز",
@@ -151,62 +155,70 @@ function PWAAppHome() {
   }, []);
 
   return (
-    <AppHome
-      header={<AppHeader />}
-      quickActions={
-        <div className="space-y-3 pt-1 -mt-1">
-          {/* بنر شمارش معکوس با تاریخ دقیق ۱ خرداد ۱۴۰۶ */}
-          <AppCountdownBanner
-            targetDate="2027-05-22T00:00:00+03:30"
-            targetUrl="/elite-league"
-            imageSrc="/image/appHero.jpg"
-          />
+    <>
+      {/* پریلودر اختصاصی PWA با تایمر ۳ ثانیه‌ای */}
+      {showPwaPreloader && (
+        <AppPreloader
+          duration={3000}
+          onComplete={() => setShowPwaPreloader(false)}
+        />
+      )}
 
-          {/* اکشن‌های سریع PWA */}
-          <AppQuickActions
-            onActionClick={(id) => {
-              if (id === "quizzes") window.location.href = "/league/grade";
-              if (id === "league") window.location.href = "/elite-league";
-              if (id === "courses") window.location.href = "/courses";
-              if (id === "goftino") window.location.href = "/chat-guidance/chat";
+      <AppHome
+        header={<AppHeader />}
+        quickActions={
+          <div className="space-y-3 pt-1 -mt-1">
+            <AppCountdownBanner
+              targetDate="2027-05-22T00:00:00+03:30"
+              targetUrl="/elite-league"
+              imageSrc="/image/appHero.jpg"
+            />
+
+            <AppQuickActions
+              onActionClick={(id) => {
+                if (id === "quizzes") router.push("/under-construction");
+                if (id === "league") router.push("/elite-league");
+                if (id === "courses") router.push("/courses");
+                if (id === "goftino") router.push("/chat-guidance/chat");
+              }}
+            />
+          </div>
+        }
+        leagueCard={
+          <AppLeagueCard
+            rank={studentData.rank}
+            totalParticipants={studentData.totalParticipants}
+            progressPercentage={studentData.progressPercentage}
+            onViewLeaderboard={() => {
+              router.push("/elite-league");
             }}
           />
-        </div>
-      }
-      leagueCard={
-        <AppLeagueCard
-          rank={studentData.rank}
-          totalParticipants={studentData.totalParticipants}
-          progressPercentage={studentData.progressPercentage}
-          onViewLeaderboard={() => {
-            window.location.href = "/elite-league";
-          }}
-        />
-      }
-      quickAccess={
-        <AppQuickAccess
-          onItemClick={(id) => {
-            if (id === "honors") window.location.href = "/student/dashboard";
-            if (id === "notes") window.location.href = "/student/dashboard";
-            if (id === "calendar") window.location.href = "/calendar";
-            if (id === "videos") window.location.href = "/courses";
-          }}
-        />
-      }
-      bottomNav={
-        <AppBottomNav
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            if (tab === "home") window.location.href = "/";
-            if (tab === "news") window.location.href = "/news";
-            if (tab === "about") window.location.href = "/aboutUs";
-            if (tab === "contact") window.location.href = "/contactUs";
-            if (tab === "login") window.location.href = "/auth/login";
-          }}
-        />
-      }
-    />
+        }
+        quickAccess={
+          <AppQuickAccess
+            onItemClick={(id) => {
+              if (id === "honors") router.push("/student/dashboard");
+              if (id === "notes") router.push("/student/dashboard");
+              if (id === "calendar") router.push("/calendar");
+              if (id === "videos") router.push("/courses");
+            }}
+          />
+        }
+        bottomNav={
+          <AppBottomNav
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              if (tab === "home") router.push("/");
+              if (tab === "news") router.push("/news");
+              if (tab === "about") router.push("/aboutUs");
+              if (tab === "contact") router.push("/contactUs");
+              if (tab === "login") router.push("/auth/login");
+            }}
+          />
+        }
+      />
+    </>
   );
 }
 

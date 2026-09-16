@@ -56,7 +56,7 @@ export default function AppCountdownBanner({
   return (
     <Link
       href={targetUrl}
-      className="block w-full relative rounded-3xl overflow-hidden my-3 min-h-[170px] border border-white/20 active:scale-[0.99] transition-transform shadow-md group"
+      className="block w-full relative rounded-3xl -mt-1 overflow-hidden my-3 min-h-[170px] border border-white/20 active:scale-[0.99] transition-transform shadow-md group"
     >
       {/* عکس پس‌زمینه */}
       <div className="absolute inset-0 z-0">

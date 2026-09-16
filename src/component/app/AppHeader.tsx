@@ -43,18 +43,18 @@ export default function AppHeader({
 
   return (
     <>
-      {/* هدر اصلی */}
-      <header className="sticky top-0 z-30 bg-[#0d52b5] border-b border-blue-400/20 px-4 py-2.5 flex items-center justify-between shadow-md shadow-blue-900/20" dir="rtl">
+      {/* هدر اصلی با ارتفاع بیشتر (py-5.5) */}
+      <header className="sticky top-0 z-30 bg-[#0d52b5] border-b border-blue-400/20 px-4 py-3.5 flex items-center justify-between shadow-md shadow-blue-900/20" dir="rtl">
         
         {/* سمت راست: لوگو و عنوان */}
         <div className="flex items-center gap-2.5">
-          <div className="relative w-9 h-9 rounded-full p-0.5 bg-white/20 shadow-sm">
+          <div className="relative w-10 h-10 rounded-full p-0.5 bg-white/20 shadow-sm">
             <div className="w-full h-full bg-white rounded-full p-1 flex items-center justify-center overflow-hidden">
               <Image
                 src="/icons/logo6.png"
                 alt="علمی منتظران"
-                width={36}
-                height={36}
+                width={40}
+                height={40}
                 className="object-contain w-full h-full"
                 priority
               />
@@ -66,28 +66,32 @@ export default function AppHeader({
           </span>
         </div>
 
-        {/* سمت چپ: دکمه‌های ورود/ثبت‌نام + منوی همبرگری در انتهای چپ */}
+        {/* سمت چپ: آیکون‌های ورود و ثبت‌نام (استایل همسان شیشه‌ای) + منوی همبرگری */}
         <div className="flex items-center gap-2">
+          {/* آیکون ورود */}
           <button
             onClick={() => setIsLoginOpen(true)}
-            className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 border border-white/15 text-xs font-[iranBold] active:scale-95 transition-all"
+            className="p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/15 active:scale-95 transition-all flex items-center justify-center"
+            title="ورود"
+            aria-label="ورود"
           >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>ورود</span>
+            <LogIn className="w-4 h-4 text-white" />
           </button>
           
+          {/* آیکون ثبت‌نام (دقیقاً مشابه ورود بدون بک‌گراند سفید) */}
           <button
             onClick={() => setIsRegisterOpen(true)}
-            className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-white text-[#0d52b5] hover:bg-blue-50 text-xs font-[iranBold] shadow-sm active:scale-95 transition-all"
+            className="p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/15 active:scale-95 transition-all flex items-center justify-center"
+            title="ثبت‌نام"
+            aria-label="ثبت‌نام"
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>ثبت‌نام</span>
+            <UserPlus className="w-4 h-4 text-white" />
           </button>
 
           {/* دکمه منوی همبرگری (انتهای سمت چپ) */}
           <button
             onClick={toggleDrawer}
-            className="p-2 mr-1 rounded-xl bg-white/10 text-white active:scale-95 transition-all hover:bg-white/20 border border-white/10 flex items-center justify-center"
+            className="p-2.5 mr-0.5 rounded-xl bg-white/10 text-white active:scale-95 transition-all hover:bg-white/20 border border-white/10 flex items-center justify-center"
             aria-label="منوی اصلی"
           >
             <Menu className="w-5 h-5 text-white" />
