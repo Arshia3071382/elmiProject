@@ -38,7 +38,7 @@ const PuzzleActionSection = dynamic(() => import("@/component/PuzzleButton"), {
 });
 const PopularClasses = dynamic(
   () => import("@/component/classBox/PopularClasses"),
-  { ssr: false },
+  { ssr: false }
 );
 const StudentComments = dynamic(() => import("@/component/StudentComments"), {
   ssr: false,
@@ -209,10 +209,11 @@ function PWAAppHome() {
           activeTab={activeTab}
           onTabChange={(tab) => {
             setActiveTab(tab);
-            if (tab === "quizzes") window.location.href = "/league/grade";
-            if (tab === "league") window.location.href = "/elite-league";
-            if (tab === "courses") window.location.href = "/courses";
-            if (tab === "profile") window.location.href = "/student/dashboard";
+            if (tab === "home") window.location.href = "/";
+            if (tab === "news") window.location.href = "/news";
+            if (tab === "about") window.location.href = "/aboutUs";
+            if (tab === "contact") window.location.href = "/contactUs";
+            if (tab === "login") window.location.href = "/auth/login";
           }}
         />
       }
