@@ -15,7 +15,6 @@ export default function AppPreloader({
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    // محو شدن افکت (Fade out) قبل از خروج کامل
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
     }, duration - 400);
@@ -39,31 +38,23 @@ export default function AppPreloader({
     >
       <div />
 
-      {/* بخش مرکزی: لوگوی خالص بدون پس‌زمینه و بدون پرش */}
-      <div className="flex flex-col items-center gap-6 text-center">
-        <div className="relative w-32 h-32 flex items-center justify-center transition-transform duration-700 transform scale-100">
+      {/* بخش مرکزی: فقط لوگوی بسیار بزرگ بدون متن */}
+      <div className="flex flex-col items-center justify-center">
+        <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
           <Image
             src="/icons/logo6.png"
-            alt="مجموعه علمی منتظران"
-            width={128}
-            height={128}
+            alt="لوگو"
+            width={256}
+            height={256}
             className="object-contain w-full h-full"
             priority
           />
         </div>
-
-        {/* عنوان مجموعه */}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-[iranBold] text-[#0d52b5] tracking-wide">
-            مجموعه علمی منتظران
-          </h1>
-          
-        </div>
       </div>
 
       {/* نوار پیشرفت ۳ ثانیه‌ای */}
-      <div className="flex flex-col items-center gap-3 w-full max-w-[160px]">
-        <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+      <div className="flex flex-col items-center gap-3 w-full max-w-[220px]">
+        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
             className="h-full bg-[#0d52b5] rounded-full transition-all ease-out"
             style={{

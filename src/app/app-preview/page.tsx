@@ -14,15 +14,27 @@ import AppPreloader from '@/component/app/AppPreloader'
 export default function AppPreviewPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('home')
-  const [showPreloader, setShowPreloader] = useState(true)
+
+  // بررسی فوری جهت اجرای تک‌باره پریلودر
+  const [showPreloader, setShowPreloader] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('pwa_preloader_seen')
+    }
+    return false
+  })
+
+  const handlePreloaderComplete = () => {
+    localStorage.setItem('pwa_preloader_seen', 'true')
+    setShowPreloader(false)
+  }
 
   return (
     <>
-      {/* پریلودر ۳ ثانیه‌ای پیش‌نمایش */}
+      {/* پریلودر PWA فقط یک‌بار در اولین لود برنامه اجرا می‌شود */}
       {showPreloader && (
         <AppPreloader
           duration={3000}
-          onComplete={() => setShowPreloader(false)}
+          onComplete={handlePreloaderComplete}
         />
       )}
 

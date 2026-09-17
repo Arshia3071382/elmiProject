@@ -5,14 +5,14 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
-// کامپوننت‌های ضروری بالای صفحه
+// کامپوننت‌های ضروری
 import Preloader from "@/component/Preloader";
 import HeroSec from "@/component/HeroSec";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
 import ScrollAnimation from "@/component/ScrollAnimation";
 
-// کامپوننت‌های اختصاصی PWA
+// کامپوننت‌های PWA
 import AppHome from "@/component/app/AppHome";
 import AppHeader from "@/component/app/AppHeader";
 import AppQuickActions from "@/component/app/AppQuickActions";
@@ -21,34 +21,19 @@ import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
 import AppPreloader from "@/component/app/AppPreloader";
 
-// لود دینامیک بنر تایمر بدون SSR جهت جلوگیری از Mismatch در سرور ورسل
 const AppCountdownBanner = dynamic(
   () => import("@/component/app/AppCountdownBanner"),
   { ssr: false }
 );
 
-// ۱. بهینه‌سازی Lazy Loading
-const CounterStats = dynamic(() => import("@/component/CounterStats"), {
-  ssr: false,
-});
-const ScienceHub = dynamic(() => import("@/component/ScienceHub"), {
-  ssr: false,
-});
-const PuzzleActionSection = dynamic(() => import("@/component/PuzzleButton"), {
-  ssr: false,
-});
-const PopularClasses = dynamic(
-  () => import("@/component/classBox/PopularClasses"),
-  { ssr: false }
-);
-const StudentComments = dynamic(() => import("@/component/StudentComments"), {
-  ssr: false,
-});
-const Questions = dynamic(() => import("@/component/Questions"), {
-  ssr: false,
-});
+const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
+const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
+const PuzzleActionSection = dynamic(() => import("@/component/PuzzleButton"), { ssr: false });
+const PopularClasses = dynamic(() => import("@/component/classBox/PopularClasses"), { ssr: false });
+const StudentComments = dynamic(() => import("@/component/StudentComments"), { ssr: false });
+const Questions = dynamic(() => import("@/component/Questions"), { ssr: false });
 
-// --- UI اصلی سایت ---
+// --- UI نسخه وب اصلی ---
 function ExistingWebsiteHome() {
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -63,14 +48,8 @@ function ExistingWebsiteHome() {
 
   return (
     <>
-      {/* پریلودر موشکی */}
       <Preloader onComplete={() => setIsLoaded(true)} />
-
-      <div
-        dir="rtl"
-        className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white pb-16 sm:pb-24"
-      >
-        {/* بخش بالایی لندینگ */}
+      <div dir="rtl" className="w-full dir-rtl text-right overflow-x-hidden flex-grow bg-white pb-16 sm:pb-24">
         <div className="space-y-6 sm:space-y-10 pt-4 sm:pt-6 Container mb-12 sm:mb-20">
           <HeroSec isLoaded={true} />
           <div className="mt-8 sm:mt-16">
@@ -79,40 +58,22 @@ function ExistingWebsiteHome() {
           <EliteLeagueBanner />
         </div>
 
-        {/* کامپوننت‌های دینامیک */}
         {isLoaded && (
           <div className="space-y-12 mt-30 sm:mt-40 sm:space-y-24">
-            <ScrollAnimation direction="up" delay={0.05}>
-              <CounterStats />
-            </ScrollAnimation>
-
+            <ScrollAnimation direction="up" delay={0.05}><CounterStats /></ScrollAnimation>
             <div className="mt-30 sm:mt-40">
-              <ScrollAnimation direction="up" delay={0.1}>
-                <ScienceHub />
-              </ScrollAnimation>
+              <ScrollAnimation direction="up" delay={0.1}><ScienceHub /></ScrollAnimation>
             </div>
-
             <div className="mt-30 sm:mt-40">
-              <ScrollAnimation direction="up" delay={0.15}>
-                <PuzzleActionSection />
-              </ScrollAnimation>
+              <ScrollAnimation direction="up" delay={0.15}><PuzzleActionSection /></ScrollAnimation>
             </div>
-
             <div className="mt-30 sm:mt-40">
-              <ScrollAnimation direction="up" delay={0.2}>
-                <PopularClasses />
-              </ScrollAnimation>
+              <ScrollAnimation direction="up" delay={0.2}><PopularClasses /></ScrollAnimation>
             </div>
-
             <div className="mt-30 sm:mt-35">
-              <ScrollAnimation direction="up" delay={0.25}>
-                <StudentComments />
-              </ScrollAnimation>
+              <ScrollAnimation direction="up" delay={0.25}><StudentComments /></ScrollAnimation>
             </div>
-
-            <ScrollAnimation direction="up" delay={0.3}>
-              <Questions />
-            </ScrollAnimation>
+            <ScrollAnimation direction="up" delay={0.3}><Questions /></ScrollAnimation>
           </div>
         )}
       </div>
@@ -120,10 +81,18 @@ function ExistingWebsiteHome() {
   );
 }
 
-// --- UI اختصاصی اپلیکیشن PWA ---
+// --- UI اختصاصی PWA ---
 function PWAAppHome() {
   const router = useRouter();
-  const [showPwaPreloader, setShowPwaPreloader] = useState(true);
+  
+  // بررسی فوری عدم اجرای مجدد پریلودر
+  const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !localStorage.getItem("pwa_preloader_seen");
+    }
+    return false;
+  });
+
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [studentData, setStudentData] = useState({
     name: "دانش‌آموز",
@@ -154,13 +123,18 @@ function PWAAppHome() {
     fetchUserData();
   }, []);
 
+  const handlePreloaderComplete = () => {
+    localStorage.setItem("pwa_preloader_seen", "true");
+    setShowPwaPreloader(false);
+  };
+
   return (
     <>
-      {/* پریلودر اختصاصی PWA با تایمر ۳ ثانیه‌ای */}
+      {/* پریلودر PWA فقط یک‌بار در اولین لود برنامه اجرا می‌شود */}
       {showPwaPreloader && (
         <AppPreloader
           duration={3000}
-          onComplete={() => setShowPwaPreloader(false)}
+          onComplete={handlePreloaderComplete}
         />
       )}
 
@@ -189,9 +163,7 @@ function PWAAppHome() {
             rank={studentData.rank}
             totalParticipants={studentData.totalParticipants}
             progressPercentage={studentData.progressPercentage}
-            onViewLeaderboard={() => {
-              router.push("/elite-league");
-            }}
+            onViewLeaderboard={() => router.push("/elite-league")}
           />
         }
         quickAccess={
