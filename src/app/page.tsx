@@ -12,10 +12,10 @@ import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
 import ScrollAnimation from "@/component/ScrollAnimation";
 
-// کامپوننت مودال ورود دانش‌آموز (آدرس ایمپورت را در صورت نیاز با مسیر پروژه خود تطبیق دهید)
+// کامپوننت مودال ورود دانش‌آموز
 import StudentLoginModal from "@/component/auth/StudentLoginModal";
 
-// کامپوننت‌های PWA (بدون نیاز به هدر و نوبار تکرار شونده در اینجا)
+// کامپوننت‌های PWA
 import AppCountdownBanner from "@/component/app/AppCountdownBanner";
 import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
@@ -103,7 +103,7 @@ function ExistingWebsiteHome() {
   );
 }
 
-// --- UI اختصاصی PWA (فقط محتوای صفحه اصلی، هدر و نوبار در LayoutShell مدیریت میشن) ---
+// --- UI اختصاصی PWA ---
 function PWAAppHome() {
   const router = useRouter();
 
@@ -232,7 +232,6 @@ function PWAAppHome() {
         />
       )}
 
-      {/* محتوای بدنه صفحه اصلی PWA بدون تکرار هدر و نوبار */}
       <div className="space-y-4 p-4 pb-12">
         <AppCountdownBanner
           targetDate="2027-05-22T00:00:00+03:30"
@@ -287,7 +286,12 @@ function PWAAppHome() {
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
-  if (isMounted && isPWA) {
+  // تا زمان مونت شدن روی کلاینت، خروجی مشابه سرور بدهید تا ارور Hydration رخ ندهد
+  if (!isMounted) {
+    return <ExistingWebsiteHome />;
+  }
+
+  if (isPWA) {
     return <PWAAppHome />;
   }
 
