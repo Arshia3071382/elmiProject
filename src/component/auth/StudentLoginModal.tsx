@@ -20,7 +20,7 @@ interface StudentLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  onLoginSuccess?: () => void; // پشتیبانی از هر دو نام
+  onLoginSuccess?: () => void;
   onSwitchToRegister?: () => void;
 }
 
@@ -50,7 +50,7 @@ export default function StudentLoginModal({
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
   const [forgotIdentifier, setForgotIdentifier] = useState("");
-  
+
   const [securityCode, setSecurityCode] = useState("");
   const [playerCode, setPlayerCode] = useState("");
 
@@ -61,7 +61,6 @@ export default function StudentLoginModal({
   const [forgotStatus, setForgotStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [forgotError, setForgotError] = useState("");
 
-  // قفل کردن اسکرول صفحه هنگام باز بودن مودال‌ها
   useEffect(() => {
     if (isOpen || isForgotPasswordOpen) {
       document.body.style.overflow = "hidden";
@@ -154,9 +153,11 @@ export default function StudentLoginModal({
 
         setTimeout(() => {
           onSuccess?.();
+          onLoginSuccess?.();
           handleResetAndClose();
-          window.location.href = data.redirectUrl || "/student/dashboard";
-        }, 1000);
+          // استفاده مستقیم از مسیریابی اجباری
+          window.location.assign(data.redirectUrl || "/student/dashboard");
+        }, 800);
       } else {
         setStatus("error");
         setErrorMessage(
@@ -303,16 +304,11 @@ export default function StudentLoginModal({
           setTimeout(() => {
             resetForgotPasswordState();
             onClose();
-            window.location.href = loginData.redirectUrl || "/student/dashboard";
+            window.location.assign(loginData.redirectUrl || "/student/dashboard");
           }, 1000);
         } else {
           setForgotStatus("error");
-          setForgotError("رمز عبور تغییر کرد، اما ورود خودکار انجام نشد. لطفاً به صورت دستی وارد شوید.");
-          setTimeout(() => {
-            resetForgotPasswordState();
-            setPhone(forgotIdentifier);
-            setPassword(newPassword);
-          }, 2000);
+          setForgotError("رمز عبور تغییر کرد، اما ورود خودکار انجام نشد. لطفاً دستی وارد شوید.");
         }
       } else {
         setForgotStatus("error");
@@ -326,7 +322,6 @@ export default function StudentLoginModal({
 
   if (!mounted) return null;
 
-  // استفاده از createPortal برای انتقال مودال مستقیم به بدنه صفحه (document.body) جهت رفع قطعی مشکل z-index در سلفاری آیفون
   return createPortal(
     <>
       <AnimatePresence>
@@ -587,7 +582,7 @@ export default function StudentLoginModal({
                   <p className="text-xs text-slate-500 leading-relaxed">
                     رمز عبور جدید باید بین ۶ تا ۸ کاراکتر و شامل حروف بزرگ، حروف کوچک و عدد انگلیسی باشد.
                   </p>
-                  
+
                   <div className="relative">
                     <label className="block text-xs font-bold text-slate-700 mb-1">رمز عبور جدید</label>
                     <div className="relative">
