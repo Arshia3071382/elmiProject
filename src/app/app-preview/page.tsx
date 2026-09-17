@@ -12,12 +12,22 @@ import AppBottomNav, { TabType } from '@/component/app/AppBottomNav'
 import AppPreloader from '@/component/app/AppPreloader'
 import StudentLoginModal from '@/component/auth/StudentLoginModal'
 
+// تابع محاسبه مدال و تصویر دقیقاً مطابق پنل و امتیاز کل دانش‌آموز
+const getScientificBadgeInfo = (score: number) => {
+  if (score <= 500) return { title: "باید بیشتر تلاش کنی", imageUrl: "/image/hero11.png" };
+  if (score <= 2500) return { title: "شهید رضایی نژاد", imageUrl: "/image/levels/le1.png" };
+  if (score <= 5000) return { title: "شهید علیمحمدی", imageUrl: "/image/levels/le2.png" };
+  if (score <= 7500) return { title: "شهید احمدی روشن", imageUrl: "/image/levels/le3.png" };
+  if (score <= 10000) return { title: "شهید شهریاری", imageUrl: "/image/levels/le4.png" };
+  if (score <= 12500) return { title: "شهید طهرانی مقدم", imageUrl: "/image/levels/le5.png" };
+  return { title: "شهید فخری زاده", imageUrl: "/image/levels/le6.png" };
+};
+
 export default function AppPreviewPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-  // بررسی فوری جهت اجرای تک‌باره پریلودر
   const [showPreloader, setShowPreloader] = useState(() => {
     if (typeof window !== 'undefined') {
       return !localStorage.getItem('pwa_preloader_seen')
@@ -25,7 +35,6 @@ export default function AppPreviewPage() {
     return false
   })
 
-  // خواندن آنی وضعیت لاگین از لوکال استوریج در اولین رندر برای جلوگیری از پرش
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     if (typeof window !== 'undefined') {
       return Boolean(
@@ -40,52 +49,79 @@ export default function AppPreviewPage() {
 
   const [studentData, setStudentData] = useState(() => {
     if (typeof window !== 'undefined') {
-      const storedName = localStorage.getItem('studentName')
       return {
-        name: storedName || 'دانش‌آموز',
-        inEliteLeague: true,
-        eliteRank: 12,
-        eliteTotal: 50,
-        basicRank: 5,
-        basicTotal: 30,
-        medalImageUrl: '',
-        medalTitle: 'مدال علمی',
+        name: localStorage.getItem('studentName') || 'دانش‌آموز',
+        inEliteLeague: localStorage.getItem('studentInEliteLeague') === 'true',
+        eliteRank: Number(localStorage.getItem('studentEliteRank')) || 0,
+        eliteTotal: Number(localStorage.getItem('studentEliteTotal')) || 50,
+        basicRank: Number(localStorage.getItem('studentBasicRank')) || 1,
+        basicTotal: Number(localStorage.getItem('studentBasicTotal')) || 30,
+        medalImageUrl: localStorage.getItem('studentMedalImageUrl') || '/image/hero11.png',
+        medalTitle: localStorage.getItem('studentMedalTitle') || 'باید بیشتر تلاش کنی',
       }
     }
     return {
       name: 'دانش‌آموز',
-      inEliteLeague: true,
-      eliteRank: 12,
+      inEliteLeague: false,
+      eliteRank: 0,
       eliteTotal: 50,
-      basicRank: 5,
+      basicRank: 1,
       basicTotal: 30,
-      medalImageUrl: '',
-      medalTitle: 'مدال علمی',
+      medalImageUrl: '/image/hero11.png',
+      medalTitle: 'باید بیشتر تلاش کنی',
     }
   })
 
-  // دریافت اطلاعات کامل‌تر از سرور در پس‌زمینه
   const fetchUserData = async () => {
     try {
-      const res = await fetch('/api/student/dashboard')
+      const res = await fetch('/api/student/dashboard', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
       if (res.ok) {
-        const data = await res.json()
-        if (data?.student) {
+        const json = await res.json()
+        if (json?.success && json?.data) {
+          const { profile, gradeLeague, eliteLeague } = json.data
           setIsLoggedIn(true)
-          setStudentData({
-            name: data.student.name || 'دانش‌آموز',
-            inEliteLeague: Boolean(data.student.inEliteLeague),
-            eliteRank: data.student.eliteRank || 12,
-            eliteTotal: data.student.eliteTotal || 50,
-            basicRank: data.student.basicRank || 5,
-            basicTotal: data.student.basicTotal || 30,
-            medalImageUrl: data.student.medalImageUrl || '',
-            medalTitle: data.student.medalTitle || 'مدال علمی',
-          })
-          if (data.student.name) {
-            localStorage.setItem('studentName', data.student.name)
+
+          const name = profile?.name || 'دانش‌آموز'
+          const totalScore = profile?.totalScore || 0
+          
+          // محاسبه مدال و تصویر بر اساس امتیاز واقعی
+          const badgeInfo = getScientificBadgeInfo(totalScore)
+
+          const basicRank = gradeLeague?.rank || 1
+          const basicTotal = gradeLeague?.totalStudents || 30
+          
+          const inEliteLeague = Boolean(eliteLeague && eliteLeague.rank > 0)
+          const eliteRank = eliteLeague?.rank || 0
+          const eliteTotal = eliteLeague?.totalStudents || 50
+
+          const updatedData = {
+            name,
+            inEliteLeague,
+            eliteRank,
+            eliteTotal,
+            basicRank,
+            basicTotal,
+            medalImageUrl: badgeInfo.imageUrl,
+            medalTitle: badgeInfo.title,
           }
+
+          setStudentData(updatedData)
+
+          localStorage.setItem('studentName', name)
+          localStorage.setItem('studentInEliteLeague', String(inEliteLeague))
+          localStorage.setItem('studentEliteRank', String(eliteRank))
+          localStorage.setItem('studentEliteTotal', String(eliteTotal))
+          localStorage.setItem('studentBasicRank', String(basicRank))
+          localStorage.setItem('studentBasicTotal', String(basicTotal))
+          localStorage.setItem('studentMedalTitle', badgeInfo.title)
+          localStorage.setItem('studentMedalImageUrl', badgeInfo.imageUrl)
         }
+      } else if (res.status === 401) {
+        setIsLoggedIn(false)
       }
     } catch (error) {
       console.error('Error fetching preview student data:', error)
@@ -99,28 +135,39 @@ export default function AppPreviewPage() {
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false)
     setIsLoggedIn(true)
-    const storedName = localStorage.getItem('studentName')
-    if (storedName) {
-      setStudentData(prev => ({ ...prev, name: storedName }))
-    }
     fetchUserData()
     router.refresh()
   }
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await fetch('/api/auth/student/logout', { 
+        method: 'POST',
+        credentials: 'include' 
+      })
     } catch (error) {
       console.error('Error logging out:', error)
     }
     
-    localStorage.removeItem("studentPhone")
-    localStorage.removeItem("studentNationalId")
-    localStorage.removeItem("studentName")
-    localStorage.removeItem("studentToken")
-    localStorage.removeItem("token")
+    const keysToRemove = [
+      "studentPhone", "studentNationalId", "studentName", 
+      "studentToken", "token", "studentInEliteLeague", 
+      "studentEliteRank", "studentEliteTotal", "studentBasicRank", 
+      "studentBasicTotal", "studentMedalImageUrl", "studentMedalTitle"
+    ]
+    keysToRemove.forEach(key => localStorage.removeItem(key))
 
     setIsLoggedIn(false)
+    setStudentData({
+      name: 'دانش‌آموز',
+      inEliteLeague: false,
+      eliteRank: 0,
+      eliteTotal: 50,
+      basicRank: 1,
+      basicTotal: 30,
+      medalImageUrl: '/image/hero11.png',
+      medalTitle: 'باید بیشتر تلاش کنی',
+    })
     router.refresh()
   }
 

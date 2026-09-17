@@ -28,7 +28,6 @@ export async function GET(req: Request) {
     const queryNationalId = searchParams.get("nationalId");
 
     const cookieStore = await cookies();
-    // 🔒 پوشش کامل تمام نام‌های احتمالی کوکی دانش‌آموز
     const token = 
       cookieStore.get("token") || 
       cookieStore.get("studentToken") || 
@@ -36,11 +35,10 @@ export async function GET(req: Request) {
 
     let student = null;
 
-    // ۱. پیدا کردن دانش‌آموز از طریق توکن JWT امن
     if (token && token.value) {
       try {
         const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+          process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
         );
         const { payload } = await jwtVerify(token.value, secret);
         const studentId = (payload.userId || payload.id || payload.sub) as string;
@@ -49,7 +47,6 @@ export async function GET(req: Request) {
           student = await Student.findById(studentId);
         }
       } catch (e) {
-        // اگر توکن به صورت کد ملی یا آیدی خام در کوکی ذخیره شده بود
         const rawTokenVal = token.value;
         if (rawTokenVal.length === 24) {
           student = await Student.findById(rawTokenVal);
@@ -59,7 +56,6 @@ export async function GET(req: Request) {
       }
     }
 
-    // ۲. پشتیبانی از جستجو با کد ملی ارسالی از کوئری پارامتر
     if (!student && queryNationalId) {
       const cleanQueryId = normalizeNationalId(queryNationalId);
       student = await Student.findOne({ nationalId: cleanQueryId });
@@ -80,7 +76,6 @@ export async function GET(req: Request) {
 
     const cleanStudentNationalId = normalizeNationalId(student.nationalId);
 
-    // ۳. پیدا کردن یا متصل کردن رکورد لیگ پایه (GradeStudent)
     let gradeRecord = null;
     if (student.leagueProfile) {
       gradeRecord = await GradeStudent.findById(student.leagueProfile);
@@ -108,7 +103,6 @@ export async function GET(req: Request) {
     const grade = gradeRecord?.grade || student.grade || 6;
     const totalScore = gradeRecord?.totalScore || 0;
 
-    // ۴. محاسبه دقیق رتبه در لیگ پایه بر اساس امتیاز
     const sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
     
     let userIndex = -1;
@@ -181,6 +175,7 @@ export async function GET(req: Request) {
           score: eliteRecord.score,
           rank: eliteRank,
           category: eliteRecord.category,
+          totalStudents: sameCategoryElite.length, // 🔒 ارسال تعداد کل نخبگان دسته مربوطه
         };
       }
     } catch (e) {
