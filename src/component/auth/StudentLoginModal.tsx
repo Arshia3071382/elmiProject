@@ -19,12 +19,16 @@ import { AuthInput } from "./AuthInput";
 interface StudentLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToRegister: () => void;
+  onSuccess?: () => void;
+  onLoginSuccess?: () => void; // پشتیبانی از هر دو نام
+  onSwitchToRegister?: () => void;
 }
 
 export default function StudentLoginModal({
   isOpen,
   onClose,
+  onSuccess,
+  onLoginSuccess,
   onSwitchToRegister,
 }: StudentLoginModalProps) {
   const [mounted, setMounted] = useState(false);
@@ -138,9 +142,9 @@ export default function StudentLoginModal({
         credentials: "include",
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (res.ok && data.success) {
+      if (res.ok && data?.success) {
         setStatus("success");
 
         if (data.student?.nationalId) {
@@ -149,12 +153,15 @@ export default function StudentLoginModal({
         localStorage.setItem("studentPhone", phone.trim());
 
         setTimeout(() => {
+          onSuccess?.();
           handleResetAndClose();
           window.location.href = data.redirectUrl || "/student/dashboard";
         }, 1000);
       } else {
         setStatus("error");
-        setErrorMessage(data.message || data.error || "نام کاربری یا رمز عبور اشتباه است.");
+        setErrorMessage(
+          data?.message || data?.error || "نام کاربری یا رمز عبور اشتباه است."
+        );
       }
     } catch {
       setStatus("error");

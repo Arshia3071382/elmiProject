@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
   BookOpen,
   Bell,
   Sparkles,
@@ -12,40 +11,30 @@ import {
   User,
   Pencil,
   LucideIcon,
+  UserCheck,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-export type TabType = "home" | "news" | "about" | "contact" | "login";
+export type TabType = "home" | "news" | "about" | "contact" | "login" | "profile";
 
 interface TabItem {
   id: TabType;
   label: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
-  activeIcon?: LucideIcon;
   isCenter?: boolean;
 }
 
 interface AppBottomNavProps {
   activeTab?: TabType;
   onTabChange?: (tab: TabType) => void;
+  onOpenLoginModal?: () => void; // جهت باز کردن مودال ورود
 }
-
-/*
-|--------------------------------------------------------------------------
-| آیکون کتاب نقاشی / آموزشی
-|--------------------------------------------------------------------------
-| ترکیب کتاب باز + مداد
-| برای اینکه حس یک آیکون اختصاصی‌تر داشته باشد.
-*/
 
 function DrawingBookIcon({ className = "" }: { className?: string }) {
   return (
     <div className={`relative ${className}`}>
-      {/* کتاب */}
       <BookOpen className="w-6 h-6 stroke-[2.1]" />
-
-      {/* مداد کوچک */}
       <Pencil
         className="
           absolute
@@ -64,8 +53,23 @@ function DrawingBookIcon({ className = "" }: { className?: string }) {
 export default function AppBottomNav({
   activeTab,
   onTabChange,
+  onOpenLoginModal,
 }: AppBottomNavProps) {
   const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+  // بررسی وضعیت لاگین از localStorage
+  const checkAuthStatus = () => {
+    const studentPhone = localStorage.getItem("studentPhone");
+    const studentNationalId = localStorage.getItem("studentNationalId");
+    setIsLoggedIn(Boolean(studentPhone || studentNationalId));
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+    window.addEventListener("storage", checkAuthStatus);
+    return () => window.removeEventListener("storage", checkAuthStatus);
+  }, []);
 
   const tabs: TabItem[] = [
     {
@@ -85,7 +89,6 @@ export default function AppBottomNav({
       label: "خانه",
       href: "/",
       icon: BookOpen,
-      activeIcon: Home,
       isCenter: true,
     },
     {
@@ -94,12 +97,22 @@ export default function AppBottomNav({
       href: "/contactUs",
       icon: Headset,
     },
-    {
-      id: "login",
-      label: "ورود",
-      href: "/auth/login",
-      icon: User,
-    },
+    ...(isLoggedIn
+      ? [
+          {
+            id: "profile" as TabType,
+            label: "پروفایل",
+            href: "/student/dashboard",
+            icon: UserCheck,
+          },
+        ]
+      : [
+          {
+            id: "login" as TabType,
+            label: "ورود",
+            icon: User,
+          },
+        ]),
   ];
 
   const getIsActive = (tab: TabItem) => {
@@ -111,7 +124,21 @@ export default function AppBottomNav({
       return pathname === "/";
     }
 
-    return pathname.startsWith(tab.href);
+    if (tab.href) {
+      return pathname.startsWith(tab.href);
+    }
+
+    return false;
+  };
+
+  const handleTabClick = (e: React.MouseEvent, tab: TabItem) => {
+    onTabChange?.(tab.id);
+
+    // صرفاً باز کردن مودال ورود اختصاصی
+    if (tab.id === "login") {
+      e.preventDefault();
+      onOpenLoginModal?.();
+    }
   };
 
   return (
@@ -136,10 +163,6 @@ export default function AppBottomNav({
           pointer-events-auto
         "
       >
-        {/* =====================================================
-            Bottom Navigation
-        ===================================================== */}
-
         <nav
           className="
             relative
@@ -159,19 +182,14 @@ export default function AppBottomNav({
         >
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const ActiveIcon = tab.activeIcon || tab.icon;
             const isActive = getIsActive(tab);
-
-            /* =================================================
-               CENTER BUTTON
-            ================================================= */
 
             if (tab.isCenter) {
               return (
                 <Link
                   key={tab.id}
-                  href={tab.href}
-                  onClick={() => onTabChange?.(tab.id)}
+                  href={tab.href || "/"}
+                  onClick={(e) => handleTabClick(e, tab)}
                   className="
                     flex
                     flex-col
@@ -182,7 +200,6 @@ export default function AppBottomNav({
                     group
                   "
                 >
-                  {/* دایره اصلی */}
                   <div
                     className="
                       w-13
@@ -215,83 +232,16 @@ export default function AppBottomNav({
                         group-hover:bg-blue-50
                       "
                     >
-                      {/* =================================================
-                          Transition بین:
-                          خانه ↔ کتاب نقاشی
-                      ================================================= */}
-
-                      <AnimatePresence mode="wait" initial={false}>
-                        {isActive ? (
-                          /* -----------------------------
-                             حالت فعال: خانه
-                          ----------------------------- */
-
-                          <motion.div
-                            key="active-home"
-                            initial={{
-                              scale: 0.55,
-                              rotate: -20,
-                              opacity: 0,
-                            }}
-                            animate={{
-                              scale: 1,
-                              rotate: 0,
-                              opacity: 1,
-                            }}
-                            exit={{
-                              scale: 0.7,
-                              rotate: 20,
-                              opacity: 0,
-                            }}
-                            transition={{
-                              duration: 0.28,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                          >
-                            <ActiveIcon
-                              className="
-                                w-6
-                                h-6
-                                stroke-[2.2]
-                              "
-                            />
-                          </motion.div>
-                        ) : (
-                          /* -----------------------------
-                             حالت غیرفعال:
-                             کتاب + مداد
-                          ----------------------------- */
-
-                          <motion.div
-                            key="drawing-book"
-                            initial={{
-                              scale: 0.55,
-                              rotate: 12,
-                              opacity: 0,
-                            }}
-                            animate={{
-                              scale: 1,
-                              rotate: 0,
-                              opacity: 1,
-                            }}
-                            exit={{
-                              scale: 0.7,
-                              rotate: -12,
-                              opacity: 0,
-                            }}
-                            transition={{
-                              duration: 0.28,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                          >
-                            <DrawingBookIcon />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      <motion.div
+                        key="drawing-book-center"
+                        animate={{ scale: isActive ? 1.08 : 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <DrawingBookIcon />
+                      </motion.div>
                     </div>
                   </div>
 
-                  {/* عنوان */}
                   <span
                     className={`
                       text-[10px]
@@ -308,28 +258,8 @@ export default function AppBottomNav({
               );
             }
 
-            /* =================================================
-               OTHER ITEMS
-            ================================================= */
-
-            return (
-              <Link
-                key={tab.id}
-                href={tab.href}
-                onClick={() => onTabChange?.(tab.id)}
-                className="
-                  flex-1
-                  flex
-                  flex-col
-                  items-center
-                  justify-center
-                  h-full
-                  pt-1
-                  transition-all
-                  duration-200
-                  active:scale-90
-                "
-              >
+            const Content = (
+              <>
                 <Icon
                   className={`
                     w-5
@@ -343,7 +273,6 @@ export default function AppBottomNav({
                     }
                   `}
                 />
-
                 <span
                   className={`
                     text-[10px]
@@ -359,7 +288,34 @@ export default function AppBottomNav({
                 >
                   {tab.label}
                 </span>
-              </Link>
+              </>
+            );
+
+            const commonClasses =
+              "flex-1 flex flex-col items-center justify-center h-full pt-1 transition-all duration-200 active:scale-90 cursor-pointer";
+
+            if (tab.href) {
+              return (
+                <Link
+                  key={tab.id}
+                  href={tab.href}
+                  onClick={(e) => handleTabClick(e, tab)}
+                  className={commonClasses}
+                >
+                  {Content}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={(e) => handleTabClick(e, tab)}
+                className={commonClasses}
+              >
+                {Content}
+              </button>
             );
           })}
         </nav>

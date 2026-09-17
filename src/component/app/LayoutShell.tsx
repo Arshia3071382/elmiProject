@@ -10,7 +10,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const { isPWA, isMounted } = useIsPWA()
   
-  // بررسی مستقیم وضعیت پریلودر جهت عدم رندر نوبار در لحظه اول
+  // بررسی وضعیت پریلودر فقط برای نسخه وب عادی
   const [hasSeenPreloader, setHasSeenPreloader] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return !!sessionStorage.getItem('hasSeenPreloader')
@@ -19,21 +19,22 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   })
 
   useEffect(() => {
-    // گوش دادن به رویداد اتمام پریلودر
-    const handlePreloaderDone = () => setHasSeenPreloader(true)
-    window.addEventListener('preloaderComplete', handlePreloaderDone)
+    const handlePreloaderComplete = () => setHasSeenPreloader(true)
+    window.addEventListener('preloaderComplete', handlePreloaderComplete)
 
     return () => {
-      window.removeEventListener('preloaderComplete', handlePreloaderDone)
+      window.removeEventListener('preloaderComplete', handlePreloaderComplete)
     }
   }, [])
 
   const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/senior-admin')
   const isHomePage = pathname === '/'
-  const isPreloaderActive = isHomePage && !hasSeenPreloader
 
-  // اگر PWA باشد، مسیر ادلمین باشد، یا پریلودر هنوز در حال اجرا باشد، هدر رندر نمی‌شود
-  const isHideLayout = isAdminRoute || (isMounted && isPWA) || isPreloaderActive
+  // در حالت PWA کلاً کاری به پریلودر سایت نداریم
+  const isWebsitePreloaderActive = !isPWA && isHomePage && !hasSeenPreloader
+
+  // اگر PWA باشد، مسیر ادادمین باشد، یا پریلودر وب فعال باشد، هدر و فوتر وب رندر نمیشوند
+  const isHideLayout = isAdminRoute || (isMounted && isPWA) || isWebsitePreloaderActive
 
   return (
     <div dir="rtl" className="flex flex-col min-h-screen text-right">

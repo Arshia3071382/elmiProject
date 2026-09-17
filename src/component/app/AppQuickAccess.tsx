@@ -1,7 +1,15 @@
 'use client'
 
 import React from 'react'
-import { Radio, RadioIcon as LiveIcon, Hourglass, Lightbulb, Compass, Store, HelpCircle } from 'lucide-react'
+import {
+  Camera,
+  Mic,
+  Tv,
+  Lightbulb,
+  Calendar,
+  Rocket,
+  Compass,
+} from 'lucide-react'
 
 interface ShowcaseItem {
   id: string
@@ -21,42 +29,42 @@ export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
     {
       id: 'showcase',
       title: 'ویترین',
-      icon: <Store className="w-5 h-5" />,
+      icon: <Camera className="w-5 h-5" />,
       bgColor: 'bg-amber-50',
       textColor: 'text-amber-600',
     },
     {
       id: 'radio',
       title: 'رادیو علمی',
-      icon: <Radio className="w-5 h-5" />,
+      icon: <Mic className="w-5 h-5" />,
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
     },
     {
       id: 'live',
       title: 'پخش زنده',
-      icon: <LiveIcon className="w-5 h-5" />,
+      icon: <Tv className="w-5 h-5" />,
       bgColor: 'bg-rose-50',
       textColor: 'text-rose-500',
     },
     {
       id: 'curiosity',
       title: 'ایستگاه کنجکاوی',
-      icon: <HelpCircle className="w-5 h-5" />,
+      icon: <Lightbulb className="w-5 h-5" />,
       bgColor: 'bg-teal-50',
       textColor: 'text-teal-600',
     },
     {
       id: 'countdown',
       title: 'روزشمار',
-      icon: <Hourglass className="w-5 h-5" />,
+      icon: <Calendar className="w-5 h-5" />,
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
     },
     {
       id: 'borhan',
       title: 'برهان',
-      icon: <Lightbulb className="w-5 h-5" />,
+      icon: <Rocket className="w-5 h-5" />,
       bgColor: 'bg-indigo-50',
       textColor: 'text-indigo-600',
     },

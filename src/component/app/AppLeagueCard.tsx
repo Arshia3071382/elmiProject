@@ -2,99 +2,100 @@
 
 import React from 'react'
 import Image from 'next/image'
-import { Star, ChevronLeft } from 'lucide-react'
+import { Star, Award, ShieldAlert } from 'lucide-react'
 
 interface AppLeagueCardProps {
-  rank?: number
-  totalParticipants?: number
-  progressPercentage?: number
-  onViewLeaderboard?: () => void
-  trophyImageUrl?: string
+  isLoggedIn?: boolean
+  inEliteLeague?: boolean
+  eliteRank?: number
+  eliteTotal?: number
+  basicRank?: number
+  basicTotal?: number
+  medalImageUrl?: string
+  medalTitle?: string
 }
 
 export default function AppLeagueCard({
-  rank = 12,
-  totalParticipants = 2450,
-  progressPercentage = 60,
-  onViewLeaderboard,
-  trophyImageUrl,
+  isLoggedIn = false,
+  inEliteLeague = false,
+  eliteRank = 12,
+  eliteTotal = 50,
+  basicRank = 5,
+  basicTotal = 30,
+  medalImageUrl,
+  medalTitle = 'مدال علمی',
 }: AppLeagueCardProps) {
-  // تبدیل اعداد به فرمت فارسی
-  const formattedRank = rank.toLocaleString('fa-IR')
-  const formattedTotal = totalParticipants.toLocaleString('fa-IR')
-  const formattedProgress = progressPercentage.toLocaleString('fa-IR')
+  
+  // ۱. عدم رندر کارت‌ها در صورت عدم لاگین
+  if (!isLoggedIn) return null
+
+  const fEliteRank = (eliteRank || 0).toLocaleString('fa-IR')
+  const fEliteTotal = (eliteTotal || 0).toLocaleString('fa-IR')
+  const fBasicRank = (basicRank || 0).toLocaleString('fa-IR')
+  const fBasicTotal = (basicTotal || 0).toLocaleString('fa-IR')
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-50/60 via-slate-50 to-white border border-blue-100/80 p-5 shadow-xs">
-      <div className="flex items-start justify-between gap-3">
-        {/* Detail Area */}
-        <div className="flex-1 space-y-3">
-          {/* Header Title */}
-          <div className="flex items-center gap-1.5">
-            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-            <h3 className="text-sm font-bold text-slate-800 tracking-tight">
-              لیگ نخبگان علمی
-            </h3>
-          </div>
-
-          {/* Rank Display */}
-          <div>
-            <span className="text-[11px] font-medium text-slate-400 block mb-0.5">
-              رتبه شما
-            </span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-blue-600 tracking-tight">
-                {formattedRank}
-              </span>
-              <span className="text-xs text-slate-400 font-medium">
-                از {formattedTotal} نفر
-              </span>
+    <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-100 p-3.5 shadow-xs flex items-stretch justify-between gap-3">
+      
+      {/* سمت راست: دو کارت رتبه (افقی و زیر هم) */}
+      <div className="flex flex-col justify-center gap-2.5 flex-1">
+        
+        {/* لیگ نخبگان */}
+        {inEliteLeague ? (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 border border-amber-300/80 p-2.5 flex items-center justify-between shadow-[0_0_12px_rgba(251,191,36,0.25)]">
+            <div className="absolute inset-0 bg-amber-400/10 blur-md animate-pulse"></div>
+            <div className="relative flex items-center gap-1.5 z-10">
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span className="text-[11px] font-[iranBold] text-amber-900 tracking-tight">لیگ نخبگان</span>
+            </div>
+            <div className="relative z-10 text-[10px] font-semibold text-amber-800">
+              رتبه <span className="text-sm font-black mx-0.5 text-amber-900">{fEliteRank}</span> از {fEliteTotal} نفر
             </div>
           </div>
-
-          {/* View Leaderboard Button */}
-          <button
-            onClick={onViewLeaderboard}
-            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold rounded-xl transition-all active:scale-95 border border-slate-200/50"
-          >
-            <span>مشاهده جدول</span>
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Trophy Illustration */}
-        <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
-          {trophyImageUrl ? (
-            <Image
-              src={trophyImageUrl}
-              alt="جام لیگ نخبگان"
-              width={96}
-              height={96}
-              className="object-contain"
-            />
-          ) : (
-            <div className="w-20 h-20 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-200/50">
-              <span className="text-4xl">🏆</span>
+        ) : (
+          <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-2.5 flex items-center justify-between opacity-60">
+            <div className="flex items-center gap-1.5">
+              <ShieldAlert className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[11px] font-[iranBold] text-slate-500 tracking-tight">لیگ نخبگان</span>
             </div>
-          )}
+            <span className="text-[9px] font-medium text-slate-400">عدم حضور در جدول</span>
+          </div>
+        )}
+
+        {/* لیگ پایه */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-100 via-emerald-50 to-emerald-100 border border-emerald-300/80 p-2.5 flex items-center justify-between shadow-[0_0_12px_rgba(52,211,153,0.2)]">
+          <div className="absolute inset-0 bg-emerald-400/10 blur-md animate-pulse"></div>
+          <div className="relative flex items-center gap-1.5 z-10">
+            <Award className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[11px] font-[iranBold] text-emerald-900 tracking-tight">لیگ پایه</span>
+          </div>
+          <div className="relative z-10 text-[10px] font-semibold text-emerald-800">
+            رتبه <span className="text-sm font-black mx-0.5 text-emerald-950">{fBasicRank}</span> از {fBasicTotal} نفر
+          </div>
         </div>
+
       </div>
 
-      {/* Progress Bar Footer */}
-      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-        <span className="text-[11px] font-semibold text-blue-600 shrink-0">
-          %{formattedProgress}
-        </span>
-        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-linear-to-r from-sky-400 to-blue-600 rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(100, Math.max(0, progressPercentage))}%` }}
+      {/* سمت چپ: مدال سطح علمی */}
+      <div className="relative w-24 shrink-0 flex flex-col items-center justify-center bg-slate-50/80 rounded-2xl border border-slate-100 p-2">
+        {medalImageUrl ? (
+          <Image
+            src={medalImageUrl}
+            alt={medalTitle}
+            width={60}
+            height={60}
+            className="object-contain drop-shadow-sm mb-1"
           />
-        </div>
-        <span className="text-[11px] font-medium text-slate-400 shrink-0">
-          پیشرفت شما در این ماه
+        ) : (
+          <div className="w-12 h-12 bg-gradient-to-tr from-amber-100 to-amber-50 rounded-full flex items-center justify-center border border-amber-200/60 shadow-2xs mb-1">
+            <span className="text-2xl">🏅</span>
+          </div>
+        )}
+        <span className="text-[9px] font-[iranBold] text-slate-600 text-center leading-tight">
+          {medalTitle}
         </span>
       </div>
+
     </div>
   )
 }
