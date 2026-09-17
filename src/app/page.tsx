@@ -29,7 +29,6 @@ const PopularClasses = dynamic(() => import("@/component/classBox/PopularClasses
 const StudentComments = dynamic(() => import("@/component/StudentComments"), { ssr: false });
 const Questions = dynamic(() => import("@/component/Questions"), { ssr: false });
 
-// تابع محاسبه مدال و تصویر دقیقاً مطابق امتیاز و پنل (شهدای هسته‌ای و علمی)
 const getScientificBadgeInfo = (score: number) => {
   if (score <= 500) return { title: "باید بیشتر تلاش کنی", imageUrl: "/image/hero11.png" };
   if (score <= 2500) return { title: "شهید رضایی نژاد", imageUrl: "/image/levels/le1.png" };
@@ -40,17 +39,13 @@ const getScientificBadgeInfo = (score: number) => {
   return { title: "شهید فخری زاده", imageUrl: "/image/levels/le6.png" };
 };
 
-// --- UI نسخه وب اصلی ---
 function ExistingWebsiteHome() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      sessionStorage.getItem("hasSeenPreloader")
-    ) {
+    if (typeof window !== "undefined" && sessionStorage.getItem("hasSeenPreloader")) {
       setIsLoaded(true);
     }
   }, []);
@@ -92,7 +87,6 @@ function ExistingWebsiteHome() {
         )}
       </div>
 
-      {/* مودال ورود برای نسخه وب */}
       <StudentLoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
@@ -103,55 +97,29 @@ function ExistingWebsiteHome() {
   );
 }
 
-// --- UI اختصاصی PWA ---
 function PWAAppHome() {
   const router = useRouter();
-
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [showPwaPreloader, setShowPwaPreloader] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !localStorage.getItem("pwa_preloader_seen");
-    }
-    return false;
+  const [studentData, setStudentData] = useState({
+    name: "دانش‌آموز",
+    inEliteLeague: false,
+    eliteRank: 0,
+    eliteTotal: 50,
+    basicRank: 1,
+    basicTotal: 30,
+    medalImageUrl: "/image/hero11.png",
+    medalTitle: "باید بیشتر تلاش کنی",
   });
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window !== "undefined") {
-      return Boolean(
-        localStorage.getItem("studentPhone") || 
-        localStorage.getItem("studentNationalId") || 
-        localStorage.getItem("studentToken") || 
-        localStorage.getItem("token")
-      );
+  useEffect(() => {
+    if (!localStorage.getItem("pwa_preloader_seen")) {
+      setShowPwaPreloader(true);
     }
-    return false;
-  });
-
-  const [studentData, setStudentData] = useState(() => {
-    if (typeof window !== "undefined") {
-      return {
-        name: localStorage.getItem("studentName") || "دانش‌آموز",
-        inEliteLeague: localStorage.getItem("studentInEliteLeague") === "true",
-        eliteRank: Number(localStorage.getItem("studentEliteRank")) || 0,
-        eliteTotal: Number(localStorage.getItem("studentEliteTotal")) || 50,
-        basicRank: Number(localStorage.getItem("studentBasicRank")) || 1,
-        basicTotal: Number(localStorage.getItem("studentBasicTotal")) || 30,
-        medalImageUrl: localStorage.getItem("studentMedalImageUrl") || "/image/hero11.png",
-        medalTitle: localStorage.getItem("studentMedalTitle") || "باید بیشتر تلاش کنی",
-      };
-    }
-    return {
-      name: "دانش‌آموز",
-      inEliteLeague: false,
-      eliteRank: 0,
-      eliteTotal: 50,
-      basicRank: 1,
-      basicTotal: 30,
-      medalImageUrl: "/image/hero11.png",
-      medalTitle: "باید بیشتر تلاش کنی",
-    };
-  });
+    fetchUserData();
+  }, []);
 
   const fetchUserData = async () => {
     try {
@@ -167,17 +135,15 @@ function PWAAppHome() {
 
           const name = profile?.name || "دانش‌آموز";
           const totalScore = profile?.totalScore || 0;
-          
           const badgeInfo = getScientificBadgeInfo(totalScore);
 
           const basicRank = gradeLeague?.rank || 1;
           const basicTotal = gradeLeague?.totalStudents || 30;
-          
           const inEliteLeague = Boolean(eliteLeague && eliteLeague.rank > 0);
           const eliteRank = eliteLeague?.rank || 0;
           const eliteTotal = eliteLeague?.totalStudents || 50;
 
-          const updatedData = {
+          setStudentData({
             name,
             inEliteLeague,
             eliteRank,
@@ -186,18 +152,7 @@ function PWAAppHome() {
             basicTotal,
             medalImageUrl: badgeInfo.imageUrl,
             medalTitle: badgeInfo.title,
-          };
-
-          setStudentData(updatedData);
-
-          localStorage.setItem("studentName", name);
-          localStorage.setItem("studentInEliteLeague", String(inEliteLeague));
-          localStorage.setItem("studentEliteRank", String(eliteRank));
-          localStorage.setItem("studentEliteTotal", String(eliteTotal));
-          localStorage.setItem("studentBasicRank", String(basicRank));
-          localStorage.setItem("studentBasicTotal", String(basicTotal));
-          localStorage.setItem("studentMedalTitle", badgeInfo.title);
-          localStorage.setItem("studentMedalImageUrl", badgeInfo.imageUrl);
+          });
         }
       } else if (res.status === 401) {
         setIsLoggedIn(false);
@@ -206,10 +161,6 @@ function PWAAppHome() {
       console.error("Error fetching PWA student data:", error);
     }
   };
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
 
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
@@ -226,10 +177,7 @@ function PWAAppHome() {
   return (
     <>
       {showPwaPreloader && (
-        <AppPreloader
-          duration={3000}
-          onComplete={handlePreloaderComplete}
-        />
+        <AppPreloader duration={3000} onComplete={handlePreloaderComplete} />
       )}
 
       <div className="space-y-4 p-4 pb-12">
@@ -286,9 +234,14 @@ function PWAAppHome() {
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
-  // تا زمان مونت شدن روی کلاینت، خروجی مشابه سرور بدهید تا ارور Hydration رخ ندهد
+  // تا زمانی که کلاینت به‌طور کامل بارگذاری نشده، یک لودینگ امن یا نسخه استاندارد برگردانید
+  // تا اختلاف HTML سرور و کلاینت (Hydration Error) رخ ندهد.
   if (!isMounted) {
-    return <ExistingWebsiteHome />;
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Preloader onComplete={() => {}} />
+      </div>
+    );
   }
 
   if (isPWA) {
