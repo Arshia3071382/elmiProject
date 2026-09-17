@@ -15,19 +15,12 @@ import ScrollAnimation from "@/component/ScrollAnimation";
 // کامپوننت مودال ورود دانش‌آموز (آدرس ایمپورت را در صورت نیاز با مسیر پروژه خود تطبیق دهید)
 import StudentLoginModal from "@/component/auth/StudentLoginModal";
 
-// کامپوننت‌های PWA
-import AppHome from "@/component/app/AppHome";
-import AppHeader from "@/component/app/AppHeader";
+// کامپوننت‌های PWA (بدون نیاز به هدر و نوبار تکرار شونده در اینجا)
+import AppCountdownBanner from "@/component/app/AppCountdownBanner";
 import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
-import AppBottomNav, { TabType } from "@/component/app/AppBottomNav";
 import AppPreloader from "@/component/app/AppPreloader";
-
-const AppCountdownBanner = dynamic(
-  () => import("@/component/app/AppCountdownBanner"),
-  { ssr: false }
-);
 
 const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
 const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
@@ -110,14 +103,12 @@ function ExistingWebsiteHome() {
   );
 }
 
-// --- UI اختصاصی PWA ---
+// --- UI اختصاصی PWA (فقط محتوای صفحه اصلی، هدر و نوبار در LayoutShell مدیریت میشن) ---
 function PWAAppHome() {
   const router = useRouter();
 
-  // استیت کنترل باز/بسته بودن مودال ورود
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // بررسی فوری عدم اجرای مجدد پریلودر
   const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
     if (typeof window !== "undefined") {
       return !localStorage.getItem("pwa_preloader_seen");
@@ -125,7 +116,6 @@ function PWAAppHome() {
     return false;
   });
 
-  // خواندن آنی وضعیت لاگین از لوکال استوریج در رندر اولیه برای جلوگیری از پرش
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     if (typeof window !== "undefined") {
       return Boolean(
@@ -137,8 +127,6 @@ function PWAAppHome() {
     }
     return false;
   });
-
-  const [activeTab, setActiveTab] = useState<TabType>("home");
 
   const [studentData, setStudentData] = useState(() => {
     if (typeof window !== "undefined") {
@@ -180,7 +168,6 @@ function PWAAppHome() {
           const name = profile?.name || "دانش‌آموز";
           const totalScore = profile?.totalScore || 0;
           
-          // محاسبه مدال بر اساس امتیاز واقعی پروفایل
           const badgeInfo = getScientificBadgeInfo(totalScore);
 
           const basicRank = gradeLeague?.rank || 1;
@@ -231,38 +218,6 @@ function PWAAppHome() {
     router.refresh();
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/student/logout", { 
-        method: "POST",
-        credentials: "include" 
-      });
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-    
-    const keysToRemove = [
-      "studentPhone", "studentNationalId", "studentName", 
-      "studentToken", "token", "studentInEliteLeague", 
-      "studentEliteRank", "studentEliteTotal", "studentBasicRank", 
-      "studentBasicTotal", "studentMedalImageUrl", "studentMedalTitle"
-    ];
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
-    setIsLoggedIn(false);
-    setStudentData({
-      name: "دانش‌آموز",
-      inEliteLeague: false,
-      eliteRank: 0,
-      eliteTotal: 50,
-      basicRank: 1,
-      basicTotal: 30,
-      medalImageUrl: "/image/hero11.png",
-      medalTitle: "باید بیشتر تلاش کنی",
-    });
-    router.refresh();
-  };
-
   const handlePreloaderComplete = () => {
     localStorage.setItem("pwa_preloader_seen", "true");
     setShowPwaPreloader(false);
@@ -277,76 +232,43 @@ function PWAAppHome() {
         />
       )}
 
-      <AppHome
-        header={
-          <AppHeader
-            isLoggedIn={isLoggedIn}
-            studentName={studentData.name}
-            onLogout={handleLogout}
-            onOpenLoginModal={() => setIsLoginModalOpen(true)}
-          />
-        }
-        quickActions={
-          <div className="space-y-3 pt-1 -mt-1">
-            <AppCountdownBanner
-              targetDate="2027-05-22T00:00:00+03:30"
-              targetUrl="/elite-league"
-              imageSrc="/image/appHero.jpg"
-            />
+      {/* محتوای بدنه صفحه اصلی PWA بدون تکرار هدر و نوبار */}
+      <div className="space-y-4 p-4 pb-12">
+        <AppCountdownBanner
+          targetDate="2027-05-22T00:00:00+03:30"
+          targetUrl="/elite-league"
+          imageSrc="/image/appHero.jpg"
+        />
 
-            <AppQuickActions
-              onActionClick={(id) => {
-                if (id === "quizzes") router.push("/under-construction");
-                if (id === "league") router.push("/elite-league");
-                if (id === "courses") router.push("/courses");
-                if (id === "goftino") router.push("/chat-guidance/chat");
-              }}
-            />
-          </div>
-        }
-        leagueCard={
-          <AppLeagueCard
-            isLoggedIn={isLoggedIn}
-            inEliteLeague={studentData.inEliteLeague}
-            eliteRank={studentData.eliteRank}
-            eliteTotal={studentData.eliteTotal}
-            basicRank={studentData.basicRank}
-            basicTotal={studentData.basicTotal}
-            medalImageUrl={studentData.medalImageUrl}
-            medalTitle={studentData.medalTitle}
-          />
-        }
-        quickAccess={
-          <AppQuickAccess
-            onItemClick={(id) => {
-              if (id === "honors") router.push("/student/dashboard");
-              if (id === "notes") router.push("/student/dashboard");
-              if (id === "calendar") router.push("/calendar");
-              if (id === "videos") router.push("/courses");
-            }}
-          />
-        }
-        bottomNav={
-          <AppBottomNav
-            activeTab={activeTab}
-            onOpenLoginModal={() => setIsLoginModalOpen(true)}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              if (tab === "home") router.push("/");
-              if (tab === "news") router.push("/news");
-              if (tab === "about") router.push("/aboutUs");
-              if (tab === "contact") router.push("/contactUs");
-              if (tab === "login") {
-                if (!isLoggedIn) {
-                  setIsLoginModalOpen(true);
-                } else {
-                  router.push("/student/dashboard");
-                }
-              }
-            }}
-          />
-        }
-      />
+        <AppQuickActions
+          onActionClick={(id) => {
+            if (id === "quizzes") router.push("/under-construction");
+            if (id === "league") router.push("/elite-league");
+            if (id === "courses") router.push("/courses");
+            if (id === "goftino") router.push("/chat-guidance/chat");
+          }}
+        />
+
+        <AppLeagueCard
+          isLoggedIn={isLoggedIn}
+          inEliteLeague={studentData.inEliteLeague}
+          eliteRank={studentData.eliteRank}
+          eliteTotal={studentData.eliteTotal}
+          basicRank={studentData.basicRank}
+          basicTotal={studentData.basicTotal}
+          medalImageUrl={studentData.medalImageUrl}
+          medalTitle={studentData.medalTitle}
+        />
+
+        <AppQuickAccess
+          onItemClick={(id) => {
+            if (id === "honors") router.push("/student/dashboard");
+            if (id === "notes") router.push("/student/dashboard");
+            if (id === "calendar") router.push("/calendar");
+            if (id === "videos") router.push("/courses");
+          }}
+        />
+      </div>
 
       <StudentLoginModal
         isOpen={isLoginModalOpen}
