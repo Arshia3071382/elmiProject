@@ -141,7 +141,8 @@ export async function POST(req: Request) {
           message: "ورود با موفقیت انجام شد.",
         });
 
-        response.cookies.set("token", token, {
+        // 🟢 اصلاح نام کوکی به student_token جهت هماهنگی کامل با Middleware دست‌نخورده شما
+        response.cookies.set("student_token", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
