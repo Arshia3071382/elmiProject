@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Star, Award, ShieldAlert } from 'lucide-react'
 
@@ -16,7 +16,7 @@ interface AppLeagueCardProps {
 }
 
 export default function AppLeagueCard({
-  isLoggedIn = true,
+  isLoggedIn: initialIsLoggedIn,
   inEliteLeague = false,
   eliteRank = 0,
   eliteTotal = 50,
@@ -25,9 +25,29 @@ export default function AppLeagueCard({
   medalImageUrl,
   medalTitle = 'مدال علمی',
 }: AppLeagueCardProps) {
-  
-  // عدم رندر کارت در صورت عدم احراز هویت قطعی
-  if (isLoggedIn === false) return null
+  const [isMounted, setIsMounted] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(initialIsLoggedIn ?? false)
+
+  useEffect(() => {
+    setIsMounted(true)
+
+    const checkAuth = () => {
+      if (initialIsLoggedIn !== undefined) {
+        setIsLoggedIn(initialIsLoggedIn)
+        return
+      }
+      const phone = localStorage.getItem("studentPhone")
+      const nationalId = localStorage.getItem("studentNationalId")
+      setIsLoggedIn(Boolean(phone || nationalId))
+    }
+
+    checkAuth()
+    window.addEventListener("storage", checkAuth)
+    return () => window.removeEventListener("storage", checkAuth)
+  }, [initialIsLoggedIn])
+
+  // تا زمانی که مانت نشده یا کاربر لاگین نیست، چیزی نمایش نده
+  if (!isMounted || !isLoggedIn) return null
 
   const fEliteRank = Number(eliteRank || 0).toLocaleString('fa-IR')
   const fEliteTotal = Number(eliteTotal || 50).toLocaleString('fa-IR')

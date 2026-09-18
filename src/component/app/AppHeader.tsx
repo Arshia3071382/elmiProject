@@ -34,7 +34,7 @@ export default function AppHeader({
   isLoggedIn: initialIsLoggedIn = false,
   studentName: initialStudentName,
   onLogout,
-  onOpenLoginModal, // <--- اینجا اضافه شد
+  onOpenLoginModal,
 }: AppHeaderProps) {
   const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -58,17 +58,27 @@ export default function AppHeader({
 
       if (loggedIn && storedName) {
         setStudentName(storedName);
-      } else if (initialIsLoggedIn) {
-        setIsLoggedIn(true);
+      } else {
+        setStudentName("");
       }
     };
 
     checkAuthStatus();
     window.addEventListener("storage", checkAuthStatus);
+
+    // مدیریت کش سافاری آیفون (bfcache) در زمان بازگشت به صفحه
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        checkAuthStatus();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+
     const interval = setInterval(checkAuthStatus, 1000);
 
     return () => {
       window.removeEventListener("storage", checkAuthStatus);
+      window.removeEventListener("pageshow", handlePageShow);
       clearInterval(interval);
     };
   }, [initialIsLoggedIn]);
@@ -86,7 +96,6 @@ export default function AppHeader({
     setIsDrawerOpen((prev) => !prev);
   };
 
-  // تابع مدیریت باز کردن مودال ورود (پشتیبانی از حالت والد یا محلی)
   const handleOpenLogin = () => {
     if (onOpenLoginModal) {
       onOpenLoginModal();
@@ -128,19 +137,25 @@ export default function AppHeader({
   const handleLogoutClick = () => {
     setIsDrawerOpen(false);
     setIsLoggedIn(false);
+    setStudentName("");
     
+    // پاک کردن اطلاعات از حافظه مرورگر
     localStorage.removeItem("studentPhone");
     localStorage.removeItem("studentNationalId");
     localStorage.removeItem("studentName");
     localStorage.removeItem("studentToken");
     localStorage.removeItem("token");
+    
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
+    }
 
     if (onLogout) {
       onLogout();
     }
 
-    router.push("/");
-    router.refresh();
+    // استفاده از window.location.href برای جلوگیری از بارگذاری صفحه از کش آیفون
+    window.location.href = "/";
   };
 
   return (

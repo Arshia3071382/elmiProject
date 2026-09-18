@@ -127,7 +127,6 @@ function PWAAppHome() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   
-  // اصلاح مکانیزم پریلودر PWA با sessionStorage برای هماهنگی کامل بین آیفون و اندروید و جلوگیری از پرش
   const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
     if (typeof window !== "undefined") {
       return !sessionStorage.getItem("app_preloader_shown_session");
@@ -147,10 +146,6 @@ function PWAAppHome() {
     medalTitle: "باید بیشتر تلاش کنی",
   });
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
   // تابع کمکی برای پاکسازی کامل اطلاعات و ریست کردن رتبه‌ها در حالت خروج
   const handleLoggedOutState = () => {
     setIsLoggedIn(false);
@@ -167,8 +162,15 @@ function PWAAppHome() {
   };
 
   const fetchUserData = async () => {
+    // ابتدا بررسی سریع localStorage برای سرعت بیشتر و واکنش آنی در خروج
+    const studentPhone = localStorage.getItem("studentPhone");
+    const studentNationalId = localStorage.getItem("studentNationalId");
+    if (!studentPhone && !studentNationalId) {
+      handleLoggedOutState();
+      return;
+    }
+
     try {
-      // استفاده از هدرهای ضدکش برای جلوگیری از کش شدن پاسخ در سافاری آیفون
       const res = await fetch("/api/student/dashboard", {
         method: "GET",
         credentials: "include",
@@ -176,6 +178,7 @@ function PWAAppHome() {
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
           "Pragma": "no-cache",
+          "Expires": "0",
         },
       });
 
@@ -217,6 +220,29 @@ function PWAAppHome() {
     }
   };
 
+  useEffect(() => {
+    fetchUserData();
+
+    // رخداد سنج برای هماهنگی با تغییرات localStorage (خروج از حساب)
+    const handleStorageChange = () => {
+      fetchUserData();
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // مدیریت کش سافاری آیفون (bfcache) هنگام بازگشت به صفحه با دکمه Back
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        fetchUserData();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
     setIsLoggedIn(true);
@@ -242,7 +268,6 @@ function PWAAppHome() {
         <AppPreloader duration={3000} onComplete={handlePreloaderComplete} />
       )}
 
-      {/* محتوای اصلی اپ فقط بعد از اتمام پریلودر نمایش داده می‌شود */}
       {!showPwaPreloader && (
         <div className="space-y-4 p-4 pb-12">
           <AppCountdownBanner
