@@ -198,12 +198,14 @@ export default function AppPreviewPage() {
         <div className="w-full max-w-md bg-white h-full sm:h-[844px] sm:max-h-[90vh] sm:rounded-[40px] shadow-2xl overflow-y-auto relative border-0 sm:border-[8px] sm:border-slate-800 scrollbar-none dir-rtl">
           <AppHome
             header={
-              <AppHeader
-                isLoggedIn={isLoggedIn}
-                studentName={studentData.name}
-                onLogout={handleLogout}
-                onOpenLoginModal={() => setIsLoginModalOpen(true)}
-              />
+              !showPreloader ? (
+                <AppHeader
+                  isLoggedIn={isLoggedIn}
+                  studentName={studentData.name}
+                  onLogout={handleLogout}
+                  onOpenLoginModal={() => setIsLoginModalOpen(true)}
+                />
+              ) : null
             }
             quickActions={
               <div className="space-y-3 pt-1 -mt-1">
@@ -246,23 +248,25 @@ export default function AppPreviewPage() {
               />
             }
             bottomNav={
-              <AppBottomNav
-                activeTab={activeTab}
-                onTabChange={(tab) => {
-                  setActiveTab(tab)
-                  if (tab === 'home') router.push('/')
-                  if (tab === 'news') router.push('/news')
-                  if (tab === 'about') router.push('/aboutUs')
-                  if (tab === 'contact') router.push('/contactUs')
-                  if (tab === 'login') {
-                    if (!isLoggedIn) {
-                      setIsLoginModalOpen(true)
-                    } else {
-                      router.push('/student/dashboard')
+              !showPreloader ? (
+                <AppBottomNav
+                  activeTab={activeTab}
+                  onTabChange={(tab) => {
+                    setActiveTab(tab)
+                    if (tab === 'home') router.push('/')
+                    if (tab === 'news') router.push('/news')
+                    if (tab === 'about') router.push('/aboutUs')
+                    if (tab === 'contact') router.push('/contactUs')
+                    if (tab === 'login') {
+                      if (!isLoggedIn) {
+                        setIsLoginModalOpen(true)
+                      } else {
+                        router.push('/student/dashboard')
+                      }
                     }
-                  }
-                }}
-              />
+                  }}
+                />
+              ) : null
             }
           />
         </div>

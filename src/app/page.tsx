@@ -215,42 +215,45 @@ function PWAAppHome() {
         <AppPreloader duration={3000} onComplete={handlePreloaderComplete} />
       )}
 
-      <div className="space-y-4 p-4 pb-12">
-        <AppCountdownBanner
-          targetDate="2027-05-22T00:00:00+03:30"
-          targetUrl="/elite-league"
-          imageSrc="/image/appHero.jpg"
-        />
+      {/* محتوای اصلی اپ فقط بعد از اتمام پریلودر نمایش داده می‌شود تا هدر یا عناصر دیگر زیر لودینگ دیده نشوند */}
+      {!showPwaPreloader && (
+        <div className="space-y-4 p-4 pb-12">
+          <AppCountdownBanner
+            targetDate="2027-05-22T00:00:00+03:30"
+            targetUrl="/elite-league"
+            imageSrc="/image/appHero.jpg"
+          />
 
-        <AppQuickActions
-          onActionClick={(id) => {
-            if (id === "quizzes") router.push("/under-construction");
-            if (id === "league") router.push("/elite-league");
-            if (id === "courses") router.push("/courses");
-            if (id === "goftino") router.push("/chat-guidance/chat");
-          }}
-        />
+          <AppQuickActions
+            onActionClick={(id) => {
+              if (id === "quizzes") router.push("/under-construction");
+              if (id === "league") router.push("/elite-league");
+              if (id === "courses") router.push("/courses");
+              if (id === "goftino") router.push("/chat-guidance/chat");
+            }}
+          />
 
-        <AppLeagueCard
-          isLoggedIn={isLoggedIn}
-          inEliteLeague={studentData.inEliteLeague}
-          eliteRank={studentData.eliteRank}
-          eliteTotal={studentData.eliteTotal}
-          basicRank={studentData.basicRank}
-          basicTotal={studentData.basicTotal}
-          medalImageUrl={studentData.medalImageUrl}
-          medalTitle={studentData.medalTitle}
-        />
+          <AppLeagueCard
+            isLoggedIn={isLoggedIn}
+            inEliteLeague={studentData.inEliteLeague}
+            eliteRank={studentData.eliteRank}
+            eliteTotal={studentData.eliteTotal}
+            basicRank={studentData.basicRank}
+            basicTotal={studentData.basicTotal}
+            medalImageUrl={studentData.medalImageUrl}
+            medalTitle={studentData.medalTitle}
+          />
 
-        <AppQuickAccess
-          onItemClick={(id) => {
-            if (id === "honors") router.push("/student/dashboard");
-            if (id === "notes") router.push("/student/dashboard");
-            if (id === "calendar") router.push("/calendar");
-            if (id === "videos") router.push("/courses");
-          }}
-        />
-      </div>
+          <AppQuickAccess
+            onItemClick={(id) => {
+              if (id === "honors") router.push("/student/dashboard");
+              if (id === "notes") router.push("/student/dashboard");
+              if (id === "calendar") router.push("/calendar");
+              if (id === "videos") router.push("/courses");
+            }}
+          />
+        </div>
+      )}
 
       <StudentLoginModal
         isOpen={isLoginModalOpen}
@@ -280,8 +283,7 @@ function PWAAppHome() {
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
-  // تا قبل از مانت کامل در سمت کلاینت، یک صفحه خالی نمایش داده می‌شود 
-  // تا از تداخل و فلش زدن موشکِ وب در نسخه PWA جلوگیری شود
+ 
   if (!isMounted) {
     return <div className="min-h-screen bg-white" />;
   }
