@@ -5,14 +5,14 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useIsPWA } from "./../../hooks/useIsPWA";
 
-// کامپوننت‌های ضروری
+// کامپوننت‌های ضروری وب
 import Preloader from "@/component/Preloader";
 import HeroSec from "@/component/HeroSec";
 import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
 import ScrollAnimation from "@/component/ScrollAnimation";
 
-// کامپوننت‌های مودال احراز هویت
+// مودال‌های احراز هویت
 import StudentLoginModal from "@/component/auth/StudentLoginModal";
 import StudentRegisterModal from "@/component/auth/StudentRegisterModal";
 
@@ -40,8 +40,8 @@ const getScientificBadgeInfo = (score: number) => {
   return { title: "شهید فخری زاده", imageUrl: "/image/levels/le6.png" };
 };
 
+// نسخه وب عادی سایت
 function ExistingWebsiteHome() {
-  const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -52,13 +52,11 @@ function ExistingWebsiteHome() {
     }
   }, []);
 
-  // اصلاح‌شده: هدایت قطعی به پنل پس از ورود موفق
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
     window.location.assign("/student/dashboard");
   };
 
-  // اصلاح‌شده: هدایت قطعی به پنل پس از ثبت‌نام موفق
   const handleRegisterSuccess = () => {
     setIsRegisterModalOpen(false);
     window.location.assign("/student/dashboard");
@@ -123,13 +121,21 @@ function ExistingWebsiteHome() {
   );
 }
 
+// نسخه PWA (اپلیکیشن موبایل)
 function PWAAppHome() {
   const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [showPwaPreloader, setShowPwaPreloader] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // بررسی وضعیت لودینگ اختصاصی PWA از طریق localStorage
+  const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !localStorage.getItem("pwa_preloader_seen");
+    }
+    return false;
+  });
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [studentData, setStudentData] = useState({
     name: "دانش‌آموز",
     inEliteLeague: false,
@@ -142,9 +148,6 @@ function PWAAppHome() {
   });
 
   useEffect(() => {
-    if (!localStorage.getItem("pwa_preloader_seen")) {
-      setShowPwaPreloader(true);
-    }
     fetchUserData();
   }, []);
 
@@ -189,7 +192,6 @@ function PWAAppHome() {
     }
   };
 
-  // اصلاح‌شده در حالت PWA: هدایت قطعی به پنل
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
     setIsLoggedIn(true);
@@ -274,15 +276,14 @@ function PWAAppHome() {
   );
 }
 
+// کامپوننت اصلی مدیریت مسیر که نسخه وب و PWA را تفکیک می‌کند
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
+  // تا قبل از مانت کامل در سمت کلاینت، یک صفحه خالی نمایش داده می‌شود 
+  // تا از تداخل و فلش زدن موشکِ وب در نسخه PWA جلوگیری شود
   if (!isMounted) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Preloader onComplete={() => {}} />
-      </div>
-    );
+    return <div className="min-h-screen bg-white" />;
   }
 
   if (isPWA) {

@@ -88,7 +88,6 @@ export default function AppPreviewPage() {
           const name = profile?.name || 'دانش‌آموز'
           const totalScore = profile?.totalScore || 0
           
-          // محاسبه مدال و تصویر بر اساس امتیاز واقعی
           const badgeInfo = getScientificBadgeInfo(totalScore)
 
           const basicRank = gradeLeague?.rank || 1
