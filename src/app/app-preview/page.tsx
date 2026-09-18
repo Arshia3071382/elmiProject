@@ -28,7 +28,7 @@ export default function AppPreviewPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-  // استفاده از sessionStorage برای جلوگیری از اجرای مجدد و تکرار پریلودر هنگام رندرهای مجدد یا رفرش‌های داخلی
+  // استفاده از sessionStorage برای جلوگیری از تکرار پریلودر هنگام رندرهای مجدد در یک نشست
   const [showPreloader, setShowPreloader] = useState(() => {
     if (typeof window !== 'undefined') {
       return !sessionStorage.getItem('app_preloader_shown_session')
@@ -48,7 +48,6 @@ export default function AppPreviewPage() {
     medalTitle: 'باید بیشتر تلاش کنی',
   })
 
-  // تابع کمکی برای ریست کردن کامل اطلاعات در حالت خروج
   const handleLoggedOutState = () => {
     setIsLoggedIn(false)
     setStudentData({
@@ -65,7 +64,6 @@ export default function AppPreviewPage() {
 
   const fetchUserData = async () => {
     try {
-      // استفاده از هدرهای ضدکش (No-Store) برای جلوگیری از ماندگاری دیتا در سافاری آیفون
       const res = await fetch('/api/student/dashboard', {
         method: 'GET',
         credentials: 'include',
@@ -84,7 +82,6 @@ export default function AppPreviewPage() {
 
           const name = profile?.name || 'دانش‌آموز'
           const totalScore = profile?.totalScore || 0
-          
           const badgeInfo = getScientificBadgeInfo(totalScore)
 
           const basicRank = gradeLeague?.rank || 1
@@ -119,13 +116,11 @@ export default function AppPreviewPage() {
   useEffect(() => {
     fetchUserData()
 
-    // ردیابی تغییرات localStorage برای همگام‌سازی لحظه‌ای میان تب‌ها یا لاگین‌های موفق
     const handleStorageChange = () => {
       fetchUserData()
     }
     window.addEventListener('storage', handleStorageChange)
 
-    // رفع مشکل کش شدن وضعیت در سافاری هنگام بازگشت با دکمه Back
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
         fetchUserData()
@@ -142,7 +137,7 @@ export default function AppPreviewPage() {
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false)
     setIsLoggedIn(true)
-    fetchUserData() // گرفتن اطلاعات جدید کاربر بلافاصله پس از لاگین
+    fetchUserData()
     router.refresh()
   }
 
@@ -164,7 +159,6 @@ export default function AppPreviewPage() {
     ]
     keysToRemove.forEach(key => localStorage.removeItem(key))
 
-    // پاک کردن وضعیت نشست پریلودر و ریست کامل استیت‌ها هنگام خروج از حساب
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('app_preloader_shown_session')
     }
@@ -183,6 +177,7 @@ export default function AppPreviewPage() {
 
   return (
     <>
+      {/* پریلودر اختصاصی شما با لوگوی مرکزی و نوار پیشرفت */}
       {showPreloader && (
         <AppPreloader
           duration={3000}

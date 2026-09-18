@@ -16,11 +16,12 @@ import ScrollAnimation from "@/component/ScrollAnimation";
 import StudentLoginModal from "@/component/auth/StudentLoginModal";
 import StudentRegisterModal from "@/component/auth/StudentRegisterModal";
 
-// کامپوننت‌های PWA
+// کامپوننت‌های PWA و پریلودر اختصاصی اپ
 import AppCountdownBanner from "@/component/app/AppCountdownBanner";
 import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
+import AppPreloader from "@/component/app/AppPreloader";
 
 const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
 const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
@@ -120,11 +121,19 @@ function ExistingWebsiteHome() {
   );
 }
 
-// نسخه PWA (اپلیکیشن موبایل)
+// نسخه PWA (اپلیکیشن موبایل) همراه با AppPreloader اختصاصی
 function PWAAppHome() {
   const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  // استفاده از sessionStorage برای عدم نمایش تکراری پریلودر در طول یک نشست
+  const [showPreloader, setShowPreloader] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('app_preloader_shown_session');
+    }
+    return true;
+  });
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [studentData, setStudentData] = useState({
@@ -138,7 +147,6 @@ function PWAAppHome() {
     medalTitle: "باید بیشتر تلاش کنی",
   });
 
-  // تابع کمکی برای پاکسازی کامل اطلاعات و ریست کردن رتبه‌ها در حالت خروج
   const handleLoggedOutState = () => {
     setIsLoggedIn(false);
     setStudentData({
@@ -244,8 +252,22 @@ function PWAAppHome() {
     window.location.assign("/student/dashboard");
   };
 
+  const handlePreloaderComplete = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('app_preloader_shown_session', 'true');
+    }
+    setShowPreloader(false);
+  };
+
   return (
     <>
+      {showPreloader && (
+        <AppPreloader
+          duration={3000}
+          onComplete={handlePreloaderComplete}
+        />
+      )}
+
       <div className="space-y-4 p-4 pb-12">
         <AppCountdownBanner
           targetDate="2027-05-22T00:00:00+03:30"
