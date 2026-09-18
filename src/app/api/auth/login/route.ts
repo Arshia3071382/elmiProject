@@ -3,50 +3,55 @@ import dbConnect from "./../../../../../lib/dbConnect";
 import Admin from "./../../../../../models/Admin";
 import SeniorAdmin from "./../../../../../models/SeniorAdmin";
 import Student from "./../../../../../models/Student";
-import Teacher from "./../../../../../models/Teacher";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
     await dbConnect();
-    const body = await request.json();
+
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json(
+        { success: false, error: "اطلاعات ارسالی نامعتبر است." },
+        { status: 400 }
+      );
+    }
+
     const { username, password } = body;
 
     if (!username || !password) {
       return NextResponse.json(
-        { success: false, message: "لطفاً نام کاربری و رمز عبور را وارد کنید." },
+        { success: false, error: "نام کاربری و رمز عبور الزامی است." },
         { status: 400 }
       );
     }
 
     const cleanUsername = String(username).trim();
-    const cleanPassword = String(password);
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    };
+    const cleanPassword = String(password).trim();
+    const genericErrorMessage = "نام کاربری یا رمز عبور اشتباه است.";
 
     const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
+      process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
     );
 
-    // ----------------------------------------------------
-    // ۱. بررسی معین ارشد (SeniorAdmin)
-    // ----------------------------------------------------
-    const seniorAdminUser = await SeniorAdmin.findOne({
-      $or: [{ username: cleanUsername }, { email: cleanUsername }],
-    });
+    // تشخیص خودکار امن بودن پروتکل (جلوگیری از بلاک شدن کوکی در HTTP)
+    const isHttps = req.url.startsWith("https://");
 
-    if (seniorAdminUser && (await bcrypt.compare(cleanPassword, seniorAdminUser.password || seniorAdminUser.passwordHash))) {
+    // ----------------------------------------------------
+    // ۱. بررسی ادمین کل (Admin) و حالت ثبت‌نام اولین ادمین
+    // ----------------------------------------------------
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0) {
+      const hashedPassword = await bcrypt.hash(cleanPassword, 10);
+      const newAdmin = await Admin.create({
+        username: cleanUsername,
+        password: hashedPassword,
+      });
+
       const token = await new SignJWT({
-        userId: seniorAdminUser._id.toString(),
-        username: seniorAdminUser.username,
-        role: "senior-admin",
+        userId: newAdmin._id.toString(),
+        role: "admin",
       })
         .setProtectedHeader({ alg: "HS256" })
         .setExpirationTime("7d")
@@ -54,80 +59,28 @@ export async function POST(request: Request) {
 
       const response = NextResponse.json({
         success: true,
-        role: "senior-admin",
-        redirectUrl: "/senior-admin",
-        message: "ورود معین ارشد با موفقیت انجام شد.",
+        role: "admin",
+        redirectUrl: "/admin",
+        message: "حساب ادمین با موفقیت ایجاد شد.",
       });
 
-      response.cookies.set("senior_token", token, cookieOptions);
-      response.cookies.set("senior_admin_token", token, cookieOptions);
-      response.cookies.set("token", token, cookieOptions);
-
+      response.cookies.set("admin_token", token, {
+        httpOnly: true,
+        secure: isHttps,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
       return response;
     }
 
-    // ----------------------------------------------------
-    // ۲. بررسی ادمین معمولی (Admin)
-    // ----------------------------------------------------
-    const adminUser = await Admin.findOne({
-      $or: [{ username: cleanUsername }, { email: cleanUsername }],
-    });
-
-    if (adminUser && (await bcrypt.compare(cleanPassword, adminUser.password))) {
-      const roleValue = String(adminUser.role || "").toLowerCase().trim();
-      const isSenior = 
-        roleValue === "senior" || 
-        roleValue === "senior_admin" || 
-        roleValue === "senior-admin" || 
-        roleValue === "معین" || 
-        roleValue.includes("senior");
-
-      const finalRole = isSenior ? "senior-admin" : "admin";
-      const redirectUrl = isSenior ? "/senior-admin" : "/admin";
-
-      const token = await new SignJWT({
-        userId: adminUser._id.toString(),
-        username: adminUser.username,
-        role: finalRole,
-      })
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime("7d")
-        .sign(secret);
-
-      const response = NextResponse.json({
-        success: true,
-        role: finalRole,
-        redirectUrl: redirectUrl,
-        message: isSenior ? "ورود معین ارشد با موفقیت انجام شد." : "ورود ادمین با موفقیت انجام شد.",
-      });
-
-      if (isSenior) {
-        response.cookies.set("senior_token", token, cookieOptions);
-        response.cookies.set("senior_admin_token", token, cookieOptions);
-      } else {
-        response.cookies.set("admin_token", token, cookieOptions);
-      }
-      response.cookies.set("token", token, cookieOptions);
-
-      return response;
-    }
-
-    // ----------------------------------------------------
-    // ۳. بررسی استاد (Teacher)
-    // ----------------------------------------------------
-    const teacher = await Teacher.findOne({
-      $or: [{ phone: cleanUsername }, { username: cleanUsername }, { email: cleanUsername }],
-    });
-
-    const teacherPasswordHash = teacher?.password || teacher?.passwordHash;
-
-    if (teacher && teacherPasswordHash) {
-      const isMatch = await bcrypt.compare(cleanPassword, teacherPasswordHash);
+    const admin = await Admin.findOne({ username: cleanUsername });
+    if (admin && admin.password) {
+      const isMatch = await bcrypt.compare(cleanPassword, admin.password);
       if (isMatch) {
         const token = await new SignJWT({
-          userId: teacher._id.toString(),
-          username: teacher.username || teacher.phone,
-          role: "teacher",
+          userId: admin._id.toString(),
+          role: "admin",
         })
           .setProtectedHeader({ alg: "HS256" })
           .setExpirationTime("7d")
@@ -135,33 +88,68 @@ export async function POST(request: Request) {
 
         const response = NextResponse.json({
           success: true,
-          role: "teacher",
-          redirectUrl: "/teacher/dashboard",
-          message: "ورود استاد با موفقیت انجام شد.",
+          role: "admin",
+          redirectUrl: "/admin",
         });
 
-        response.cookies.set("teacher_token", token, cookieOptions);
-        response.cookies.set("token", token, cookieOptions);
-
+        response.cookies.set("admin_token", token, {
+          httpOnly: true,
+          secure: isHttps,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7,
+        });
         return response;
       }
     }
 
     // ----------------------------------------------------
-    // ۴. بررسی دانش‌آموز (Student)
+    // ۲. بررسی معین‌های ارشد (SeniorAdmin)
+    // ----------------------------------------------------
+    const seniorAdmin = await SeniorAdmin.findOne({ username: cleanUsername });
+    if (seniorAdmin && seniorAdmin.password) {
+      const isMatch = await bcrypt.compare(cleanPassword, seniorAdmin.password);
+      if (isMatch) {
+        const token = await new SignJWT({
+          userId: seniorAdmin._id.toString(),
+          role: "senior-admin",
+        })
+          .setProtectedHeader({ alg: "HS256" })
+          .setExpirationTime("7d")
+          .sign(secret);
+
+        const response = NextResponse.json({
+          success: true,
+          role: "senior-admin",
+          redirectUrl: "/senior-admin",
+        });
+
+        response.cookies.set("senior_admin_token", token, {
+          httpOnly: true,
+          secure: isHttps,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7,
+        });
+        return response;
+      }
+    }
+
+    // ----------------------------------------------------
+    // ۳. بررسی دانش‌آموز (Student)
     // ----------------------------------------------------
     const student = await Student.findOne({
       $or: [
         { phone: cleanUsername },
         { username: cleanUsername },
-        { nationalId: cleanUsername }
+        { nationalId: cleanUsername },
       ],
     });
 
-    const studentPasswordHash = student?.password || student?.passwordHash;
+    const studentPassword = student?.password || student?.passwordHash;
 
-    if (student && studentPasswordHash) {
-      const isMatch = await bcrypt.compare(cleanPassword, studentPasswordHash);
+    if (student && studentPassword) {
+      const isMatch = await bcrypt.compare(cleanPassword, studentPassword);
       if (isMatch) {
         const token = await new SignJWT({
           userId: student._id.toString(),
@@ -176,31 +164,36 @@ export async function POST(request: Request) {
         const response = NextResponse.json({
           success: true,
           role: "student",
+          student: {
+            nationalId: student.nationalId,
+            phone: student.phone,
+          },
           redirectUrl: "/student/dashboard",
           message: "ورود با موفقیت انجام شد.",
-          student: {
-            id: student._id.toString(),
-            nationalId: student.nationalId || "",
-            username: student.username || student.phone || "",
-          },
         });
 
-        response.cookies.set("student_token", token, cookieOptions);
-        response.cookies.set("token", token, cookieOptions);
+        response.cookies.set("student_token", token, {
+          httpOnly: true,
+          secure: isHttps,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7,
+        });
 
         return response;
       }
     }
 
+    await bcrypt.compare(cleanPassword, "$2a$10$invalidhashvaluetomatchtiming123456789");
     return NextResponse.json(
-      { success: false, message: "نام کاربری یا رمز عبور اشتباه است." },
+      { success: false, error: genericErrorMessage },
       { status: 401 }
     );
 
-  } catch (error: any) {
-    console.error("Login API Error:", error);
+  } catch (err: any) {
+    console.error("Unified Login Error:", err);
     return NextResponse.json(
-      { success: false, message: "خطای سرور داخلی. لطفاً دوباره تلاش کنید." },
+      { success: false, error: "خطای سرور. لطفاً دوباره تلاش کنید." },
       { status: 500 }
     );
   }

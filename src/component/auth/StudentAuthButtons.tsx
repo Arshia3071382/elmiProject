@@ -1,20 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 
-// ۱. اضافه کردن interface برای دریافت پراپ onOpenLoginModal
+// ۱. اضافه کردن پراپ‌های مربوط به باز شدن مدال‌ها
 interface StudentAuthButtonsProps {
   onOpenLoginModal?: () => void;
+  onOpenRegisterModal?: () => void;
 }
 
-export default function StudentAuthButtons({ onOpenLoginModal }: StudentAuthButtonsProps) {
+export default function StudentAuthButtons({
+  onOpenLoginModal,
+  onOpenRegisterModal,
+}: StudentAuthButtonsProps) {
   const handleOpenLogin = () => {
     localStorage.removeItem("studentNationalId");
     localStorage.removeItem("studentPhone");
     
-    // اگر تابع والد ارسال شده بود آن را صدا بزن، وگرنه کار خود را انجام بده
     if (onOpenLoginModal) {
       onOpenLoginModal();
     }
@@ -23,7 +26,11 @@ export default function StudentAuthButtons({ onOpenLoginModal }: StudentAuthButt
   const handleOpenRegister = () => {
     localStorage.removeItem("studentNationalId");
     localStorage.removeItem("studentPhone");
-    // اینجا هم اگر برای ثبت‌نام نیاز بود می‌توانید مشابه حالت بالا عمل کنید
+    
+    // اگر تابع والد برای ثبت‌نام ارسال شده بود، آن را صدا بزن
+    if (onOpenRegisterModal) {
+      onOpenRegisterModal();
+    }
   };
 
   return (
@@ -63,10 +70,10 @@ export default function StudentAuthButtons({ onOpenLoginModal }: StudentAuthButt
             <LogIn className="h-5 w-5 sm:h-7 sm:w-7" />
           </div>
           <div className="flex flex-col gap-0.5 text-right min-w-0">
-            <span className="text-[11px] sm:text-sm text-slate-500 font-medium tracking-wide truncate" style={{ fontFamily: 'iranSans-r' }}>
+            <span className="text-[11px] sm:text-sm text-slate-500 font-medium tracking-wide truncate font-[iranSans-r]">
               حساب دارم
             </span>
-            <h3 className="text-xl sm:text-4xl font-black tracking-tight text-blue-950 group-hover:text-blue-600 transition-colors duration-200 truncate" style={{ fontFamily: 'iranBold' }}>
+            <h3 className="text-xl sm:text-4xl font-black tracking-tight text-blue-950 group-hover:text-blue-600 transition-colors duration-200 truncate font-[iranBold]">
               ورود
             </h3>
           </div>
@@ -92,10 +99,10 @@ export default function StudentAuthButtons({ onOpenLoginModal }: StudentAuthButt
             <UserPlus className="h-5 w-5 sm:h-7 sm:w-7" />
           </div>
           <div className="flex flex-col gap-0.5 text-right min-w-0">
-            <span className="text-[11px] sm:text-sm text-slate-500 font-medium tracking-wide truncate" style={{ fontFamily: 'iranSans-r' }}>
+            <span className="text-[11px] sm:text-sm text-slate-500 font-medium tracking-wide truncate font-[iranSans-r]">
               تازه اومدم
             </span>
-            <h3 className="text-xl sm:text-4xl font-black tracking-tight text-emerald-950 group-hover:text-emerald-600 transition-colors duration-200 truncate" style={{ fontFamily: 'iranBold' }}>
+            <h3 className="text-xl sm:text-4xl font-black tracking-tight text-emerald-950 group-hover:text-emerald-600 transition-colors duration-200 truncate font-[iranBold]">
               ثبت‌نام
             </h3>
           </div>

@@ -12,8 +12,9 @@ import StudentAuthButtons from "@/component/auth/StudentAuthButtons";
 import EliteLeagueBanner from "@/component/EliteLeagueBanner";
 import ScrollAnimation from "@/component/ScrollAnimation";
 
-// کامپوننت مودال ورود دانش‌آموز
+// کامپوننت‌های مودال احراز هویت
 import StudentLoginModal from "@/component/auth/StudentLoginModal";
+import StudentRegisterModal from "@/component/auth/StudentRegisterModal";
 
 // کامپوننت‌های PWA
 import AppCountdownBanner from "@/component/app/AppCountdownBanner";
@@ -43,6 +44,7 @@ function ExistingWebsiteHome() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && sessionStorage.getItem("hasSeenPreloader")) {
@@ -50,9 +52,16 @@ function ExistingWebsiteHome() {
     }
   }, []);
 
+  // اصلاح‌شده: هدایت قطعی به پنل پس از ورود موفق
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
-    router.refresh();
+    window.location.assign("/student/dashboard");
+  };
+
+  // اصلاح‌شده: هدایت قطعی به پنل پس از ثبت‌نام موفق
+  const handleRegisterSuccess = () => {
+    setIsRegisterModalOpen(false);
+    window.location.assign("/student/dashboard");
   };
 
   return (
@@ -62,7 +71,10 @@ function ExistingWebsiteHome() {
         <div className="space-y-6 sm:space-y-10 pt-4 sm:pt-6 Container mb-12 sm:mb-20">
           <HeroSec isLoaded={true} />
           <div className="mt-8 sm:mt-16">
-            <StudentAuthButtons onOpenLoginModal={() => setIsLoginModalOpen(true)} />
+            <StudentAuthButtons 
+              onOpenLoginModal={() => setIsLoginModalOpen(true)}
+              onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
+            />
           </div>
           <EliteLeagueBanner />
         </div>
@@ -92,6 +104,20 @@ function ExistingWebsiteHome() {
         onClose={() => setIsLoginModalOpen(false)}
         onSuccess={handleLoginSuccess}
         onLoginSuccess={handleLoginSuccess}
+        onSwitchToRegister={() => {
+          setIsLoginModalOpen(false);
+          setIsRegisterModalOpen(true);
+        }}
+      />
+
+      <StudentRegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={handleRegisterSuccess}
+        onSwitchToLogin={() => {
+          setIsRegisterModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
       />
     </>
   );
@@ -100,6 +126,7 @@ function ExistingWebsiteHome() {
 function PWAAppHome() {
   const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [showPwaPreloader, setShowPwaPreloader] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -162,11 +189,17 @@ function PWAAppHome() {
     }
   };
 
+  // اصلاح‌شده در حالت PWA: هدایت قطعی به پنل
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
     setIsLoggedIn(true);
-    fetchUserData();
-    router.refresh();
+    window.location.assign("/student/dashboard");
+  };
+
+  const handleRegisterSuccess = () => {
+    setIsRegisterModalOpen(false);
+    setIsLoggedIn(true);
+    window.location.assign("/student/dashboard");
   };
 
   const handlePreloaderComplete = () => {
@@ -224,7 +257,17 @@ function PWAAppHome() {
         onLoginSuccess={handleLoginSuccess}
         onSwitchToRegister={() => {
           setIsLoginModalOpen(false);
-          router.push("/auth/register");
+          setIsRegisterModalOpen(true);
+        }}
+      />
+
+      <StudentRegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={handleRegisterSuccess}
+        onSwitchToLogin={() => {
+          setIsRegisterModalOpen(false);
+          setIsLoginModalOpen(true);
         }}
       />
     </>
@@ -234,8 +277,6 @@ function PWAAppHome() {
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
-  // تا زمانی که کلاینت به‌طور کامل بارگذاری نشده، یک لودینگ امن یا نسخه استاندارد برگردانید
-  // تا اختلاف HTML سرور و کلاینت (Hydration Error) رخ ندهد.
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
