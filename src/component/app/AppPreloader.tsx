@@ -16,7 +16,6 @@ export default function AppPreloader({
   const [startProgress, setStartProgress] = useState(false);
 
   useEffect(() => {
-    // استفاده از requestAnimationFrame برای هماهنگی کامل با رندر فریم‌رِیت سافاری و اندروید
     const frameId = requestAnimationFrame(() => {
       setStartProgress(true);
     });
@@ -42,30 +41,29 @@ export default function AppPreloader({
         fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       style={{
-        // حل مشکل ارتفاع داینامیک نوار آدرس در سافاری آیفون (Viewport Fix)
         height: "-webkit-fill-available",
       }}
       dir="rtl"
     >
       <div />
 
-      {/* بخش مرکزی: فقط لوگوی بسیار بزرگ بدون متن */}
+      {/* بخش مرکزی: فقط لوگوی بزرگ و باکیفیت بدون تایتل متنی اضافه */}
       <div className="flex flex-col items-center justify-center">
-        <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
+        <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center">
           <Image
             src="/icons/logo6.png"
-            alt="لوگو"
-            width={256}
-            height={256}
-            className="object-contain w-full h-full"
+            alt="مجموعه علمی منتظران"
+            width={224}
+            height={224}
+            className="object-contain w-full h-full drop-shadow-md"
             priority
           />
         </div>
       </div>
 
-      {/* نوار پیشرفت ۳ ثانیه‌ای */}
-      <div className="flex flex-col items-center gap-3 w-full max-w-[220px] pb-4">
-        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+      {/* نوار پیشرفت ۳ ثانیه‌ای پایین صفحه */}
+      <div className="flex flex-col items-center gap-3 w-full max-w-[200px] pb-4">
+        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden shadow-inner">
           <div
             className="h-full bg-[#0d52b5] rounded-full transition-all ease-out"
             style={{
