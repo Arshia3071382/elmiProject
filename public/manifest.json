@@ -2,7 +2,7 @@
   "name": "مجموعه علمی منتظران",
   "short_name": "علمی منتظران",
   "description": "سامانه علمی و آموزشی مجموعه علمی منتظران",
-"start_url": "/?mode=pwa",
+  "start_url": "/?mode=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
@@ -11,13 +11,13 @@
   "lang": "fa",
   "icons": [
     {
-      "src": "/icons/logo6.png",
+      "src": "/icons/logo6.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icons/icon-512x512.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
