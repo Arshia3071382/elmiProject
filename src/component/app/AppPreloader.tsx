@@ -16,10 +16,10 @@ export default function AppPreloader({
   const [startProgress, setStartProgress] = useState(false);
 
   useEffect(() => {
-    // شروع حرکت نوار پیشرفت بلافاصله بعد از رندر
-    const progressTimer = setTimeout(() => {
+    // استفاده از requestAnimationFrame برای هماهنگی کامل با رندر فریم‌رِیت سافاری و اندروید
+    const frameId = requestAnimationFrame(() => {
       setStartProgress(true);
-    }, 50);
+    });
 
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
@@ -30,7 +30,7 @@ export default function AppPreloader({
     }, duration);
 
     return () => {
-      clearTimeout(progressTimer);
+      cancelAnimationFrame(frameId);
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
     };
@@ -38,9 +38,13 @@ export default function AppPreloader({
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-between bg-white py-16 px-6 transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-between bg-white py-16 px-6 transition-opacity duration-500 select-none pointer-events-auto ${
         fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
+      style={{
+        // حل مشکل ارتفاع داینامیک نوار آدرس در سافاری آیفون (Viewport Fix)
+        height: "-webkit-fill-available",
+      }}
       dir="rtl"
     >
       <div />
@@ -60,7 +64,7 @@ export default function AppPreloader({
       </div>
 
       {/* نوار پیشرفت ۳ ثانیه‌ای */}
-      <div className="flex flex-col items-center gap-3 w-full max-w-[220px]">
+      <div className="flex flex-col items-center gap-3 w-full max-w-[220px] pb-4">
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
             className="h-full bg-[#0d52b5] rounded-full transition-all ease-out"

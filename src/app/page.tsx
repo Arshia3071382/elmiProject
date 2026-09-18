@@ -127,12 +127,12 @@ function PWAAppHome() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   
-  // بررسی وضعیت لودینگ اختصاصی PWA از طریق localStorage
+  // اصلاح مکانیزم پریلودر PWA با sessionStorage برای هماهنگی کامل بین آیفون و اندروید و جلوگیری از پرش
   const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
     if (typeof window !== "undefined") {
-      return !localStorage.getItem("pwa_preloader_seen");
+      return !sessionStorage.getItem("app_preloader_shown_session");
     }
-    return false;
+    return true;
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -168,7 +168,7 @@ function PWAAppHome() {
 
   const fetchUserData = async () => {
     try {
-      // اضافه کردنه هدرهای ضدکش برای جلوگیری از کش شدن پاسخ در سافاری آیفون
+      // استفاده از هدرهای ضدکش برای جلوگیری از کش شدن پاسخ در سافاری آیفون
       const res = await fetch("/api/student/dashboard", {
         method: "GET",
         credentials: "include",
@@ -230,7 +230,9 @@ function PWAAppHome() {
   };
 
   const handlePreloaderComplete = () => {
-    localStorage.setItem("pwa_preloader_seen", "true");
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("app_preloader_shown_session", "true");
+    }
     setShowPwaPreloader(false);
   };
 

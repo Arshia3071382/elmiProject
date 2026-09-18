@@ -28,8 +28,13 @@ export default function AppPreviewPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-  // اجبار به اجرای پریلودر در هر بار رفرش یا ورود جدید به صفحه
-  const [showPreloader, setShowPreloader] = useState(true)
+  // استفاده از sessionStorage برای جلوگیری از اجرای مجدد و تکرار پریلودر هنگام رندرهای مجدد یا رفرش‌های داخلی
+  const [showPreloader, setShowPreloader] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('app_preloader_shown_session')
+    }
+    return true
+  })
 
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [studentData, setStudentData] = useState({
@@ -136,18 +141,24 @@ export default function AppPreviewPage() {
       "studentPhone", "studentNationalId", "studentName", 
       "studentToken", "token", "studentInEliteLeague", 
       "studentEliteRank", "studentEliteTotal", "studentBasicRank", 
-      "studentBasicTotal", "studentMedalImageUrl", "studentMedalTitle",
-      "pwa_preloader_seen"
+      "studentBasicTotal", "studentMedalImageUrl", "studentMedalTitle"
     ]
     keysToRemove.forEach(key => localStorage.removeItem(key))
 
-    // ریست فوری استیت‌ها و نمایش مجدد پریلودر هنگام خروج
+    // پاک کردن وضعیت نشست پریلودر و ریست کامل استیت‌ها هنگام خروج از حساب
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('app_preloader_shown_session')
+    }
+
     handleLoggedOutState()
     setShowPreloader(true)
     router.refresh()
   }
 
   const handlePreloaderComplete = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('app_preloader_shown_session', 'true')
+    }
     setShowPreloader(false)
   }
 
