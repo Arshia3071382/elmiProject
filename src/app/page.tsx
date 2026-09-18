@@ -151,12 +151,34 @@ function PWAAppHome() {
     fetchUserData();
   }, []);
 
+  // تابع کمکی برای پاکسازی کامل اطلاعات و ریست کردن رتبه‌ها در حالت خروج
+  const handleLoggedOutState = () => {
+    setIsLoggedIn(false);
+    setStudentData({
+      name: "دانش‌آموز",
+      inEliteLeague: false,
+      eliteRank: 0,
+      eliteTotal: 50,
+      basicRank: 1,
+      basicTotal: 30,
+      medalImageUrl: "/image/hero11.png",
+      medalTitle: "باید بیشتر تلاش کنی",
+    });
+  };
+
   const fetchUserData = async () => {
     try {
+      // اضافه کردنه هدرهای ضدکش برای جلوگیری از کش شدن پاسخ در سافاری آیفون
       const res = await fetch("/api/student/dashboard", {
         method: "GET",
         credentials: "include",
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+        },
       });
+
       if (res.ok) {
         const json = await res.json();
         if (json?.success && json?.data) {
@@ -183,12 +205,15 @@ function PWAAppHome() {
             medalImageUrl: badgeInfo.imageUrl,
             medalTitle: badgeInfo.title,
           });
+        } else {
+          handleLoggedOutState();
         }
-      } else if (res.status === 401) {
-        setIsLoggedIn(false);
+      } else {
+        handleLoggedOutState();
       }
     } catch (error) {
       console.error("Error fetching PWA student data:", error);
+      handleLoggedOutState();
     }
   };
 
@@ -215,7 +240,7 @@ function PWAAppHome() {
         <AppPreloader duration={3000} onComplete={handlePreloaderComplete} />
       )}
 
-      {/* محتوای اصلی اپ فقط بعد از اتمام پریلودر نمایش داده می‌شود تا هدر یا عناصر دیگر زیر لودینگ دیده نشوند */}
+      {/* محتوای اصلی اپ فقط بعد از اتمام پریلودر نمایش داده می‌شود */}
       {!showPwaPreloader && (
         <div className="space-y-4 p-4 pb-12">
           <AppCountdownBanner
@@ -283,7 +308,6 @@ function PWAAppHome() {
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
 
- 
   if (!isMounted) {
     return <div className="min-h-screen bg-white" />;
   }

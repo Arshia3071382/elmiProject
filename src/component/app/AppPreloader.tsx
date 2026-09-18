@@ -13,8 +13,14 @@ export default function AppPreloader({
   duration = 3000,
 }: AppPreloaderProps) {
   const [fadeOut, setFadeOut] = useState(false);
+  const [startProgress, setStartProgress] = useState(false);
 
   useEffect(() => {
+    // شروع حرکت نوار پیشرفت بلافاصله بعد از رندر
+    const progressTimer = setTimeout(() => {
+      setStartProgress(true);
+    }, 50);
+
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
     }, duration - 400);
@@ -24,6 +30,7 @@ export default function AppPreloader({
     }, duration);
 
     return () => {
+      clearTimeout(progressTimer);
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
     };
@@ -58,7 +65,7 @@ export default function AppPreloader({
           <div
             className="h-full bg-[#0d52b5] rounded-full transition-all ease-out"
             style={{
-              width: fadeOut ? "100%" : "0%",
+              width: startProgress ? "100%" : "0%",
               transitionDuration: `${duration}ms`,
             }}
           />

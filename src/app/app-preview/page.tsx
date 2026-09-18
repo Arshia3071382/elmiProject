@@ -28,39 +28,25 @@ export default function AppPreviewPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-  const [showPreloader, setShowPreloader] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !localStorage.getItem('pwa_preloader_seen')
-    }
-    return false
+  // اجبار به اجرای پریلودر در هر بار رفرش یا ورود جدید به صفحه
+  const [showPreloader, setShowPreloader] = useState(true)
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [studentData, setStudentData] = useState({
+    name: 'دانش‌آموز',
+    inEliteLeague: false,
+    eliteRank: 0,
+    eliteTotal: 50,
+    basicRank: 1,
+    basicTotal: 30,
+    medalImageUrl: '/image/hero11.png',
+    medalTitle: 'باید بیشتر تلاش کنی',
   })
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return Boolean(
-        localStorage.getItem('studentPhone') || 
-        localStorage.getItem('studentNationalId') || 
-        localStorage.getItem('studentToken') || 
-        localStorage.getItem('token')
-      )
-    }
-    return false
-  })
-
-  const [studentData, setStudentData] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return {
-        name: localStorage.getItem('studentName') || 'دانش‌آموز',
-        inEliteLeague: localStorage.getItem('studentInEliteLeague') === 'true',
-        eliteRank: Number(localStorage.getItem('studentEliteRank')) || 0,
-        eliteTotal: Number(localStorage.getItem('studentEliteTotal')) || 50,
-        basicRank: Number(localStorage.getItem('studentBasicRank')) || 1,
-        basicTotal: Number(localStorage.getItem('studentBasicTotal')) || 30,
-        medalImageUrl: localStorage.getItem('studentMedalImageUrl') || '/image/hero11.png',
-        medalTitle: localStorage.getItem('studentMedalTitle') || 'باید بیشتر تلاش کنی',
-      }
-    }
-    return {
+  // تابع کمکی برای ریست کردن کامل اطلاعات در حالت خروج
+  const handleLoggedOutState = () => {
+    setIsLoggedIn(false)
+    setStudentData({
       name: 'دانش‌آموز',
       inEliteLeague: false,
       eliteRank: 0,
@@ -69,14 +55,20 @@ export default function AppPreviewPage() {
       basicTotal: 30,
       medalImageUrl: '/image/hero11.png',
       medalTitle: 'باید بیشتر تلاش کنی',
-    }
-  })
+    })
+  }
 
   const fetchUserData = async () => {
     try {
+      // استفاده از هدرهای ضدکش (No-Store) برای جلوگیری از ماندگاری دیتا در سافاری آیفون
       const res = await fetch('/api/student/dashboard', {
         method: 'GET',
         credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
       })
 
       if (res.ok) {
@@ -97,7 +89,7 @@ export default function AppPreviewPage() {
           const eliteRank = eliteLeague?.rank || 0
           const eliteTotal = eliteLeague?.totalStudents || 50
 
-          const updatedData = {
+          setStudentData({
             name,
             inEliteLeague,
             eliteRank,
@@ -106,24 +98,16 @@ export default function AppPreviewPage() {
             basicTotal,
             medalImageUrl: badgeInfo.imageUrl,
             medalTitle: badgeInfo.title,
-          }
-
-          setStudentData(updatedData)
-
-          localStorage.setItem('studentName', name)
-          localStorage.setItem('studentInEliteLeague', String(inEliteLeague))
-          localStorage.setItem('studentEliteRank', String(eliteRank))
-          localStorage.setItem('studentEliteTotal', String(eliteTotal))
-          localStorage.setItem('studentBasicRank', String(basicRank))
-          localStorage.setItem('studentBasicTotal', String(basicTotal))
-          localStorage.setItem('studentMedalTitle', badgeInfo.title)
-          localStorage.setItem('studentMedalImageUrl', badgeInfo.imageUrl)
+          })
+        } else {
+          handleLoggedOutState()
         }
-      } else if (res.status === 401) {
-        setIsLoggedIn(false)
+      } else {
+        handleLoggedOutState()
       }
     } catch (error) {
       console.error('Error fetching preview student data:', error)
+      handleLoggedOutState()
     }
   }
 
@@ -152,26 +136,18 @@ export default function AppPreviewPage() {
       "studentPhone", "studentNationalId", "studentName", 
       "studentToken", "token", "studentInEliteLeague", 
       "studentEliteRank", "studentEliteTotal", "studentBasicRank", 
-      "studentBasicTotal", "studentMedalImageUrl", "studentMedalTitle"
+      "studentBasicTotal", "studentMedalImageUrl", "studentMedalTitle",
+      "pwa_preloader_seen"
     ]
     keysToRemove.forEach(key => localStorage.removeItem(key))
 
-    setIsLoggedIn(false)
-    setStudentData({
-      name: 'دانش‌آموز',
-      inEliteLeague: false,
-      eliteRank: 0,
-      eliteTotal: 50,
-      basicRank: 1,
-      basicTotal: 30,
-      medalImageUrl: '/image/hero11.png',
-      medalTitle: 'باید بیشتر تلاش کنی',
-    })
+    // ریست فوری استیت‌ها و نمایش مجدد پریلودر هنگام خروج
+    handleLoggedOutState()
+    setShowPreloader(true)
     router.refresh()
   }
 
   const handlePreloaderComplete = () => {
-    localStorage.setItem('pwa_preloader_seen', 'true')
     setShowPreloader(false)
   }
 
