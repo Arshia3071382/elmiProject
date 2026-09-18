@@ -9,7 +9,6 @@ import AppQuickActions from '@/component/app/AppQuickActions'
 import AppLeagueCard from '@/component/app/AppLeagueCard'
 import AppQuickAccess from '@/component/app/AppQuickAccess'
 import AppBottomNav, { TabType } from '@/component/app/AppBottomNav'
-import AppPreloader from '@/component/app/AppPreloader'
 import StudentLoginModal from '@/component/auth/StudentLoginModal'
 
 // تابع محاسبه مدال و تصویر دقیقاً مطابق پنل و امتیاز کل دانش‌آموز
@@ -27,14 +26,6 @@ export default function AppPreviewPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-
-  // استفاده از sessionStorage برای جلوگیری از تکرار پریلودر هنگام رندرهای مجدد در یک نشست
-  const [showPreloader, setShowPreloader] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !sessionStorage.getItem('app_preloader_shown_session')
-    }
-    return true
-  })
 
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [studentData, setStudentData] = useState({
@@ -159,32 +150,12 @@ export default function AppPreviewPage() {
     ]
     keysToRemove.forEach(key => localStorage.removeItem(key))
 
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('app_preloader_shown_session')
-    }
-
     handleLoggedOutState()
-    setShowPreloader(true)
     router.refresh()
-  }
-
-  const handlePreloaderComplete = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('app_preloader_shown_session', 'true')
-    }
-    setShowPreloader(false)
   }
 
   return (
     <>
-      {/* پریلودر اختصاصی شما با لوگوی مرکزی و نوار پیشرفت */}
-      {showPreloader && (
-        <AppPreloader
-          duration={3000}
-          onComplete={handlePreloaderComplete}
-        />
-      )}
-
       <StudentLoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
@@ -200,14 +171,12 @@ export default function AppPreviewPage() {
         <div className="w-full max-w-md bg-white h-full sm:h-[844px] sm:max-h-[90vh] sm:rounded-[40px] shadow-2xl overflow-y-auto relative border-0 sm:border-[8px] sm:border-slate-800 scrollbar-none dir-rtl">
           <AppHome
             header={
-              !showPreloader ? (
-                <AppHeader
-                  isLoggedIn={isLoggedIn}
-                  studentName={studentData.name}
-                  onLogout={handleLogout}
-                  onOpenLoginModal={() => setIsLoginModalOpen(true)}
-                />
-              ) : null
+              <AppHeader
+                isLoggedIn={isLoggedIn}
+                studentName={studentData.name}
+                onLogout={handleLogout}
+                onOpenLoginModal={() => setIsLoginModalOpen(true)}
+              />
             }
             quickActions={
               <div className="space-y-3 pt-1 -mt-1">
@@ -250,25 +219,23 @@ export default function AppPreviewPage() {
               />
             }
             bottomNav={
-              !showPreloader ? (
-                <AppBottomNav
-                  activeTab={activeTab}
-                  onTabChange={(tab) => {
-                    setActiveTab(tab)
-                    if (tab === 'home') router.push('/')
-                    if (tab === 'news') router.push('/news')
-                    if (tab === 'about') router.push('/aboutUs')
-                    if (tab === 'contact') router.push('/contactUs')
-                    if (tab === 'login') {
-                      if (!isLoggedIn) {
-                        setIsLoginModalOpen(true)
-                      } else {
-                        router.push('/student/dashboard')
-                      }
+              <AppBottomNav
+                activeTab={activeTab}
+                onTabChange={(tab) => {
+                  setActiveTab(tab)
+                  if (tab === 'home') router.push('/')
+                  if (tab === 'news') router.push('/news')
+                  if (tab === 'about') router.push('/aboutUs')
+                  if (tab === 'contact') router.push('/contactUs')
+                  if (tab === 'login') {
+                    if (!isLoggedIn) {
+                      setIsLoginModalOpen(true)
+                    } else {
+                      router.push('/student/dashboard')
                     }
-                  }}
-                />
-              ) : null
+                  }
+                }}
+              />
             }
           />
         </div>
