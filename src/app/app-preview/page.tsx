@@ -118,12 +118,31 @@ export default function AppPreviewPage() {
 
   useEffect(() => {
     fetchUserData()
+
+    // ردیابی تغییرات localStorage برای همگام‌سازی لحظه‌ای میان تب‌ها یا لاگین‌های موفق
+    const handleStorageChange = () => {
+      fetchUserData()
+    }
+    window.addEventListener('storage', handleStorageChange)
+
+    // رفع مشکل کش شدن وضعیت در سافاری هنگام بازگشت با دکمه Back
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        fetchUserData()
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('pageshow', handlePageShow)
+    }
   }, [])
 
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false)
     setIsLoggedIn(true)
-    fetchUserData()
+    fetchUserData() // گرفتن اطلاعات جدید کاربر بلافاصله پس از لاگین
     router.refresh()
   }
 
@@ -175,6 +194,7 @@ export default function AppPreviewPage() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onSuccess={handleLoginSuccess}
+        onLoginSuccess={handleLoginSuccess}
         onSwitchToRegister={() => {
           setIsLoginModalOpen(false)
           router.push('/auth/register')

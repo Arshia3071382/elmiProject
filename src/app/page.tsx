@@ -21,7 +21,6 @@ import AppCountdownBanner from "@/component/app/AppCountdownBanner";
 import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
-import AppPreloader from "@/component/app/AppPreloader";
 
 const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
 const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
@@ -126,13 +125,6 @@ function PWAAppHome() {
   const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  
-  const [showPwaPreloader, setShowPwaPreloader] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("app_preloader_shown_session");
-    }
-    return true;
-  });
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [studentData, setStudentData] = useState({
@@ -162,7 +154,6 @@ function PWAAppHome() {
   };
 
   const fetchUserData = async () => {
-    // ابتدا بررسی سریع localStorage برای سرعت بیشتر و واکنش آنی در خروج
     const studentPhone = localStorage.getItem("studentPhone");
     const studentNationalId = localStorage.getItem("studentNationalId");
     if (!studentPhone && !studentNationalId) {
@@ -223,13 +214,11 @@ function PWAAppHome() {
   useEffect(() => {
     fetchUserData();
 
-    // رخداد سنج برای هماهنگی با تغییرات localStorage (خروج از حساب)
     const handleStorageChange = () => {
       fetchUserData();
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // مدیریت کش سافاری آیفون (bfcache) هنگام بازگشت به صفحه با دکمه Back
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
         fetchUserData();
@@ -255,57 +244,44 @@ function PWAAppHome() {
     window.location.assign("/student/dashboard");
   };
 
-  const handlePreloaderComplete = () => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("app_preloader_shown_session", "true");
-    }
-    setShowPwaPreloader(false);
-  };
-
   return (
     <>
-      {showPwaPreloader && (
-        <AppPreloader duration={3000} onComplete={handlePreloaderComplete} />
-      )}
+      <div className="space-y-4 p-4 pb-12">
+        <AppCountdownBanner
+          targetDate="2027-05-22T00:00:00+03:30"
+          targetUrl="/elite-league"
+          imageSrc="/image/appHero.jpg"
+        />
 
-      {!showPwaPreloader && (
-        <div className="space-y-4 p-4 pb-12">
-          <AppCountdownBanner
-            targetDate="2027-05-22T00:00:00+03:30"
-            targetUrl="/elite-league"
-            imageSrc="/image/appHero.jpg"
-          />
+        <AppQuickActions
+          onActionClick={(id) => {
+            if (id === "quizzes") router.push("/under-construction");
+            if (id === "league") router.push("/elite-league");
+            if (id === "courses") router.push("/courses");
+            if (id === "goftino") router.push("/chat-guidance/chat");
+          }}
+        />
 
-          <AppQuickActions
-            onActionClick={(id) => {
-              if (id === "quizzes") router.push("/under-construction");
-              if (id === "league") router.push("/elite-league");
-              if (id === "courses") router.push("/courses");
-              if (id === "goftino") router.push("/chat-guidance/chat");
-            }}
-          />
+        <AppLeagueCard
+          isLoggedIn={isLoggedIn}
+          inEliteLeague={studentData.inEliteLeague}
+          eliteRank={studentData.eliteRank}
+          eliteTotal={studentData.eliteTotal}
+          basicRank={studentData.basicRank}
+          basicTotal={studentData.basicTotal}
+          medalImageUrl={studentData.medalImageUrl}
+          medalTitle={studentData.medalTitle}
+        />
 
-          <AppLeagueCard
-            isLoggedIn={isLoggedIn}
-            inEliteLeague={studentData.inEliteLeague}
-            eliteRank={studentData.eliteRank}
-            eliteTotal={studentData.eliteTotal}
-            basicRank={studentData.basicRank}
-            basicTotal={studentData.basicTotal}
-            medalImageUrl={studentData.medalImageUrl}
-            medalTitle={studentData.medalTitle}
-          />
-
-          <AppQuickAccess
-            onItemClick={(id) => {
-              if (id === "honors") router.push("/student/dashboard");
-              if (id === "notes") router.push("/student/dashboard");
-              if (id === "calendar") router.push("/calendar");
-              if (id === "videos") router.push("/courses");
-            }}
-          />
-        </div>
-      )}
+        <AppQuickAccess
+          onItemClick={(id) => {
+            if (id === "honors") router.push("/student/dashboard");
+            if (id === "notes") router.push("/student/dashboard");
+            if (id === "calendar") router.push("/calendar");
+            if (id === "videos") router.push("/courses");
+          }}
+        />
+      </div>
 
       <StudentLoginModal
         isOpen={isLoginModalOpen}
