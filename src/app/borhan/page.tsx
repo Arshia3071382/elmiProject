@@ -165,7 +165,7 @@ export default function BorhanPage() {
 
     return (
       <div className="space-y-6" dir="rtl">
-        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+        <div className="flex justify-between  mt-10 sm:mt-100 items-center border-b border-gray-100 pb-4">
           <div>
             <h2 className="text-2xl font-black text-[#1F3A5F]">
               مدیریت تیم برهان

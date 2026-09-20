@@ -37,12 +37,9 @@ export default function AppPreloader({
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-between bg-white py-16 px-6 transition-opacity duration-500 select-none pointer-events-auto ${
+      className={`absolute inset-0 z-[99999] flex flex-col items-center justify-between bg-white py-16 px-6 transition-opacity duration-500 select-none pointer-events-auto overflow-hidden ${
         fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
-      style={{
-        height: "-webkit-fill-available",
-      }}
       dir="rtl"
     >
       <div />
