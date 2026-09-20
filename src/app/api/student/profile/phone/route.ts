@@ -10,11 +10,15 @@ export async function PUT(req: Request) {
 
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("studentToken");
+    // پشتیبانی از نام‌های مختلف کوکی برای جلوگیری از خطای دسترسی غیرمجاز (401)
+    const token = 
+      cookieStore.get("studentToken") || 
+      cookieStore.get("student_token") || 
+      cookieStore.get("token");
 
     if (!token || !token.value) {
       return NextResponse.json(
-        { success: false, message: "دسترسی غیرمجاز." },
+        { success: false, message: "دسترسی غیرمجاز. لطفاً دوباره وارد شوید." },
         { status: 401 }
       );
     }
@@ -60,25 +64,34 @@ export async function PUT(req: Request) {
       );
     }
 
-    // ۳. بررسی تکراری نبودن شماره در کل دیتابیس (مدل Student)
-    const existingStudent = await Student.findOne({ phone });
+    // ۳. بررسی دقیق یکتا بودن شماره موبایل در کل دیتابیس (جلوگیری از تکرار در سایر کاربران)
+    const existingStudent = await Student.findOne({ 
+      phone: phone, 
+      _id: { $ne: studentId } // مطمئن شویم متعلق به کاربر دیگری است
+    });
+
     if (existingStudent) {
       return NextResponse.json(
-        { success: false, message: "این شماره موبایل قبلاً توسط کاربر دیگری ثبت شده است." },
+        { success: false, message: "این شماره موبایل قبلاً توسط کاربر دیگری ثبت شده است. لطفاً شماره دیگری وارد کنید." },
         { status: 400 }
       );
     }
 
-    // ۴. ذخیره شماره جدید روی دانش‌آموز
-    student.phone = phone;
+    const updateData: any = { phone };
     if (!student.username) {
-      student.username = student.nationalId || `user_${Date.now()}`;
+      updateData.username = student.nationalId || `user_${Date.now()}`;
     }
-    await student.save();
 
-    // ۵. به‌روزرسانی همگام در مدل GradeStudent (در صورت وجود)
-    if (student.leagueProfile) {
-      const gradeRecord = await GradeStudent.findById(student.leagueProfile);
+    // ۴. آپدیت امن اطلاعات بدون درگیر شدن با خطاهای اعتبارسنجی سایر فیلدها (مثل securityPin)
+    const updatedStudent = await Student.findByIdAndUpdate(
+      studentId,
+      { $set: updateData },
+      { new: true, runValidators: false }
+    );
+
+    // ۵. به‌روزرسانی همگام در مدل GradeStudent (در صورت وجود پروفایل لیگ)
+    if (updatedStudent && updatedStudent.leagueProfile) {
+      const gradeRecord = await GradeStudent.findById(updatedStudent.leagueProfile);
       if (gradeRecord) {
         gradeRecord.phone = phone;
         await gradeRecord.save();

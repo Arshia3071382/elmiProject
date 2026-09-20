@@ -29,7 +29,7 @@ const AVATAR_OPTIONS: AvatarOption[] = [
   { id: "avatar-3", imageUrl: "/image/profile/p3.jpg", label: "والاس و گرومیت" },
   { id: "avatar-4", imageUrl: "/image/profile/p4.jpg", label: "دوناتلو" },
   { id: "avatar-5", imageUrl: "/image/profile/p5.png", label: "هیرو" },
-  { id: "avatar-6", imageUrl: "/image/profile/p6.png", label: "ستاره" },
+  { id: "avatar-6", imageUrl: "/image/profile/p6.jpg", label: "پروفسور بالتازار" },
 ];
 
 export default function EditProfilePage() {

@@ -1,6 +1,7 @@
-'use client'
+"use client";
 
-import React from 'react'
+import React from "react";
+import { useRouter } from "next/navigation";
 import {
   Camera,
   Mic,
@@ -9,70 +10,77 @@ import {
   Calendar,
   Rocket,
   Compass,
-} from 'lucide-react'
+} from "lucide-react";
 
 interface ShowcaseItem {
-  id: string
-  title: string
-  icon: React.ReactNode
-  bgColor: string
-  textColor: string
-  onClick?: () => void
+  id: string;
+  title: string;
+  icon: React.ReactNode;
+  bgColor: string;
+  textColor: string;
+  url: string;
 }
 
 interface AppQuickAccessProps {
-  onItemClick?: (id: string) => void
+  onItemClick?: (id: string, url: string) => void; // اصلاح نوع ورودی برای دریافت url
 }
 
 export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
+  const router = useRouter();
+
   const items: ShowcaseItem[] = [
     {
-      id: 'showcase',
-      title: 'ویترین',
+      id: "showcase",
+      title: "ویترین",
       icon: <Camera className="w-5 h-5" />,
-      bgColor: 'bg-amber-50',
-      textColor: 'text-amber-600',
+      bgColor: "bg-amber-50",
+      textColor: "text-amber-600",
+      url: "/showcase",
     },
     {
-      id: 'radio',
-      title: 'رادیو علمی',
+      id: "radio",
+      title: "رادیو علمی",
       icon: <Mic className="w-5 h-5" />,
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600',
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600",
+      url: "/podcasts",
     },
     {
-      id: 'live',
-      title: 'پخش زنده',
+      id: "live",
+      title: "پخش زنده",
       icon: <Tv className="w-5 h-5" />,
-      bgColor: 'bg-rose-50',
-      textColor: 'text-rose-500',
+      bgColor: "bg-rose-50",
+      textColor: "text-rose-500",
+      url: "/live",
     },
     {
-      id: 'curiosity',
-      title: 'ایستگاه کنجکاوی',
+      id: "curiosity",
+      title: "ایستگاه کنجکاوی",
       icon: <Lightbulb className="w-5 h-5" />,
-      bgColor: 'bg-teal-50',
-      textColor: 'text-teal-600',
+      bgColor: "bg-teal-50",
+      textColor: "text-teal-600",
+      url: "/curiosity",
     },
     {
-      id: 'countdown',
-      title: 'روزشمار',
+      id: "countdown",
+      title: "روزشمار",
       icon: <Calendar className="w-5 h-5" />,
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
+      url: "/calendar",
     },
     {
-      id: 'borhan',
-      title: 'برهان',
+      id: "borhan",
+      title: "برهان",
       icon: <Rocket className="w-5 h-5" />,
-      bgColor: 'bg-indigo-50',
-      textColor: 'text-indigo-600',
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600",
+      url: "/borhan",
     },
-  ]
+  ];
 
   return (
     <div className="space-y-3">
-      {/* Title */}
       <div className="flex items-center gap-1.5 px-1">
         <Compass className="w-4 h-4 text-blue-600 fill-blue-50" />
         <h4 className="text-xs font-bold text-slate-800 tracking-tight">
@@ -80,16 +88,19 @@ export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
         </h4>
       </div>
 
-      {/* Grid Items (2 سطر 3 تایی) */}
       <div className="grid grid-cols-3 gap-2.5">
         {items.map((item) => (
           <button
             key={item.id}
+            type="button" // اضافه کردن نوع دکمه برای جلوگیری از رفتارهای پیش‌فرض
             onClick={() => {
-              if (item.onClick) item.onClick()
-              else if (onItemClick) onItemClick(item.id)
+              if (onItemClick) {
+                onItemClick(item.id, item.url);
+              } else {
+                router.push(item.url);
+              }
             }}
-            className="flex flex-col items-center justify-center p-3 bg-white rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all active:scale-95 group"
+            className="flex flex-col items-center justify-center p-3 bg-white rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all active:scale-95 group cursor-pointer"
           >
             <div
               className={`w-11 h-11 rounded-xl ${item.bgColor} ${item.textColor} flex items-center justify-center mb-2 transition-transform group-hover:scale-105`}
@@ -103,5 +114,5 @@ export default function AppQuickAccess({ onItemClick }: AppQuickAccessProps) {
         ))}
       </div>
     </div>
-  )
+  );
 }

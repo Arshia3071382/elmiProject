@@ -31,7 +31,7 @@ const StudentComments = dynamic(() => import("@/component/StudentComments"), { s
 const Questions = dynamic(() => import("@/component/Questions"), { ssr: false });
 
 const getScientificBadgeInfo = (score: number) => {
-  if (score <= 500) return { title: "باید بیشتر تلاش کنی", imageUrl: "/image/hero11.png" };
+  if (score <= 500) return { title: "بدون سطح", imageUrl: "/image/levels/le7.png" };
   if (score <= 2500) return { title: "شهید رضایی نژاد", imageUrl: "/image/levels/le1.png" };
   if (score <= 5000) return { title: "شهید علیمحمدی", imageUrl: "/image/levels/le2.png" };
   if (score <= 7500) return { title: "شهید احمدی روشن", imageUrl: "/image/levels/le3.png" };
@@ -274,14 +274,7 @@ function PWAAppHome() {
           medalTitle={studentData.medalTitle}
         />
 
-        <AppQuickAccess
-          onItemClick={(id) => {
-            if (id === "honors") router.push("/student/dashboard");
-            if (id === "notes") router.push("/student/dashboard");
-            if (id === "calendar") router.push("/calendar");
-            if (id === "videos") router.push("/courses");
-          }}
-        />
+       <AppQuickAccess />
       </div>
 
       <StudentLoginModal

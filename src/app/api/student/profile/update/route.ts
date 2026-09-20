@@ -49,29 +49,35 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { name, avatar } = body;
 
+    const updateData: any = {};
     if (name) {
-      student.firstName = name.split(" ")[0] || name;
-      student.lastName = name.split(" ").slice(1).join(" ") || "";
+      updateData.firstName = name.split(" ")[0] || name;
+      updateData.lastName = name.split(" ").slice(1).join(" ") || "";
     }
     if (avatar) {
-      student.avatar = avatar;
+      updateData.avatar = avatar;
     }
 
-    // جلوگیری از خطای خالی بودن username در صورت اجباری بودن در مدل
+    // اگر username خالی بود، مقدار پیش‌فرض بدهیم
     if (!student.username) {
-      student.username = student.nationalId || `user_${Date.now()}`;
+      updateData.username = student.nationalId || `user_${Date.now()}`;
     }
 
-    await student.save();
+    // استفاده از findByIdAndUpdate برای جلوگیری از خطاهای اعتبارسنجی فیلدهای اجباری دیگر مانند securityPin
+    const updatedStudent = await Student.findByIdAndUpdate(
+      studentId,
+      { $set: updateData },
+      { new: true, runValidators: false } // غیرفعال کردن اعتبارسنجی اجباری کل سند هنگام آپدیت جزئی
+    );
 
-    if (student.leagueProfile) {
-      const gradeRecord = await GradeStudent.findById(student.leagueProfile);
+    if (updatedStudent && updatedStudent.leagueProfile) {
+      const gradeRecord = await GradeStudent.findById(updatedStudent.leagueProfile);
       if (gradeRecord) {
         if (name) {
-          gradeRecord.firstName = student.firstName;
-          gradeRecord.lastName = student.lastName;
+          gradeRecord.firstName = updatedStudent.firstName;
+          gradeRecord.lastName = updatedStudent.lastName;
+          await gradeRecord.save();
         }
-        await gradeRecord.save();
       }
     }
 

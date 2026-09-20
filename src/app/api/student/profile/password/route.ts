@@ -10,11 +10,15 @@ export async function PUT(req: Request) {
 
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("studentToken");
+    // پشتیبانی از نام‌های مختلف کوکی برای جلوگیری از خطای دسترسی غیرمجاز
+    const token = 
+      cookieStore.get("studentToken") || 
+      cookieStore.get("student_token") || 
+      cookieStore.get("token");
 
     if (!token || !token.value) {
       return NextResponse.json(
-        { success: false, message: "دسترسی غیرمجاز." },
+        { success: false, message: "دسترسی غیرمجاز. لطفاً دوباره وارد شوید." },
         { status: 401 }
       );
     }
@@ -73,15 +77,21 @@ export async function PUT(req: Request) {
       );
     }
 
-    // هش کردن و ذخیره رمز عبور جدید
+    // هش کردن رمز عبور جدید
     const salt = await bcrypt.genSalt(12);
-    student.passwordHash = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
     
+    const updateData: any = { passwordHash: hashedPassword };
     if (!student.username) {
-      student.username = student.nationalId || `user_${Date.now()}`;
+      updateData.username = student.nationalId || `user_${Date.now()}`;
     }
 
-    await student.save();
+    // استفاده از findByIdAndUpdate برای جلوگیری از خطاهای اعتبارسنجی سایر فیلدها (مثل securityPin)
+    await Student.findByIdAndUpdate(
+      studentId,
+      { $set: updateData },
+      { new: true, runValidators: false }
+    );
 
     return NextResponse.json({
       success: true,
