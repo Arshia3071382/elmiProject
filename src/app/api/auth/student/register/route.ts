@@ -56,8 +56,8 @@ export async function POST(req: Request) {
     const cleanPhone = phone.trim();
     const cleanSecurityAnswer = securityAnswer.trim().toLowerCase();
     
-    // استخراج و بررسی کد ۶ رقمی پین از پاسخ امنیتی (فرمت: پین-بازیکن)
-    const securityPin = cleanSecurityAnswer.split("-")[0];
+    // 🛠 اصلاح اصلی: استخراج امن پین ۶ رقمی (سازگار با مقادیر ارسالی از فرانت‌اند)
+    const securityPin = cleanSecurityAnswer.replace(/\D/g, "").slice(0, 6);
 
     if (!/^\d{6}$/.test(securityPin)) {
       return NextResponse.json(
@@ -175,7 +175,7 @@ export async function POST(req: Request) {
       await gradeStudentRecord.save();
     }
 
-    // 🔒 ۸. ساخت توکن JWT امن با هماهنگی کامل نقش و نام‌گذاری
+    // 🔒 ۸. ساخت توکن JWT امن
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || "elmi_super_secret_jwt_key_2026_secure_random_string"
     );

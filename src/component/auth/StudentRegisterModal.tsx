@@ -498,6 +498,56 @@ export default function StudentRegisterModal({
           )}
         </motion.div>
       </div>
+      {/* مودال قوانین، مقررات و نکات امنیتی */}
+      {isRulesModalOpen && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm" dir="rtl">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-800 font-[iranBold]">
+                قوانین و نکات بسیار مهم امنیتی
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsRulesModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="text-xs text-slate-600 space-y-3 leading-relaxed text-right font-[iranSans-r]">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 space-y-1">
+                <p className="font-bold">⚠️ هشدار بسیار مهم درباره اطلاعات امنیتی:</p>
+                <p>
+                  کد ۶ رقمی پین و ۳ حرف اول بازیکن انتخابی شما به همراه رمز عبور، کلیدهای اصلی بازیابی و ورود به حساب شما هستند. حفظ و نگهداری آن‌ها کاملاً بر عهده خود شماست.
+                </p>
+              </div>
+
+              <p>
+                ۱. <strong>الزام عکس‌برداری از کارت امنیتی:</strong> پس از اتمام ثبت‌نام، کارت امنیتی شما نمایش داده می‌شود. حتماً از آن عکس بگیرید یا آن را در گوشی/سیستم خود ذخیره کنید؛ در صورت فراموشی اطلاعات، سامانه راهی برای بازیابی دستی این اطلاعات ندارد.
+              </p>
+              
+              <p>
+                ۲. <strong>حریم خصوصی حساب:</strong> هر دانش‌آموز تنها مجاز به داشتن یک حساب کاربری با شماره موبایل و کد ملی اختصاصی خود می‌باشد.
+              </p>
+
+              <p>
+                ۳. <strong>رعایت اخلاق سامانه:</strong> رعایت قوانین انضباطی و احترام در محیط‌های تعاملی و بخش‌های مختلف علمی منتظران الزامی است.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-3 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                onClick={() => setIsRulesModalOpen(false)}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
+              >
+                مطالعه کردم و متوجه شدم
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AnimatePresence>,
     document.body
   );

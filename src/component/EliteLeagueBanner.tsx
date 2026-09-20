@@ -2,20 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, ArrowLeft } from "lucide-react";
+import { Trophy } from "lucide-react";
 import Image from "next/image";
 import Container from "./Container";
 
 export default function EliteLeagueBanner() {
-  // تاریخ شروع رقابت: ۱ مهر ۱۴۰۵
-  const targetDate = "2026-09-23T00:00:00";
+  // تاریخ پایان: ۱ خرداد ۱۴۰۶ (معادل ۲۲ مه ۲۰۲۶ در تقویم میلادی)
+  const targetDate = "2027-05-22T00:00:00";
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
-  const [isStarted, setIsStarted] = useState(false);
 
   // State برای اسلایدر دو صفحه ای
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -30,9 +29,8 @@ export default function EliteLeagueBanner() {
           minutes: Math.floor((difference / 1000 / 60) % 60),
           seconds: Math.floor((difference / 1000) % 60),
         });
-        setIsStarted(false);
       } else {
-        setIsStarted(true);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
     calculateTime();
@@ -203,56 +201,43 @@ export default function EliteLeagueBanner() {
                       </span>
                     </div>
 
-                    {!isStarted ? (
-                      <div className="w-full flex items-center justify-center gap-1.5 sm:gap-4">
-                        <Trophy className="w-4 h-4 sm:w-7 sm:h-7 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
+                    <div className="w-full flex items-center justify-center gap-1.5 sm:gap-4">
+                      <Trophy className="w-4 h-4 sm:w-7 sm:h-7 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
 
-                        {/* باکس تایمر با چیدمان راست‌به‌چپ (روز -> ساعت -> دقیقه -> ثانیه) */}
-                        <div
-                          dir="rtl"
-                          className="flex items-center justify-center gap-1 sm:gap-3 bg-[#111318] border border-[#F97316]/35 backdrop-blur-xl px-2 py-1 sm:px-5 sm:py-1.5 rounded-xl sm:rounded-2xl shadow-[0_0_25px_rgba(17,19,24,0.8)]"
-                        >
-                          <CompactTimeUnit
-                            value={formatNum(timeLeft.days)}
-                            label="روز"
-                          />
-                          <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-1 sm:mb-2">
-                            :
-                          </span>
-                          <CompactTimeUnit
-                            value={formatNum(timeLeft.hours)}
-                            label="ساعت"
-                          />
-                          <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-1 sm:mb-2">
-                            :
-                          </span>
-                          <CompactTimeUnit
-                            value={formatNum(timeLeft.minutes)}
-                            label="دقیقه"
-                          />
-                          <span className="text-[#F97316] text-xs sm:text-base font-bold animate-pulse mb-1 sm:mb-2">
-                            :
-                          </span>
-                          <CompactTimeUnit
-                            value={formatNum(timeLeft.seconds)}
-                            label="ثانیه"
-                          />
-                        </div>
+                      {/* باکس تایمر با چیدمان راست‌به‌چپ (روز -> ساعت -> دقیقه -> ثانیه) */}
+                      <div
+                        dir="rtl"
+                        className="flex items-center justify-center gap-1 sm:gap-3 bg-[#0D1117] border border-[#F97316]/40 backdrop-blur-xl px-2.5 py-1 sm:px-6 sm:py-2 rounded-xl sm:rounded-2xl shadow-[0_0_25px_rgba(17,19,24,0.9)]"
+                      >
+                        <CompactTimeUnit
+                          value={formatNum(timeLeft.days)}
+                          label="روز"
+                        />
+                        <span className="text-[#F97316] text-sm sm:text-lg font-black animate-pulse mb-1 sm:mb-2">
+                          :
+                        </span>
+                        <CompactTimeUnit
+                          value={formatNum(timeLeft.hours)}
+                          label="ساعت"
+                        />
+                        <span className="text-[#F97316] text-sm sm:text-lg font-black animate-pulse mb-1 sm:mb-2">
+                          :
+                        </span>
+                        <CompactTimeUnit
+                          value={formatNum(timeLeft.minutes)}
+                          label="دقیقه"
+                        />
+                        <span className="text-[#F97316] text-sm sm:text-lg font-black animate-pulse mb-1 sm:mb-2">
+                          :
+                        </span>
+                        <CompactTimeUnit
+                          value={formatNum(timeLeft.seconds)}
+                          label="ثانیه"
+                        />
+                      </div>
 
-                        <Trophy className="w-4 h-4 sm:w-7 sm:h-7 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
-                      </div>
-                    ) : (
-                      <div className="w-full flex items-center justify-center">
-                        <a
-                          href="/elite-league-guide"
-                          className="group relative inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#F97316] via-[#FBBF24] to-[#FDE68A] text-[#050505] font-black text-xs sm:text-lg shadow-[0_0_30px_rgba(249,115,22,0.5)]"
-                        >
-                          <Trophy className="w-4 h-4 sm:w-6 sm:h-6 text-[#050505]" />
-                          <span>شروع رقابت</span>
-                          <ArrowLeft className="w-3.5 h-3.5 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" />
-                        </a>
-                      </div>
-                    )}
+                      <Trophy className="w-4 h-4 sm:w-7 sm:h-7 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
+                    </div>
                   </motion.div>
                 ) : (
                   /* صفحه دوم: ورود به سایت منتظران */
@@ -355,16 +340,13 @@ export default function EliteLeagueBanner() {
 
 function CompactTimeUnit({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center bg-[#0B0F17] border border-[#F97316]/20 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-md min-w-[26px] sm:min-w-[42px]">
-      <span
-        className="text-[7px] sm:text-[10px] text-[#94A3B8] font-medium tracking-wide mb-0.5"
-        style={{ fontFamily: "iranSans-r" }}
-      >
+    <div className="flex flex-col items-center justify-center bg-[#030712] border border-[#F97316]/30 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl shadow-inner min-w-[30px] sm:min-w-[48px]">
+      <span className="text-[8px] sm:text-[11px] text-[#94A3B8] font-semibold tracking-wider mb-0.5">
         {label}
       </span>
       <span
-        className="text-[10px] sm:text-sm font-black text-[#FDE68A] tracking-wider drop-shadow-[0_0_6px_rgba(251,191,36,0.3)]"
-        style={{ fontFamily: "Tahoma, sans-serif" }}
+        className="text-xs sm:text-base font-black text-[#FEF08A] tracking-wider drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"
+        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
       >
         {value}
       </span>
