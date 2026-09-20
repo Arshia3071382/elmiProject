@@ -100,51 +100,57 @@ export async function GET(req: Request) {
       }
     }
 
+    // اگر کاربر در لیگ نخبگان (GradeStudent) ثبت‌نام نشده باشد
+    const hasLeagueRegistration = Boolean(gradeRecord);
+
     const grade = gradeRecord?.grade || student.grade || 6;
     const totalScore = gradeRecord?.totalScore || 0;
 
-    const sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
-    
+    let sameGradeStudents: any[] = [];
     let userIndex = -1;
-
-    if (gradeRecord && gradeRecord._id) {
-      userIndex = sameGradeStudents.findIndex(
-        (s) => s._id.toString() === gradeRecord._id.toString()
-      );
-    }
-
-    if (userIndex === -1 && student._id) {
-      userIndex = sameGradeStudents.findIndex(
-        (s) => s.studentId && s.studentId.toString() === student._id.toString()
-      );
-    }
-    
-    if (userIndex === -1 && cleanStudentNationalId) {
-      userIndex = sameGradeStudents.findIndex(
-        (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
-      );
-    }
-    
-    const gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
-
+    let gradeRank = 1;
     let higherStudent = null;
     let lowerStudent = null;
 
-    if (userIndex !== -1) {
-      if (userIndex > 0) {
-        const higher = sameGradeStudents[userIndex - 1];
-        higherStudent = {
-          name: `${higher.firstName || ""} ${higher.lastName || ""}`.trim() || "دانش‌آموز برتر",
-          score: higher.totalScore || 0,
-        };
+    if (hasLeagueRegistration) {
+      sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
+      
+      if (gradeRecord && gradeRecord._id) {
+        userIndex = sameGradeStudents.findIndex(
+          (s) => s._id.toString() === gradeRecord._id.toString()
+        );
+      }
+
+      if (userIndex === -1 && student._id) {
+        userIndex = sameGradeStudents.findIndex(
+          (s) => s.studentId && s.studentId.toString() === student._id.toString()
+        );
       }
       
-      if (userIndex < sameGradeStudents.length - 1) {
-        const lower = sameGradeStudents[userIndex + 1];
-        lowerStudent = {
-          name: `${lower.firstName || ""} ${lower.lastName || ""}`.trim() || "دانش‌آموز",
-          score: lower.totalScore || 0,
-        };
+      if (userIndex === -1 && cleanStudentNationalId) {
+        userIndex = sameGradeStudents.findIndex(
+          (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
+        );
+      }
+      
+      gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
+
+      if (userIndex !== -1) {
+        if (userIndex > 0) {
+          const higher = sameGradeStudents[userIndex - 1];
+          higherStudent = {
+            name: `${higher.firstName || ""} ${higher.lastName || ""}`.trim() || "دانش‌آموز برتر",
+            score: higher.totalScore || 0,
+          };
+        }
+        
+        if (userIndex < sameGradeStudents.length - 1) {
+          const lower = sameGradeStudents[userIndex + 1];
+          lowerStudent = {
+            name: `${lower.firstName || ""} ${lower.lastName || ""}`.trim() || "دانش‌آموز",
+            score: lower.totalScore || 0,
+          };
+        }
       }
     }
 
@@ -175,7 +181,7 @@ export async function GET(req: Request) {
           score: eliteRecord.score,
           rank: eliteRank,
           category: eliteRecord.category,
-          totalStudents: sameCategoryElite.length, // 🔒 ارسال تعداد کل نخبگان دسته مربوطه
+          totalStudents: sameCategoryElite.length,
         };
       }
     } catch (e) {
@@ -190,24 +196,26 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       data: {
+        isComplete: hasLeagueRegistration,
         profile: {
           name: fullName,
           grade: grade,
           level: "فعال",
-          totalScore: totalScore,
+          totalScore: hasLeagueRegistration ? totalScore : 0,
           scoreToNextLevel: 100 - (totalScore % 100),
           avatar: student.avatar && student.avatar.startsWith("/") 
             ? student.avatar 
             : "/image/profile/p2.png",
         },
-        gradeLeague: {
+        // اگر ثبت‌نام نکرده باشد، gradeLeague مقدار null برمی‌گردد
+        gradeLeague: hasLeagueRegistration ? {
           score: totalScore,
           rank: gradeRank,
           totalStudents: sameGradeStudents.length || 1,
           scientificLevelTitle: `پایه ${grade}`,
           higherStudent: higherStudent, 
           lowerStudent: lowerStudent, 
-        },
+        } : null,
         eliteLeague: eliteLeagueData,
         badges: [
           { title: "عضو فعال", icon: "⭐" },

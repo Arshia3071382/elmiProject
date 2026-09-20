@@ -16,7 +16,7 @@ import {
   SCIENTIFIC_LEVELS,
   getScientificBadgeInfo,
 } from "@/component/student-dashboard/constants";
-import { Trophy, FileText } from "lucide-react";
+import { Trophy, FileText, AlertCircle } from "lucide-react";
 
 export default function StudentDashboardPage() {
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function StudentDashboardPage() {
         const totalScore = profile.totalScore || 0;
 
         setData({
-          isComplete: true,
+          isComplete: json.data.isComplete ?? (league ? true : false),
           profile: {
             name: profile.name || "دانش‌آموز عزیز",
             grade: profile.grade || 7,
@@ -59,15 +59,15 @@ export default function StudentDashboardPage() {
             scoreToNextLevel: profile.scoreToNextLevel || 1000,
             avatar: profile.avatar || "/image/profile/p1.png",
           } as any,
-          gradeLeague: {
+          gradeLeague: league ? {
             score: league.score || 0,
             rank: league.rank || 1,
             totalStudents: league.totalStudents || 10,
             scientificLevelTitle: league.scientificLevelTitle || "پایه",
             higherStudent: league.higherStudent || null,
             lowerStudent: league.lowerStudent || null,
-          } as any,
-          eliteLeague: eliteLeague
+          } as any : null,
+          eliteLeague: eliteLeague && eliteLeague.rank > 0
             ? {
                 score: eliteLeague.score || 0,
                 rank: eliteLeague.rank || 0,
@@ -100,21 +100,16 @@ export default function StudentDashboardPage() {
         name: "دانش‌آموز عزیز",
         grade: 7,
         level: "عضو جدید",
-        totalScore: 750,
+        totalScore: 0,
         scoreToNextLevel: 1000,
         avatar: "/image/profile/p1.png",
       } as any,
-      gradeLeague: {
-        score: 750,
-        rank: 1,
-        totalStudents: 20,
-        scientificLevelTitle: "پایه هفتم",
-      } as any,
+      gradeLeague: null,
       eliteLeague: null,
       badges: [],
       lastLeagueUpdate: "امروز",
     });
-    setCurrentLevelIndex(1);
+    setCurrentLevelIndex(0);
   };
 
   // Logout handler
@@ -164,12 +159,7 @@ export default function StudentDashboardPage() {
       scoreToNextLevel: 1000,
       avatar: "/image/profile/p1.png",
     },
-    gradeLeague: {
-      score: 0,
-      rank: 1,
-      totalStudents: 1,
-      scientificLevelTitle: "پایه",
-    },
+    gradeLeague: null,
     eliteLeague: null,
     badges: [],
     lastLeagueUpdate: "امروز",
@@ -189,6 +179,9 @@ export default function StudentDashboardPage() {
         100,
       )
     : 100;
+
+  // بررسی اینکه آیا کاربر در لیگ ثبت‌نام کرده است یا خیر
+  const hasLeagueData = Boolean(dashboardData.gradeLeague);
 
   return (
     <Container>
@@ -210,7 +203,7 @@ export default function StudentDashboardPage() {
           />
 
           {/* نوار تب‌ها برای جابجایی بین لیگ علمی و آزمون‌ها */}
-          <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm max-w-fit mx-auto sm:mx-0">
+          <div className="flex items-center gap-3 bg-white/85 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm max-w-fit mx-auto sm:mx-0">
             <button
               onClick={() => setActiveTab("league")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
@@ -239,70 +232,89 @@ export default function StudentDashboardPage() {
           {/* محتوای تب اول: لیگ علمی */}
           {activeTab === "league" && (
             <div className="space-y-6 animate-fadeIn">
-              {dashboardData.eliteLeague && dashboardData.eliteLeague.rank > 0 && (
-                <EliteLeagueCard
-                  rank={dashboardData.eliteLeague.rank}
-                  category={dashboardData.eliteLeague.category}
-                />
+              {hasLeagueData ? (
+                <>
+                  {dashboardData.eliteLeague && dashboardData.eliteLeague.rank > 0 && (
+                    <EliteLeagueCard
+                      rank={dashboardData.eliteLeague.rank}
+                      category={dashboardData.eliteLeague.category}
+                    />
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {dashboardData.gradeLeague && (
+                      <GradeLeagueCard
+                        score={dashboardData.gradeLeague.score}
+                        rank={dashboardData.gradeLeague.rank}
+                        totalStudents={dashboardData.gradeLeague.totalStudents}
+                        scientificLevelTitle={
+                          dashboardData.gradeLeague.scientificLevelTitle
+                        }
+                        lastUpdate={dashboardData.lastLeagueUpdate}
+                      />
+                    )}
+
+                    <ScientificLevelCard
+                      imageUrl={scientificInfo.imageUrl}
+                      title={scientificInfo.title}
+                    />
+                  </div>
+
+                  {dashboardData.gradeLeague && (
+                    <RankRadarCard
+                      rank={dashboardData.gradeLeague.rank}
+                      totalStudents={dashboardData.gradeLeague.totalStudents}
+                      score={dashboardData.gradeLeague.score}
+                      higherStudent={(dashboardData.gradeLeague as any).higherStudent}
+                      lowerStudent={(dashboardData.gradeLeague as any).lowerStudent}
+                    />
+                  )}
+
+                  <div className="bg-white/90 backdrop-blur-xl border border-amber-100 rounded-3xl p-6 shadow-xl space-y-6">
+                    <ProgressBar
+                      currentScore={currentScore}
+                      nextLevelTitle={nextLevelObj?.title}
+                      nextLevelMinScore={nextLevelObj?.minScore}
+                      progressPercent={progressPercent}
+                      scoreNeeded={scoreNeeded}
+                    />
+
+                    <LevelSlider
+                      currentIndex={currentLevelIndex}
+                      userLevelIndex={scientificInfo.levelIndex}
+                      userScore={currentScore}
+                      onNext={() =>
+                        setCurrentLevelIndex(
+                          (prev) => (prev + 1) % SCIENTIFIC_LEVELS.length,
+                        )
+                      }
+                      onPrev={() =>
+                        setCurrentLevelIndex(
+                          (prev) =>
+                            (prev - 1 + SCIENTIFIC_LEVELS.length) %
+                            SCIENTIFIC_LEVELS.length,
+                        )
+                      }
+                      onSelect={setCurrentLevelIndex}
+                    />
+                  </div>
+                </>
+              ) : (
+                /* کارت ویژه کاربران ثبت‌نام نشده در لیگ */
+                <div className="bg-white/95 backdrop-blur-xl border border-amber-200/80 rounded-3xl p-8 sm:p-12 shadow-xl text-center space-y-4">
+                  <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-2 max-w-md mx-auto">
+                    <h3 className="text-lg sm:text-xl font-extrabold text-slate-800">
+                      وضعیت ثبت‌نام در لیگ
+                    </h3>
+                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium">
+                      نام شما در لیگ نخبگان ثبت نشده است.
+                    </p>
+                  </div>
+                </div>
               )}
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {dashboardData.gradeLeague && (
-                  <GradeLeagueCard
-                    score={dashboardData.gradeLeague.score}
-                    rank={dashboardData.gradeLeague.rank}
-                    totalStudents={dashboardData.gradeLeague.totalStudents}
-                    scientificLevelTitle={
-                      dashboardData.gradeLeague.scientificLevelTitle
-                    }
-                    lastUpdate={dashboardData.lastLeagueUpdate}
-                  />
-                )}
-
-                <ScientificLevelCard
-                  imageUrl={scientificInfo.imageUrl}
-                  title={scientificInfo.title}
-                />
-              </div>
-
-              {dashboardData.gradeLeague && (
-                <RankRadarCard
-                  rank={dashboardData.gradeLeague.rank}
-                  totalStudents={dashboardData.gradeLeague.totalStudents}
-                  score={dashboardData.gradeLeague.score}
-                  higherStudent={(dashboardData.gradeLeague as any).higherStudent}
-                  lowerStudent={(dashboardData.gradeLeague as any).lowerStudent}
-                />
-              )}
-
-              <div className="bg-white/90 backdrop-blur-xl border border-amber-100 rounded-3xl p-6 shadow-xl space-y-6">
-                <ProgressBar
-                  currentScore={currentScore}
-                  nextLevelTitle={nextLevelObj?.title}
-                  nextLevelMinScore={nextLevelObj?.minScore}
-                  progressPercent={progressPercent}
-                  scoreNeeded={scoreNeeded}
-                />
-
-                <LevelSlider
-                  currentIndex={currentLevelIndex}
-                  userLevelIndex={scientificInfo.levelIndex}
-                  userScore={currentScore}
-                  onNext={() =>
-                    setCurrentLevelIndex(
-                      (prev) => (prev + 1) % SCIENTIFIC_LEVELS.length,
-                    )
-                  }
-                  onPrev={() =>
-                    setCurrentLevelIndex(
-                      (prev) =>
-                        (prev - 1 + SCIENTIFIC_LEVELS.length) %
-                        SCIENTIFIC_LEVELS.length,
-                    )
-                  }
-                  onSelect={setCurrentLevelIndex}
-                />
-              </div>
             </div>
           )}
 
