@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
@@ -115,7 +116,6 @@ export default function ClassCart() {
     setCurrentIndex((prev) => (prev - 1 + CART_ITEMS.length) % CART_ITEMS.length);
   }, []);
 
-  // پشتیبانی از کلیدهای کیبورد برای پیمایش
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedClass) return;
@@ -126,7 +126,6 @@ export default function ClassCart() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goToNext, goToPrev, selectedClass]);
 
-  // چرخش خودکار
   useEffect(() => {
     if (isPaused || selectedClass !== null) return;
 
@@ -148,13 +147,12 @@ export default function ClassCart() {
     { item: getCardAt(1), role: "next" },
   ];
 
-  // اصلاح جهت Drag و Swiping بر اساس RTL
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const threshold = 40;
     if (info.offset.x > threshold) {
-      goToPrev(); // در RTL کشیدن به راست یعنی رفتن به قبلی
+      goToPrev();
     } else if (info.offset.x < -threshold) {
-      goToNext(); // در RTL کشیدن به چپ یعنی رفتن به بعدی
+      goToNext();
     }
   };
 
@@ -200,7 +198,6 @@ export default function ClassCart() {
                 filter: isActive ? "blur(0px)" : "blur(1.5px)",
               }}
             >
-              {/* تصویر کارت */}
               <div className="relative w-full aspect-[16/10] overflow-hidden rounded-t-3xl pointer-events-none">
                 <Image
                   src={item.image}
@@ -211,12 +208,11 @@ export default function ClassCart() {
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-[11px] px-3 py-1 rounded-full font-[iranBold] text-slate-800 shadow-sm">
+                <span className="absolute top-3 right-3 bg-white/95 backdrop-blur-md text-[11px] px-3 py-1 rounded-full font-[iranBold] text-slate-800 shadow-sm">
                   {item.sessionsText}
                 </span>
               </div>
 
-              {/* محتوای کارت */}
               <div className="p-5 text-center flex flex-col items-center">
                 <h3 className="text-base font-[iranBold] text-slate-900 mb-1 line-clamp-1">
                   {item.title}
@@ -241,7 +237,6 @@ export default function ClassCart() {
         })}
       </div>
 
-      {/* نقطه‌های ناوبری پایین */}
       <div className="flex justify-center items-center gap-2 mt-8">
         {CART_ITEMS.map((_, idx) => (
           <button
@@ -258,7 +253,7 @@ export default function ClassCart() {
         ))}
       </div>
 
-      {/* مودال جزئیات */}
+      {/* استفاده از Portal برای انتقال مودال مستقیماً به بدنه اصلی صفحه (بدون محدودیت z-index والدین) */}
       <AnimatePresence>
         {selectedClass && (
           <ClassDetailModal
@@ -285,14 +280,17 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
     };
   }, [onClose]);
 
-  return (
-    <div dir="rtl" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+  // مودال با createPortal به document.body متصل می‌شود تا هیچ کانتینر یا نوباری نتواند روی آن قرار بگیرد
+  if (typeof window === "undefined") return null;
+
+  return createPortal(
+    <div dir="rtl" className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-md"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
       />
 
       <motion.div
@@ -371,6 +369,7 @@ function ClassDetailModal({ item, onClose }: { item: ClassItem; onClose: () => v
           </button>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
