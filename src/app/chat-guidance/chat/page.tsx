@@ -32,6 +32,18 @@ function ChatContent() {
   const activeStepRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isModalOpen]);
+
   // Fetch topic
   useEffect(() => {
     if (!topicSlug) {
@@ -220,7 +232,11 @@ function ChatContent() {
       />
 
       {isModalOpen && activeOptions.length > 0 && (
-        <OptionModal options={activeOptions} onSelect={handleSelectOption} />
+        <OptionModal
+          options={activeOptions}
+          onSelect={handleSelectOption}
+          onClose={() => setIsModalOpen(false)}
+        />
       )}
     </div>
   );
