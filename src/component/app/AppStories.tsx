@@ -70,10 +70,9 @@ export default function AppStories() {
   return (
     <div className="w-full my-4 px-3">
       {/* عنوان بخش استوری‌ها همراه با آیکون‌های مینیمال و تراز سمت راست */}
-      <div className="flex justify-between items-center mb-2 px-1">
+      <div className="flex justify-between items-center mb-2 -mr-2.5">
         <div className="flex items-center gap-1.5">
           <Play className="w-3.5 h-3.5 text-blue-600 fill-blue-50" />
-          <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-50" />
           <h3 className="text-xs font-bold text-gray-700">استوری‌های علمی</h3>
         </div>
       </div>
