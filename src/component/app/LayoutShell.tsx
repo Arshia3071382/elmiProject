@@ -158,7 +158,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   if (showPWAShell) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-slate-900 py-0 sm:py-8 flex justify-center items-center overflow-hidden">
+      <div className="fixed inset-0 z-[9999] bg-slate-900 py-0 sm:py-8 flex justify-center items-center">
         <div className="w-full max-w-md bg-white h-full sm:h-[844px] sm:max-h-[90vh] sm:rounded-[40px] shadow-2xl flex flex-col relative border-0 sm:border-[8px] sm:border-slate-800 overflow-hidden dir-rtl">
           
           {showPwaPreloader && (
@@ -179,7 +179,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             </div>
           )}
 
-          <main className="flex-grow overflow-y-auto w-full antialiased text-right dir-rtl font-sans pb-20 scrollbar-none">
+          <main className={`flex-grow overflow-y-auto w-full antialiased text-right dir-rtl font-sans scrollbar-none ${isUiHidden ? 'pb-0' : 'pb-20'}`}>
             {children}
           </main>
 
