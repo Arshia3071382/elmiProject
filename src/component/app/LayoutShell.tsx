@@ -53,9 +53,11 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   const [activeTab, setActiveTab] = useState<TabType>('home')
   
-  // استیت برای کنترل مخفی‌سازی هدر و نوبار پایین هنگام نمایش استوری
+  // استیت برای کنترل مخفی‌سازی هدر و نوبار پایین هنگام نمایش استوری یا مودال
   const [isStoryOpen, setIsStoryOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // لیسنر مربوط به استوری
   useEffect(() => {
     const handleStoryToggle = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -67,6 +69,21 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     window.addEventListener('pwaStoryToggle', handleStoryToggle);
     return () => {
       window.removeEventListener('pwaStoryToggle', handleStoryToggle);
+    };
+  }, []);
+
+  // لیسنر عمومی برای مخفی‌سازی عناصر UI هنگام باز شدن مودال چت/انتخاب سوال
+  useEffect(() => {
+    const handleModalToggle = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail !== undefined) {
+        setIsModalOpen(Boolean(customEvent.detail.isOpen));
+      }
+    };
+
+    window.addEventListener('pwaModalToggle', handleModalToggle);
+    return () => {
+      window.removeEventListener('pwaModalToggle', handleModalToggle);
     };
   }, []);
 
@@ -136,6 +153,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const isHideLayout = isAdminRoute || (isMounted && isPWA) || isWebsitePreloaderActive
   const showPWAShell = isMounted && isPWA && !isAdminRoute
 
+  // محاسبه شرط عدم نمایش هدر و نوبار
+  const isUiHidden = showPwaPreloader || isStoryOpen || isModalOpen
+
   if (showPWAShell) {
     return (
       <div className="fixed inset-0 z-[9999] bg-slate-900 py-0 sm:py-8 flex justify-center items-center overflow-hidden">
@@ -147,8 +167,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             </div>
           )}
 
-          {/* هدر اپلیکیشن (هنگام نمایش پریلودر یا باز بودن استوری پنهان می‌شود) */}
-          {!showPwaPreloader && !isStoryOpen && (
+          {/* هدر اپلیکیشن */}
+          {!isUiHidden && (
             <div className="flex-shrink-0 z-20 bg-white">
               <AppHeader
                 isLoggedIn={isLoggedIn}
@@ -163,8 +183,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             {children}
           </main>
 
-          {/* نوبار پایین (هنگام نمایش پریلودر یا باز بودن استوری پنهان می‌شود) */}
-          {!showPwaPreloader && !isStoryOpen && (
+          {/* نوبار پایین */}
+          {!isUiHidden && (
             <div className="absolute bottom-0 left-0 right-0 z-30 bg-white">
               <AppBottomNav
                 activeTab={activeTab}
