@@ -75,7 +75,7 @@ export default function AppBottomNav({
     {
       id: "news",
       label: "اخبار",
-      href: "/news",
+      href: "/notices",
       icon: Bell,
     },
     {

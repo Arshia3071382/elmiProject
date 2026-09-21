@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import AppHome from '@/component/app/AppHome'
 import AppHeader from '@/component/app/AppHeader'
 import AppCountdownBanner from '@/component/app/AppCountdownBanner'
+import AppStories from '@/component/app/AppStories' // ۱. ایمپورت استوری‌ها
 import AppQuickActions from '@/component/app/AppQuickActions'
 import AppLeagueCard from '@/component/app/AppLeagueCard'
 import AppQuickAccess from '@/component/app/AppQuickAccess'
@@ -185,6 +186,9 @@ export default function AppPreviewPage() {
                   targetUrl="/elite-league"
                   imageSrc="/image/appHero.jpg"
                 />
+
+                {/* ۲. اضافه‌شدن استوری‌ها دقیقا زیر بنر شمارش معکوس */}
+                <AppStories />
 
                 <AppQuickActions
                   onActionClick={(id) => {

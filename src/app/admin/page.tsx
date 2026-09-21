@@ -1,4 +1,3 @@
-// Admin page - Main component
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -21,6 +20,7 @@ import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel";
 import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel";
 import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel";
 import AdminBorhanPanel from "@/component/adminpaneldet/AdminBorhanPanel";
+import AdminStoriesPanel from "@/component/adminpaneldet/AdminStoriesPanel"; // اضافه شد
 
 import AdminToast from "./AdminToast";
 import { CourseTab } from "./constants";
@@ -157,7 +157,6 @@ export default function AdminPage() {
     }
   };
 
-  // تا زمانی که وضعیت لاگین چک می‌شود، لودینگ نمایش داده شود
   if (isChecking) {
     return (
       <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
@@ -191,7 +190,7 @@ export default function AdminPage() {
         {activeCourseTab === "courses" ? (
           <>
             <AddCourseForm categories={categories} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} onAddCourse={handleAddCourse} coursesCount={(id) => courses.filter((c) => c?.category?._id === id).length} />
-            <CourseManager courses={courses} categories={categories} onCourseUpdate={fetchCourses} onShowMessage={showMessage} />
+            <CourseManager courses={categories.length ? courses : []} categories={categories} onCourseUpdate={fetchCourses} onShowMessage={showMessage} />
           </>
         ) : (
           <CategoryManager categories={categories} coursesCount={(id) => courses.filter((c) => c?.category?._id === id).length} onCategoryUpdate={() => { fetchCategories(); fetchCourses(); }} onShowMessage={showMessage} onOpenAddModal={() => setShowCategoryModal(true)} />
@@ -211,6 +210,7 @@ export default function AdminPage() {
     exams: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminExamsPanel /></div>,
     permissions: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><SeniorPermissionManager onShowMessage={showMessage} /></div>,
     borhan: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminBorhanPanel onShowMessage={showMessage} /></div>,
+    stories: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminStoriesPanel /></div>, // اضافه شد
   };
 
   const menuItems: { id: string; label: string }[] = [
@@ -229,6 +229,7 @@ export default function AdminPage() {
     { id: "exams", label: "آزمون‌ها" },
     { id: "permissions", label: "دسترسی‌ها" },
     { id: "borhan", label: "پروژه برهان" },
+    { id: "stories", label: "استوری‌ها" }, // اضافه شد
   ];
 
   return (
@@ -252,7 +253,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* اسلایدر افقی همراه با اسکرول‌بار زیرین */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 sm:mt-6">
         <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 p-2 gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {menuItems.map((item) => {

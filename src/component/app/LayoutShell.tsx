@@ -17,7 +17,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const router = useRouter()
   const { isPWA, isMounted } = useIsPWA()
   
-  // بررسی وضعیت پریلودر فقط برای نسخه وب عادی
   const [hasSeenPreloader, setHasSeenPreloader] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return !!sessionStorage.getItem('hasSeenPreloader')
@@ -25,7 +24,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     return false
   })
 
-  // پریلودر اختصاصی PWA (فقط یک‌بار در طول نشست نمایش داده می‌شود)
   const [showPwaPreloader, setShowPwaPreloader] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return !sessionStorage.getItem('app_preloader_shown_session')
@@ -33,7 +31,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     return true
   })
 
-  // استیت‌های مربوط به لاگین و اطلاعات کاربر در PWA
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -54,8 +51,24 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     return "دانش‌آموز"
   })
 
-  // تشخیص تب فعال بر اساس مسیر فعلی (Pathname) برای نوبار پایین PWA
   const [activeTab, setActiveTab] = useState<TabType>('home')
+  
+  // استیت برای کنترل مخفی‌سازی نوبار پایین هنگام نمایش استوری
+  const [isStoryOpen, setIsStoryOpen] = useState(false)
+
+  useEffect(() => {
+    const handleStoryToggle = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setIsStoryOpen(customEvent.detail.isOpen);
+      }
+    };
+
+    window.addEventListener('pwaStoryToggle', handleStoryToggle);
+    return () => {
+      window.removeEventListener('pwaStoryToggle', handleStoryToggle);
+    };
+  }, []);
 
   useEffect(() => {
     if (pathname === '/') setActiveTab('home')
@@ -128,14 +141,12 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <div className="fixed inset-0 z-[9999] bg-slate-900 py-0 sm:py-8 flex justify-center items-center overflow-hidden">
         <div className="w-full max-w-md bg-white h-full sm:h-[844px] sm:max-h-[90vh] sm:rounded-[40px] shadow-2xl flex flex-col relative border-0 sm:border-[8px] sm:border-slate-800 overflow-hidden dir-rtl">
           
-          {/* پریلودر اختصاصی PWA که به صورت مطلق روی تمام صفحه قرار می‌گیرد و بالاترین z-index را دارد */}
           {showPwaPreloader && (
             <div className="absolute inset-0 z-[99999] bg-white flex items-center justify-center">
               <AppPreloader duration={3000} onComplete={handlePwaPreloaderComplete} />
             </div>
           )}
 
-          {/* هدر اپلیکیشن (هنگام نمایش پریلودر پنهان می‌شود) */}
           {!showPwaPreloader && (
             <div className="flex-shrink-0 z-20 bg-white">
               <AppHeader
@@ -147,13 +158,12 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             </div>
           )}
 
-          {/* محتوای صفحات */}
           <main className="flex-grow overflow-y-auto w-full antialiased text-right dir-rtl font-sans pb-20 scrollbar-none">
             {children}
           </main>
 
-          {/* نوبار پایین (هنگام نمایش پریلودر کاملاً پنهان می‌شود تا در سافاری دیده نشود) */}
-          {!showPwaPreloader && (
+          {/* نوبار پایین (هنگام نمایش پریلودر یا باز بودن استوری پنهان می‌شود) */}
+          {!showPwaPreloader && !isStoryOpen && (
             <div className="absolute bottom-0 left-0 right-0 z-30 bg-white">
               <AppBottomNav
                 activeTab={activeTab}

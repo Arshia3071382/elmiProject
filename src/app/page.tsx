@@ -22,6 +22,7 @@ import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppPreloader from "@/component/app/AppPreloader";
+import AppStories from "@/component/app/AppStories"; // اضافه شدن ایمپورت استوری‌ها
 
 const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
 const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
@@ -122,7 +123,6 @@ function ExistingWebsiteHome() {
 }
 
 // نسخه PWA (اپلیکیشن موبایل) همراه با AppPreloader اختصاصی
-// نسخه PWA (اپلیکیشن موبایل) - بدون پریلودر اضافی، چون در LayoutShell مدیریت می‌شود
 function PWAAppHome() {
   const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -253,6 +253,9 @@ function PWAAppHome() {
           targetUrl="/elite-league"
           imageSrc="/image/appHero.jpg"
         />
+
+        {/* استوری‌ها درست اینجا و دقیقاً زیر بنر شمارش معکوس قرار گرفتند */}
+        <AppStories />
 
         <AppQuickActions
           onActionClick={(id) => {
