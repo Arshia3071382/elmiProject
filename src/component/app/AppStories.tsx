@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Play, Sparkles } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 interface Story {
   _id?: string;
@@ -26,12 +26,21 @@ export default function AppStories() {
         const items = data.stories || data || [];
         if (Array.isArray(items)) {
           setStories(items);
+          
+          // ترفند پیش‌بارگذاری (Preload) تصاویر برای حذف کامل دیلی
+          items.forEach((story: Story) => {
+            const imgUrl = story.image || story.image_url;
+            if (imgUrl) {
+              const img = new window.Image();
+              img.src = imgUrl;
+            }
+          });
         }
       })
       .catch((err) => console.error('Error loading stories from Supabase:', err));
   }, []);
 
-  // ارسال وضعیت باز یا بسته بودن استوری به لایوت برای مخفی‌سازی نوبار پایین
+  // ارسال وضعیت باز یا بسته بودن استوری به لایوت برای مخفی‌سازی نوبار و هدر
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const event = new CustomEvent('pwaStoryToggle', { detail: { isOpen: activeStoryIndex !== null } });
@@ -153,13 +162,15 @@ export default function AppStories() {
                 </button>
               </div>
 
-              {/* عکس اصلی استوری */}
+              {/* عکس اصلی استوری با اولویت بالا برای جلوگیری از دیلی */}
               <div className="relative w-full h-full flex items-center justify-center">
                 {currentImage && (
                   <Image
+                    key={currentImage}
                     src={currentImage}
                     alt="Story Poster"
                     fill
+                    priority
                     sizes="(max-width: 768px) 100vw, 400px"
                     className="object-contain"
                     unoptimized
