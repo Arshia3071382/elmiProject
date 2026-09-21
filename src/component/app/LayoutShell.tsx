@@ -53,7 +53,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   const [activeTab, setActiveTab] = useState<TabType>('home')
   
-  // استیت برای کنترل مخفی‌سازی نوبار پایین هنگام نمایش استوری
+  // استیت برای کنترل مخفی‌سازی هدر و نوبار پایین هنگام نمایش استوری
   const [isStoryOpen, setIsStoryOpen] = useState(false)
 
   useEffect(() => {
@@ -147,7 +147,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             </div>
           )}
 
-          {!showPwaPreloader && (
+          {/* هدر اپلیکیشن (هنگام نمایش پریلودر یا باز بودن استوری پنهان می‌شود) */}
+          {!showPwaPreloader && !isStoryOpen && (
             <div className="flex-shrink-0 z-20 bg-white">
               <AppHeader
                 isLoggedIn={isLoggedIn}
