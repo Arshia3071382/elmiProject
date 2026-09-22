@@ -17,80 +17,80 @@ const GRADES = [
     label: "پایه دوم", 
     description: "گروه شهید جباری", 
     icon: Rocket,
-    titleColor: "text-emerald-950",
-    descColor: "text-emerald-600",
-    iconBg: "bg-emerald-200/60 text-emerald-800",
-    cardBg: "bg-emerald-50/70 hover:bg-emerald-100/60 border-emerald-200/80 hover:border-emerald-400"
+    titleColor: "text-blue-950",
+    descColor: "text-blue-600",
+    iconBg: "bg-blue-200/60 text-blue-800",
+    cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
   { 
     id: 3, 
     label: "پایه سوم", 
     description: "گروه شهید عبدی", 
     icon: Flame,
-    titleColor: "text-green-950",
-    descColor: "text-green-600",
-    iconBg: "bg-green-200/60 text-green-800",
-    cardBg: "bg-green-50/70 hover:bg-green-100/60 border-green-200/80 hover:border-green-400"
+    titleColor: "text-blue-950",
+    descColor: "text-blue-600",
+    iconBg: "bg-blue-200/60 text-blue-800",
+    cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
   { 
     id: 4, 
     label: "پایه چهارم", 
     description: "گروه شهید ذوالفقاری", 
     icon: Zap,
-    titleColor: "text-teal-950",
-    descColor: "text-teal-600",
-    iconBg: "bg-teal-200/60 text-teal-800",
-    cardBg: "bg-teal-50/70 hover:bg-teal-100/60 border-teal-200/80 hover:border-teal-400"
+    titleColor: "text-sky-950",
+    descColor: "text-sky-600",
+    iconBg: "bg-sky-200/60 text-sky-800",
+    cardBg: "bg-sky-50/70 hover:bg-sky-100/60 border-sky-200/80 hover:border-sky-400"
   },
   { 
     id: 5, 
     label: "پایه پنجم", 
     description: "گروه شهید دلخواسته", 
     icon: Rocket,
-    titleColor: "text-emerald-950",
-    descColor: "text-emerald-600",
-    iconBg: "bg-emerald-200/60 text-emerald-800",
-    cardBg: "bg-emerald-50/70 hover:bg-emerald-100/60 border-emerald-200/80 hover:border-emerald-400"
+    titleColor: "text-blue-950",
+    descColor: "text-blue-600",
+    iconBg: "bg-blue-200/60 text-blue-800",
+    cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
   { 
     id: 6, 
     label: "پایه ششم", 
     description: "گروه شهید مسافرچی", 
     icon: Flame,
-    titleColor: "text-green-950",
-    descColor: "text-green-600",
-    iconBg: "bg-green-200/60 text-green-800",
-    cardBg: "bg-green-50/70 hover:bg-green-100/60 border-green-200/80 hover:border-green-400"
+    titleColor: "text-blue-950",
+    descColor: "text-blue-600",
+    iconBg: "bg-blue-200/60 text-blue-800",
+    cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
   { 
     id: 7, 
     label: "پایه هفتم", 
     description: "گروه شهید ابراهیمی", 
     icon: Zap,
-    titleColor: "text-teal-950",
-    descColor: "text-teal-600",
-    iconBg: "bg-teal-200/60 text-teal-800",
-    cardBg: "bg-teal-50/70 hover:bg-teal-100/60 border-teal-200/80 hover:border-teal-400"
+    titleColor: "text-sky-950",
+    descColor: "text-sky-600",
+    iconBg: "bg-sky-200/60 text-sky-800",
+    cardBg: "bg-sky-50/70 hover:bg-sky-100/60 border-sky-200/80 hover:border-sky-400"
   },
   { 
     id: 8, 
     label: "پایه هشتم", 
     description: "گروه شهید سلیمانی", 
     icon: Rocket,
-    titleColor: "text-emerald-950",
-    descColor: "text-emerald-600",
-    iconBg: "bg-emerald-200/60 text-emerald-800",
-    cardBg: "bg-emerald-50/70 hover:bg-emerald-100/60 border-emerald-200/80 hover:border-emerald-400"
+    titleColor: "text-blue-950",
+    descColor: "text-blue-600",
+    iconBg: "bg-blue-200/60 text-blue-800",
+    cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
   { 
     id: 9, 
     label: "پایه نهم", 
     description: "گروه شهید بکائی", 
     icon: Flame,
-    titleColor: "text-green-950",
-    descColor: "text-green-600",
-    iconBg: "bg-green-200/60 text-green-800",
-    cardBg: "bg-green-50/70 hover:bg-green-100/60 border-green-200/80 hover:border-green-400"
+    titleColor: "text-blue-950",
+    descColor: "text-blue-600",
+    iconBg: "bg-blue-200/60 text-blue-800",
+    cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
 ];
 
@@ -98,13 +98,13 @@ export default function SelectGradePage() {
   return (
     <div dir="rtl" className="min-h-screen bg-slate-100/70 text-slate-900 font-[iranBold] py-10 px-4 mt-10  sm:mt-30 sm:px-6 lg:px-8">
       {/* کانتینر اصلی صفحه */}
-      <div className="max-w-5xl mx-auto bg-emerald-50/40 border border-emerald-200/60 rounded-[32px] p-6 sm:p-10 shadow-xl backdrop-blur-sm">
+      <div className="max-w-5xl mx-auto bg-blue-50/40 border border-blue-200/60 rounded-[32px] p-6 sm:p-10 shadow-xl backdrop-blur-sm">
         
         {/* دکمه بازگشت */}
         <div className="mb-8">
           <Link
             href="/elite-league"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-100/80 hover:bg-emerald-200/80 text-emerald-900 border border-emerald-300/70 text-sm transition-all duration-300 font-[iranSans-r] shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-100/80 hover:bg-blue-200/80 text-blue-900 border border-blue-300/70 text-sm transition-all duration-300 font-[iranSans-r] shadow-sm"
           >
             <ArrowRight className="w-4 h-4" />
             بازگشت به انتخاب لیگ‌ها
@@ -113,13 +113,13 @@ export default function SelectGradePage() {
 
         {/* هدر صفحه */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 mb-5">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 mb-5">
             <Award className="w-10 h-10" />
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-emerald-950 mb-3 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-blue-950 mb-3 tracking-tight">
             لیگ علمی پایه‌های تحصیلی
           </h1>
-          <p className="text-emerald-700/80 text-sm md:text-base max-w-xl mx-auto font-[iranSans-r] leading-relaxed">
+          <p className="text-blue-700/80 text-sm md:text-base max-w-xl mx-auto font-[iranSans-r] leading-relaxed">
             پایه تحصیلی خود را انتخاب کنید تا وارد جدول هیجان‌انگیز رقابت‌ها و رتبه‌بندی دانش‌آموزان شوید.
           </p>
         </div>
@@ -140,10 +140,10 @@ export default function SelectGradePage() {
                     <div className={`w-12 h-12 rounded-2xl ${g.iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                       <IconComponent className="w-6 h-6" />
                     </div>
-                    <span className="text-xs text-emerald-700/60 font-mono font-bold">#0{g.id}</span>
+                    <span className="text-xs text-blue-700/60 font-mono font-bold">#0{g.id}</span>
                   </div>
 
-                  {/* عنوان با سبز پر رنگ و توضیحات با سبز ملایم‌تر */}
+                  {/* عنوان با آبی پر رنگ و توضیحات با آبی ملایم‌تر */}
                   <h2 className={`text-2xl font-black ${g.titleColor} mb-2`}>
                     {g.label}
                   </h2>
@@ -153,7 +153,7 @@ export default function SelectGradePage() {
                 </div>
 
                 {/* فوتر کارت */}
-                <div className="mt-8 pt-4 border-t border-emerald-200/60 flex items-center justify-between text-xs font-bold font-[iranSans-r]">
+                <div className="mt-8 pt-4 border-t border-blue-200/60 flex items-center justify-between text-xs font-bold font-[iranSans-r]">
                   <span className={`flex items-center gap-1 ${g.descColor}`}>
                     <Sparkles className="w-3.5 h-3.5" />
                     مشاهده جدول

@@ -98,7 +98,7 @@ export default function EliteLeaguePublicPage() {
                 className="group cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white p-8 shadow-xl shadow-amber-500/20 border border-amber-400/30 flex flex-col justify-between min-h-[260px] transition-all duration-300"
               >
                 <div className="absolute -left-10 -top-10 w-36 h-36 bg-yellow-300/20 rounded-full blur-2xl group-hover:bg-yellow-300/30 transition-all" />
-                
+
                 <div className="relative z-10 flex items-start justify-between">
                   <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
                     <Trophy className="w-7 h-7 text-yellow-200" />
@@ -134,13 +134,13 @@ export default function EliteLeaguePublicPage() {
                 <motion.div
                   whileHover={{ y: -6, scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-emerald-600 to-teal-800 text-white p-8 shadow-xl shadow-teal-600/20 border border-teal-400/30 flex flex-col justify-between min-h-[260px] transition-all duration-300"
+                  className="group cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-sky-600 text-white p-8 shadow-xl shadow-blue-600/20 border border-sky-400/30 flex flex-col justify-between min-h-[260px] transition-all duration-300"
                 >
-                  <div className="absolute -left-10 -top-10 w-36 h-36 bg-emerald-300/20 rounded-full blur-2xl group-hover:bg-emerald-300/30 transition-all" />
+                  <div className="absolute -left-10 -top-10 w-36 h-36 bg-sky-300/20 rounded-full blur-2xl group-hover:bg-sky-300/30 transition-all" />
 
                   <div className="relative z-10 flex items-start justify-between">
                     <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
-                      <Award className="w-7 h-7 text-emerald-200" />
+                      <Award className="w-7 h-7 text-sky-200" />
                     </div>
                     <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md font-[iranSans-r] border border-white/20">
                       تفکیک پایه
@@ -149,20 +149,20 @@ export default function EliteLeaguePublicPage() {
 
                   <div className="relative z-10 mt-8">
                     <div className="flex items-center gap-2 mb-2">
-                      <BookOpen className="w-5 h-5 text-emerald-200" />
+                      <BookOpen className="w-5 h-5 text-sky-200" />
                       <h2 className="text-2xl font-black font-iranBold text-white">
                         لیگ علمی پایه
                       </h2>
                     </div>
-                    <p className="text-teal-100 text-sm font-[iranSans-r] leading-relaxed">
+                    <p className="text-blue-100 text-sm font-[iranSans-r] leading-relaxed">
                       مشاهده امتیازات و رقابت‌های علمی به تفکیک پایه‌های تحصیلی
                     </p>
 
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/15">
-                      <span className="text-xs font-bold text-teal-200 font-[iranSans-r]">
+                      <span className="text-xs font-bold text-sky-200 font-[iranSans-r]">
                         ورود به جدول پایه‌ها
                       </span>
-                      <div className="w-9 h-9 rounded-full bg-white text-teal-700 flex items-center justify-center group-hover:bg-emerald-100 transition-all shadow-md">
+                      <div className="w-9 h-9 rounded-full bg-white text-blue-700 flex items-center justify-center group-hover:bg-sky-100 transition-all shadow-md">
                         <ChevronLeft className="w-5 h-5" />
                       </div>
                     </div>
