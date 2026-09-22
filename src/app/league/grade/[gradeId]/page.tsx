@@ -191,11 +191,11 @@ export default function GradeLeagueDetailsPage({ params }: { params: Promise<{ g
                           </div>
                         </td>
 
-                        {/* ستون روند صعود/نزول */}
+                        {/* ستون روند صعود/نزول (فقط مثلث در موبایل، عدد + مثلث در دسکتاپ) */}
                         <td className="p-2 sm:p-4 text-center">
                           <div className="flex items-center justify-center">
                             {rankDiff > 0 ? (
-                              <span className="text-blue-600 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 sm:bg-blue-50 sm:px-2 sm:py-1 sm:rounded-lg sm:border sm:border-blue-200" title={`صعود ${rankDiff} پله‌ای`}>
+                              <span className="text-emerald-600 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 sm:bg-emerald-50 sm:px-2 sm:py-1 sm:rounded-lg sm:border sm:border-emerald-200" title={`صعود ${rankDiff} پله‌ای`}>
                                 ▲ <span className="hidden sm:inline font-mono">{toPersianDigits(rankDiff)}</span>
                               </span>
                             ) : rankDiff < 0 ? (
