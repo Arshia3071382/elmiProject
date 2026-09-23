@@ -7,7 +7,6 @@ import Image from "next/image";
 import Container from "./Container";
 
 export default function EliteLeagueBanner() {
-  // تاریخ پایان: ۱ خرداد ۱۴۰۶ (معادل ۲۲ مه ۲۰۲۶ در تقویم میلادی)
   const targetDate = "2027-05-22T00:00:00";
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -204,9 +203,9 @@ export default function EliteLeagueBanner() {
                     <div className="w-full flex items-center justify-center gap-1.5 sm:gap-4">
                       <Trophy className="w-4 h-4 sm:w-7 sm:h-7 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
 
-                      {/* باکس تایمر با چیدمان راست‌به‌چپ (روز -> ساعت -> دقیقه -> ثانیه) */}
+                      {/* باکس تایمر با چیدمان چپ‌به‌چپ (روز -> ساعت -> دقیقه -> ثانیه) */}
                       <div
-                        dir="rtl"
+                        dir="ltr"
                         className="flex items-center justify-center gap-1 sm:gap-3 bg-[#0D1117] border border-[#F97316]/40 backdrop-blur-xl px-2.5 py-1 sm:px-6 sm:py-2 rounded-xl sm:rounded-2xl shadow-[0_0_25px_rgba(17,19,24,0.9)]"
                       >
                         <CompactTimeUnit

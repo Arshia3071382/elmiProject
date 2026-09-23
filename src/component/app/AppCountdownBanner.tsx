@@ -128,7 +128,7 @@ export default function AppCountdownBanner({
 
       {/* محتوای بنر و تایمر */}
       <div className="relative z-10 p-4 h-full min-h-[170px] flex flex-col justify-center items-start max-w-[55%] text-white gap-2 my-auto">
-        <div className="flex items-center gap-1.5 w-full" dir="rtl">
+        <div className="flex items-center gap-1.5 w-full" dir="ltr">
           {/* روز */}
           <div className="flex flex-col items-center bg-black/45 backdrop-blur-md px-1.5 py-1 rounded-xl flex-1 border border-white/15">
             <span className="text-xs font-[iranBold] text-white leading-none">
