@@ -320,7 +320,7 @@ export default function AppHeader({
 
                   <nav className="space-y-1">
                     <Link
-                      href="/elite-league"
+                      href="/league-guide"
                       onClick={() => setIsDrawerOpen(false)}
                       className="flex items-center justify-between p-3 rounded-2xl text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
                     >
@@ -328,7 +328,7 @@ export default function AppHeader({
                         <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                           <Trophy className="w-4 h-4" />
                         </div>
-                        <span className="text-xs font-[iranBold]">لیگ نخبگان</span>
+                        <span className="text-xs font-[iranBold]">آشنایی با لیگ نخبگان</span>
                       </div>
                       <ChevronLeft className="w-4 h-4 text-slate-300" />
                     </Link>
