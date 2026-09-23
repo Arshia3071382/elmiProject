@@ -54,6 +54,7 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
                     src={safeNoticeImage}
                     alt={notice.title}
                     fill
+                    unoptimized // <--- جلوگیری از خطای سرور و عبور از بهینه‌ساز نکست
                     className="object-cover group-hover/img:scale-105 transition-transform duration-300"
                   />
                   {/* Overlay on hover for poster */}
@@ -175,6 +176,7 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
                   src={safeNoticeImage}
                   alt={notice.title}
                   fill
+                  unoptimized // <--- جلوگیری از خطای لایت‌باکس روی VPS
                   className="object-contain"
                 />
               </div>

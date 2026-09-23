@@ -24,7 +24,7 @@ function getImageUrl(url: string) {
     url.startsWith("http://") ||
     url.startsWith("https://")
   ) {
-    return url;
+    return encodeURI(url.trim());
   }
 
   return url;
@@ -138,6 +138,7 @@ export default function ShowcaseGallery({ images }: Props) {
                 src={getImageUrl(img)}
                 alt={`تصویر ${idx + 1}`}
                 fill
+                unoptimized // <--- این بخش اضافه شد تا مثل پنل ادمین درخواست به بهینه‌ساز سرور نرفته و خطای ۵۰۴ رفع شود
                 sizes="
                   (max-width: 640px) 50vw,
                   (max-width: 768px) 33vw,
@@ -244,6 +245,7 @@ export default function ShowcaseGallery({ images }: Props) {
                 )}
                 alt="بزرگ‌نمایی تصویر"
                 fill
+                unoptimized // <--- اینجا هم برای لایت‌باکس اضافه شد
                 priority
                 sizes="100vw"
                 className="object-contain"
