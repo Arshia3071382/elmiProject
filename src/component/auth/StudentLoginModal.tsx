@@ -155,11 +155,11 @@ export default function StudentLoginModal({
           onSuccess?.();
           onLoginSuccess?.();
           handleResetAndClose();
-          // استفاده مستقیم از مسیریابی اجباری
           window.location.assign(data.redirectUrl || "/student/dashboard");
         }, 800);
       } else {
         setStatus("error");
+        // اینجا متن ارور سرور (از جمله پیام مسدودیت Rate Limit) مستقیماً دریافت و نمایش داده می‌شود
         setErrorMessage(
           data?.message || data?.error || "نام کاربری یا رمز عبور اشتباه است."
         );

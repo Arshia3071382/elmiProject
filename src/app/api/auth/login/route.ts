@@ -6,8 +6,25 @@ import Student from "./../../../../../models/Student";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
+// لایه محافظتی Rate Limiting در حافظه سرور (بدون نیاز به دیتابیس)
+const loginAttemptsMap = new Map<string, { count: number; lockoutUntil: number }>();
+
 export async function POST(req: Request) {
   try {
+    // استخراج IP کاربر برای محدودسازی نرخ درخواست
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
+    const now = Date.now();
+    const record = loginAttemptsMap.get(ip);
+
+    // بررسی اینکه آیا IP در حالت مسدودیت (Lockout) است یا خیر
+    if (record && record.lockoutUntil > now) {
+      const remainingMinutes = Math.ceil((record.lockoutUntil - now) / (60 * 1000));
+      return NextResponse.json(
+        { success: false, error: `تلاش‌های ناموفق بیش از حد مجاز. لطفاً ${remainingMinutes} دقیقه دیگر تلاش کنید.` },
+        { status: 429 }
+      );
+    }
+
     await dbConnect();
 
     const body = await req.json().catch(() => null);
@@ -57,6 +74,8 @@ export async function POST(req: Request) {
         .setExpirationTime("7d")
         .sign(secret);
 
+      loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
+
       const response = NextResponse.json({
         success: true,
         role: "admin",
@@ -85,6 +104,8 @@ export async function POST(req: Request) {
           .setProtectedHeader({ alg: "HS256" })
           .setExpirationTime("7d")
           .sign(secret);
+
+        loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
 
         const response = NextResponse.json({
           success: true,
@@ -117,6 +138,8 @@ export async function POST(req: Request) {
           .setProtectedHeader({ alg: "HS256" })
           .setExpirationTime("7d")
           .sign(secret);
+
+        loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
 
         const response = NextResponse.json({
           success: true,
@@ -161,6 +184,8 @@ export async function POST(req: Request) {
           .setExpirationTime("7d")
           .sign(secret);
 
+        loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
+
         const response = NextResponse.json({
           success: true,
           role: "student",
@@ -181,6 +206,17 @@ export async function POST(req: Request) {
         });
 
         return response;
+      }
+    }
+
+    // اگر ورود ناموفق بود، شمارنده خطای این IP را افزایش می‌دهیم
+    if (!record) {
+      loginAttemptsMap.set(ip, { count: 1, lockoutUntil: 0 });
+    } else {
+      record.count += 1;
+      if (record.count >= 5) {
+        record.lockoutUntil = now + 3 * 60 * 1000; // مسدود کردن به مدت ۳ دقیقه
+        record.count = 0;
       }
     }
 
