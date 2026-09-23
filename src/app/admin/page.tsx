@@ -20,7 +20,8 @@ import AdminCommentsPanel from "@/component/adminpaneldet/AdminCommentsPanel";
 import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel";
 import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel";
 import AdminBorhanPanel from "@/component/adminpaneldet/AdminBorhanPanel";
-import AdminStoriesPanel from "@/component/adminpaneldet/AdminStoriesPanel"; // اضافه شد
+import AdminStoriesPanel from "@/component/adminpaneldet/AdminStoriesPanel";
+import AdminLivePanel from "@/component/adminpaneldet/AdminLivePanel"; // اضافه شد
 
 import AdminToast from "./AdminToast";
 import { CourseTab } from "./constants";
@@ -37,7 +38,6 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [activeCourseTab, setActiveCourseTab] = useState<CourseTab>("courses");
 
-  // چک کردن احراز هویت در لحظه ورود به صفحه
   useEffect(() => {
     async function verifyAuth() {
       try {
@@ -210,7 +210,8 @@ export default function AdminPage() {
     exams: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminExamsPanel /></div>,
     permissions: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><SeniorPermissionManager onShowMessage={showMessage} /></div>,
     borhan: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminBorhanPanel onShowMessage={showMessage} /></div>,
-    stories: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminStoriesPanel /></div>, // اضافه شد
+    stories: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminStoriesPanel /></div>,
+    live: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminLivePanel /></div>, // اضافه شد
   };
 
   const menuItems: { id: string; label: string }[] = [
@@ -229,7 +230,8 @@ export default function AdminPage() {
     { id: "exams", label: "آزمون‌ها" },
     { id: "permissions", label: "دسترسی‌ها" },
     { id: "borhan", label: "پروژه برهان" },
-    { id: "stories", label: "استوری‌ها" }, // اضافه شد
+    { id: "stories", label: "استوری‌ها" },
+    { id: "live", label: "پخش زنده" }, // اضافه شد
   ];
 
   return (
@@ -247,7 +249,7 @@ export default function AdminPage() {
               <p className="text-blue-100/80 text-xs sm:text-sm font-medium">مدیریت یکپارچه دوره‌ها، گروه‌ها، اطلاعیه‌ها و آزمون‌ها</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="group flex items-center justify-center gap-2 bg-white/10 hover:bg-red-500/95 text-white border border-white/20 hover:border-red-500 px-4 sm:px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/25 active:scale-95 font-bold text-xs sm:text-sm cursor-pointer w-full md:w-auto">
+          <button onClick={handleLogout} className="group flex items-center justify-center gap-2 bg-white/15 hover:bg-red-500/95 text-white border border-white/20 hover:border-red-500 px-4 sm:px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/25 active:scale-95 font-bold text-xs sm:text-sm cursor-pointer w-full md:w-auto">
             <span>خروج</span>
           </button>
         </div>
@@ -262,7 +264,7 @@ export default function AdminPage() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 cursor-pointer shrink-0 ${
-                  isActive ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "text-gray-600 hover:bg-gray-100"
+                  isActive ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "text-gray-600 hover:bg-gray-150 hover:bg-gray-100"
                 }`}
               >
                 {item.label}

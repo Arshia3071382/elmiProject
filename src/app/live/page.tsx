@@ -1,41 +1,42 @@
 // src/app/live/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Container from "@/component/Container";
 import { motion } from "framer-motion";
 import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize2,
-  Minimize2,
   Clock,
   Calendar,
   Users,
-  Eye,
-  ThumbsUp,
-  MessageCircle,
-  Share2,
-  Link2,
   Tv,
   Signal,
-  Mic,
-  Camera,
-  MonitorPlay,
   Radio,
   Info,
   User,
   Tag,
   FileText,
+  Share2,
+  Link2,
 } from "lucide-react";
 
 export default function LivePage() {
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [liveData, setLiveData] = useState<any>(null);
+  const [upcoming, setUpcoming] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [volume, setVolume] = useState(80);
+
+  useEffect(() => {
+    fetch("/api/live")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setLiveData(data.currentLive);
+          setUpcoming(data.upcomingStreams);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   return (
     <Container>
@@ -47,25 +48,21 @@ export default function LivePage() {
           transition={{ duration: 0.6 }}
           className="mb-8 text-center"
         >
-          <div className="flex items-center justify-center gap-3 mb-3">
-               
-            <h1 className="font-[iranBold] text-2xl md:text-3xl lg:text-4xl text-primary">
-                پخش زنده
-            </h1>
-          </div>
+          <h1 className="font-[iranBold] text-2xl md:text-3xl lg:text-4xl text-primary mb-3">
+            پخش زنده
+          </h1>
           <p className="text-text-secondary text-sm md:text-base max-w-2xl mx-auto">
             لحظات ناب علمی را به صورت زنده با ما تجربه کنید
           </p>
         </motion.div>
 
-        {/* قاب تلویزیون */}
+        {/* قاب تلویزیون / آی فریم آپارات */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, delay: 0.1 }}
           className="relative mx-auto max-w-5xl"
         >
-          {/* بدنه تلویزیون */}
           <div
             className={`
               relative bg-gradient-to-b from-zinc-900 to-zinc-800 
@@ -74,27 +71,22 @@ export default function LivePage() {
               ${isFullscreen ? "fixed inset-0 z-50 rounded-none p-0 border-0" : ""}
             `}
           >
-            {/* صفحه نمایش */}
-            <div className="relative bg-black rounded-2xl overflow-hidden aspect-video">
-              <div className="relative w-full h-full bg-gradient-to-br from-blue-950 via-indigo-950 to-purple-950">
-                {/* افکت‌های پس‌زمینه */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
-                  <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-cyan-500/5 to-transparent blur-2xl" />
-                </div>
-
-                {/* افکت اسکن لاین */}
-                <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)] pointer-events-none" />
-
-                {/* وضعیت پخش */}
-                <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                  <Signal className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                  <span className="text-white/80 text-xs">آنلاین</span>
-                </div>
-
-                {/* اطلاعات مرکزی */}
-                <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative bg-black rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
+              {liveData?.aparatEmbedUrl ? (
+                // نمایش آی‌فریم آپارات در صورت وجود لینک
+                <div
+                  className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full"
+                  dangerouslySetInnerHTML={{ __html: liveData.aparatEmbedUrl }}
+                />
+              ) : (
+                // حالت انتظار اگر پخشی فعال نباشد
+                <div className="relative w-full h-full bg-gradient-to-br from-blue-950 via-indigo-950 to-purple-950 flex items-center justify-center">
+                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                    <Signal className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                    <span className="text-white/80 text-xs">
+                      آفلاین / آماده
+                    </span>
+                  </div>
                   <div className="text-center space-y-4">
                     <div className="inline-flex items-center gap-3 bg-black/50 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
                       <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -105,118 +97,15 @@ export default function LivePage() {
                           در انتظار پخش
                         </h2>
                         <p className="text-white/70 text-xs md:text-sm">
-                        ...به زودی
+                          به زودی برنامه‌ها آغاز خواهد شد...
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* کنترل‌های پایین صفحه */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-white/60 text-xs min-w-[40px]">
-                      0:00
-                    </span>
-                    <div className="flex-1 h-1 bg-white/20 rounded-full cursor-pointer relative group">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-100"
-                        style={{ width: "0%" }}
-                      />
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{
-                          left: "0%",
-                          transform: "translate(-50%, -50%)",
-                        }}
-                      />
-                    </div>
-                    <span className="text-white/60 text-xs min-w-[40px]">
-                      --:--
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="p-1.5 md:p-2 rounded-full hover:bg-white/10 transition-colors text-white"
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-4 h-4 md:w-5 md:h-5" />
-                        ) : (
-                          <Play className="w-4 h-4 md:w-5 md:h-5" />
-                        )}
-                      </button>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => setIsMuted(!isMuted)}
-                          className="p-1.5 md:p-2 rounded-full hover:bg-white/10 transition-colors text-white"
-                        >
-                          {isMuted ? (
-                            <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
-                          ) : (
-                            <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
-                          )}
-                        </button>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={isMuted ? 0 : volume}
-                          onChange={(e) => setVolume(parseInt(e.target.value))}
-                          className="w-12 md:w-20 h-1 bg-white/30 rounded-full appearance-none cursor-pointer accent-white"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <button className="p-1.5 md:p-2 rounded-full hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                        <Mic className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      </button>
-                      <button className="p-1.5 md:p-2 rounded-full hover:bg-white/10 transition-colors text-white/70 hover:text-white">
-                        <Camera className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      </button>
-                      <button
-                        onClick={() => setIsFullscreen(!isFullscreen)}
-                        className="p-1.5 md:p-2 rounded-full hover:bg-white/10 transition-colors text-white"
-                      >
-                        {isFullscreen ? (
-                          <Minimize2 className="w-4 h-4 md:w-5 md:h-5" />
-                        ) : (
-                          <Maximize2 className="w-4 h-4 md:w-5 md:h-5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* نشان کیفیت */}
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                  <span className="text-white/80 text-xs">HD</span>
-                </div>
-              </div>
+              )}
             </div>
-
-            {/* پایه تلویزیون */}
-            {!isFullscreen && (
-              <div className="flex justify-center mt-2">
-                <div className="w-16 h-1.5 bg-zinc-600 rounded-full" />
-              </div>
-            )}
           </div>
-
-          {/* دکمه اشتراک‌گذاری */}
-          {!isFullscreen && (
-            <div className="absolute -top-3 -left-3 flex gap-1">
-              <button className="p-2 bg-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-zinc-100">
-                <Share2 className="w-4 h-4 text-text-secondary" />
-              </button>
-              <button className="p-2 bg-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-zinc-100">
-                <Link2 className="w-4 h-4 text-text-secondary" />
-              </button>
-            </div>
-          )}
         </motion.div>
 
         {/* جدول جزئیات */}
@@ -235,143 +124,101 @@ export default function LivePage() {
                 </h3>
                 <div className="flex items-center gap-2 text-xs text-text-secondary bg-white/80 px-3 py-1.5 rounded-full border border-zinc-200">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>آماده پخش</span>
+                  <span>
+                    {liveData?.status === "live" ? "در حال پخش" : "آماده پخش"}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* ستون اول */}
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Tv className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">
-                        عنوان برنامه
-                      </p>
-                      <div className="h-6 bg-zinc-200/60 rounded w-full animate-pulse mt-1" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <User className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">مجری</p>
-                      <div className="h-6 bg-zinc-200/60 rounded w-3/4 animate-pulse mt-1" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <Calendar className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">تاریخ پخش</p>
-                      <div className="h-6 bg-zinc-200/60 rounded w-2/3 animate-pulse mt-1" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-amber-100 rounded-lg">
-                      <Clock className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">زمان پخش</p>
-                      <div className="h-6 bg-zinc-200/60 rounded w-1/2 animate-pulse mt-1" />
-                    </div>
-                  </div>
+                  <DetailItem
+                    icon={<Tv className="text-blue-600" />}
+                    label="عنوان برنامه"
+                    value={liveData?.title}
+                    loading={loading}
+                  />
+                  <DetailItem
+                    icon={<User className="text-purple-600" />}
+                    label="مجری"
+                    value={liveData?.host}
+                    loading={loading}
+                  />
+                  <DetailItem
+                    icon={<Calendar className="text-emerald-600" />}
+                    label="تاریخ پخش"
+                    value={liveData?.date}
+                    loading={loading}
+                  />
+                  <DetailItem
+                    icon={<Clock className="text-amber-600" />}
+                    label="زمان پخش"
+                    value={liveData?.time}
+                    loading={loading}
+                  />
                 </div>
-
-                {/* ستون دوم */}
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-cyan-100 rounded-lg">
-                      <Tag className="w-4 h-4 text-cyan-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">دسته‌بندی</p>
-                      <div className="h-6 bg-zinc-200/60 rounded w-2/3 animate-pulse mt-1" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
-                      <MonitorPlay className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">کیفیت</p>
-                      <div className="h-6 bg-zinc-200/60 rounded w-1/3 animate-pulse mt-1" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-rose-100 rounded-lg">
-                      <Radio className="w-4 h-4 text-rose-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">وضعیت</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="w-2 h-2 rounded-full bg-zinc-300 animate-pulse" />
-                        <span className="text-sm text-text-secondary">
-                          در انتظار
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
-                    <div className="p-2 bg-teal-100 rounded-lg">
-                      <FileText className="w-4 h-4 text-teal-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-text-secondary">توضیحات</p>
-                      <div className="space-y-1.5 mt-1">
-                        <div className="h-2 bg-zinc-200/60 rounded w-full animate-pulse" />
-                        <div className="h-2 bg-zinc-200/60 rounded w-5/6 animate-pulse" />
-                        <div className="h-2 bg-zinc-200/60 rounded w-4/6 animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
+                  <DetailItem
+                    icon={<Tag className="text-cyan-600" />}
+                    label="دسته‌بندی"
+                    value={liveData?.category}
+                    loading={loading}
+                  />
+                  <DetailItem
+                    icon={<Radio className="text-rose-600" />}
+                    label="وضعیت"
+                    value={liveData?.status === "live" ? "زنده" : "در انتظار"}
+                    loading={loading}
+                  />
+                  <DetailItem
+                    icon={<FileText className="text-teal-600" />}
+                    label="توضیحات"
+                    value={liveData?.description}
+                    loading={loading}
+                  />
                 </div>
               </div>
 
               {/* مهمانان */}
-              <div className="mt-6 pt-6 border-t border-zinc-100">
-                <div className="flex items-center gap-2 text-text-secondary text-sm mb-3">
-                  <Users className="w-4 h-4" />
-                  <span>مهمانان</span>
+              {liveData?.guests?.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-zinc-100">
+                  <div className="flex items-center gap-2 text-text-secondary text-sm mb-3">
+                    <Users className="w-4 h-4" />
+                    <span>مهمانان</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {liveData.guests.map((guest: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-4 py-2 bg-zinc-100 rounded-full text-xs text-text-secondary border border-zinc-200"
+                      >
+                        {guest}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {[1, 2, 3].map((_, index) => (
-                    <div
-                      key={index}
-                      className="px-4 py-2 bg-zinc-100 rounded-full border border-zinc-200 min-w-[80px] animate-pulse"
-                    >
-                      <div className="h-4 bg-zinc-200 rounded w-16" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* آمار */}
               <div className="mt-6 pt-6 border-t border-zinc-100">
                 <div className="grid grid-cols-3 gap-4">
-                  {["بینندگان", "پسندیده‌ها", "نظرات"].map((label, index) => (
-                    <div
-                      key={index}
-                      className="p-4 bg-slate-50 rounded-xl border border-zinc-100 text-center"
-                    >
-                      <div className="text-2xl font-[iranBold] text-primary mb-1">
-                        <span className="inline-block w-12 h-6 bg-zinc-200/60 rounded animate-pulse" />
-                      </div>
-                      <p className="text-xs text-text-secondary">{label}</p>
-                    </div>
-                  ))}
+                  <StatBox
+                    label="بینندگان"
+                    value={liveData?.viewersCount || 0}
+                    loading={loading}
+                  />
+                  <StatBox
+                    label="پسندیده‌ها"
+                    value={liveData?.likesCount || 0}
+                    loading={loading}
+                  />
+                  <StatBox
+                    label="نظرات"
+                    value={liveData?.commentsCount || 0}
+                    loading={loading}
+                  />
                 </div>
               </div>
             </div>
@@ -391,22 +238,62 @@ export default function LivePage() {
               برنامه‌های بعدی
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {[1, 2, 3].map((_, index) => (
-                <div
-                  key={index}
-                  className="p-4 bg-slate-50 rounded-xl border border-zinc-100"
-                >
-                  <div className="h-5 bg-zinc-200/60 rounded w-3/4 animate-pulse mb-2" />
-                  <div className="flex items-center gap-3">
-                    <div className="h-4 bg-zinc-200/60 rounded w-16 animate-pulse" />
-                    <div className="h-4 bg-zinc-200/60 rounded w-20 animate-pulse" />
+              {upcoming.length > 0 ? (
+                upcoming.map((item, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-slate-50 rounded-xl border border-zinc-100"
+                  >
+                    <h5 className="font-[iranBold] text-xs text-primary mb-2">
+                      {item.title}
+                    </h5>
+                    <div className="flex items-center gap-3 text-xs text-text-secondary">
+                      <span>{item.date}</span>
+                      <span>{item.time}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-text-secondary col-span-3 text-center py-2">
+                  {" "}
+                  برنامه‌ای ثبت نشده است.
+                </p>
+              )}
             </div>
           </div>
         </motion.div>
       </div>
     </Container>
+  );
+}
+
+function DetailItem({ icon, label, value, loading }: any) {
+  return (
+    <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-zinc-100">
+      <div className="p-2 bg-blue-50 rounded-lg">{icon}</div>
+      <div className="flex-1">
+        <p className="text-xs text-text-secondary">{label}</p>
+        {loading ? (
+          <div className="h-5 bg-zinc-200/60 rounded w-3/4 animate-pulse mt-1" />
+        ) : (
+          <p className="text-sm font-[iranBold] text-primary mt-1">
+            {value || "---"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatBox({ label, value, loading }: any) {
+  return (
+    <div className="p-4 bg-slate-50 rounded-xl border border-zinc-100 text-center">
+      {loading ? (
+        <div className="h-6 bg-zinc-200/60 rounded w-12 mx-auto animate-pulse mb-1" />
+      ) : (
+        <div className="text-xl font-[iranBold] text-primary mb-1">{value}</div>
+      )}
+      <p className="text-xs text-text-secondary">{label}</p>
+    </div>
   );
 }

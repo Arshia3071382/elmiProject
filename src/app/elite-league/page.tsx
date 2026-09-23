@@ -68,7 +68,7 @@ export default function EliteLeaguePublicPage() {
   }, [activeLeague, fetchStudents]);
 
   return (
-    <div dir="rtl" className="max-w-5xl mx-auto px-2 sm:px-4 py-12 font-[iranBold] mt-16 md:mt-20 overflow-x-hidden">
+    <div dir="rtl" className="max-w-5xl mx-auto px-4 sm:px-6 py-12 font-[iranBold] mt-16 md:mt-20 overflow-x-hidden">
       <AnimatePresence mode="wait">
         {activeLeague === null ? (
           <motion.div
@@ -111,8 +111,8 @@ export default function EliteLeaguePublicPage() {
                 <div className="relative z-10 mt-8">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-5 h-5 text-yellow-200 animate-pulse" />
-                    <h2 className="text-2xl font-black font-iranBold text-white">
-                      لیگ نخبگان
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-wide font-iranBold text-transparent bg-clip-text bg-gradient-to-r from-yellow-100 via-amber-200 to-amber-400 drop-shadow-[0_2px_8px_rgba(217,119,6,0.4)] py-1">
+                      لیگ نخبگان علمی
                     </h2>
                   </div>
                   <p className="text-amber-100 text-sm font-[iranSans-r] leading-relaxed">
@@ -183,19 +183,21 @@ export default function EliteLeaguePublicPage() {
               <button
                 type="button"
                 onClick={() => setActiveLeague(null)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold transition-all font-[iranSans-r]"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-sm font-bold transition-all font-[iranSans-r] shadow-sm"
               >
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 text-amber-700" />
                 بازگشت به انتخاب لیگ‌ها
               </button>
             </div>
 
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-500 mb-4 border border-amber-100">
+            <div className="text-center mb-10 px-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-600 mb-4 border border-amber-200 shadow-inner">
                 <Trophy className="w-8 h-8" />
               </div>
-              <h1 className="text-3xl font-black text-gray-900 mb-2 font-iranBold">
-                لیگ نخبگان علمی
+              <h1 className="text-2.5xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3 font-iranBold flex items-center justify-center gap-2 flex-wrap">
+                <span className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(217,119,6,0.2)] py-2 px-1">
+                  لیگ نخبگان علمی
+                </span>
               </h1>
               <p className="text-gray-500 text-sm md:text-base font-[iranSans-r]">
                 رتبه‌بندی دانش‌آموزان برتر و فعال مجموعه‌های علمی منتظران
@@ -209,7 +211,7 @@ export default function EliteLeaguePublicPage() {
                   onClick={() => setCategory("elementary")}
                   className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
                     category === "elementary"
-                      ? "bg-amber-500 text-white shadow-md"
+                      ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
@@ -220,7 +222,7 @@ export default function EliteLeaguePublicPage() {
                   onClick={() => setCategory("highschool")}
                   className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
                     category === "highschool"
-                      ? "bg-indigo-600 text-white shadow-md"
+                      ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
@@ -233,13 +235,7 @@ export default function EliteLeaguePublicPage() {
               <div className="w-full overflow-hidden">
                 <table className="w-full text-right border-collapse text-[11px] sm:text-sm md:text-base table-fixed">
                   <thead>
-                    <tr
-                      className={
-                        category === "elementary"
-                          ? "bg-amber-500 text-white"
-                          : "bg-indigo-600 text-white"
-                      }
-                    >
+                    <tr className="bg-amber-500 text-white">
                       <th className="p-2 sm:p-4 text-right w-[15%] sm:w-20 font-bold">رتبه</th>
                       <th className="p-2 sm:p-4 text-right w-[42%] sm:w-auto font-bold">نام و نام خانوادگی</th>
                       <th className="p-2 sm:p-4 text-right w-[23%] sm:w-auto font-bold">پایه تحصیلی</th>
@@ -286,7 +282,7 @@ export default function EliteLeaguePublicPage() {
                         return (
                           <tr
                             key={student._id}
-                            className="border-b border-gray-100 hover:bg-gray-50/80 transition duration-150"
+                            className="border-b border-gray-100 hover:bg-amber-50/40 transition duration-150"
                           >
                             <td className="p-2 sm:p-4 text-right font-black">
                               {index === 0 && (
@@ -322,13 +318,7 @@ export default function EliteLeaguePublicPage() {
                               {getGradeTitle(student.grade)}
                             </td>
 
-                            <td
-                              className={`p-2 sm:p-4 text-right font-black truncate ${
-                                category === "elementary"
-                                  ? "text-amber-600"
-                                  : "text-indigo-600"
-                              }`}
-                            >
+                            <td className="p-2 sm:p-4 text-right font-black truncate text-amber-600">
                               {student.score.toLocaleString()}
                             </td>
                           </tr>
