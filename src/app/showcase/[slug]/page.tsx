@@ -39,25 +39,27 @@ export default async function AlbumDetailPage({
 
   const typedAlbum = album as any;
 
+  // فیلتر کردن و ایمن‌سازی لینک‌ها با encodeURI برای جلوگیری از خطای کاراکترهای خاص و فاصله
   const images = Array.isArray(typedAlbum.images)
-    ? typedAlbum.images.filter(
-        (img: string) =>
-          typeof img === "string" &&
-          img.trim() !== ""
-      )
+    ? typedAlbum.images
+        .filter(
+          (img: string) =>
+            typeof img === "string" &&
+            img.trim() !== ""
+        )
+        .map((img: string) => encodeURI(img.trim()))
     : [];
 
   const cover =
     typeof typedAlbum.coverImage === "string" &&
     typedAlbum.coverImage.trim() !== ""
-      ? typedAlbum.coverImage
+      ? encodeURI(typedAlbum.coverImage.trim())
       : "";
 
   const finalImages = Array.from(
     new Set([cover, ...images].filter(Boolean))
   );
 
-  // دقیقاً مقدار ثبت شده در پنل ادمین را می‌خواند (بدون تبدیل تاریخ به امروز)
   const albumDate = typedAlbum.date && typedAlbum.date.trim() !== "" 
     ? typedAlbum.date 
     : "تاریخ ثبت نشده";

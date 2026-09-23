@@ -21,6 +21,9 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
   // بررسی حالت نمایش تصویر (پیش‌فرض عمودی)
   const isHorizontal = notice.imageLayout === "horizontal";
 
+  // ایمن‌سازی لینک تصویر برای جلوگیری از خطای کاراکترهای خاص و فاصله روی VPS
+  const safeNoticeImage = notice.image ? encodeURI(notice.image.trim()) : "";
+
   return (
     <>
       <motion.div
@@ -38,17 +41,17 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
 
             {/* Poster / Image (Dynamic Layout Support) or Icon */}
             <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
-              {notice.image ? (
+              {safeNoticeImage ? (
                 <div 
                   onClick={() => setShowImageModal(true)}
                   className={`relative overflow-hidden rounded-xl shadow-md border border-[var(--color-border)] cursor-pointer group/img bg-black/5 ${
                     isHorizontal 
                       ? "w-full md:w-80 h-44 object-cover" // حالت افقی (بنر عریض)
-                      : "h-44 w-32 md:h-36 md:w-28"       // حالت عمودی (کارت‌مانند)
+                      : "h-44 w-32 md:h-36 md:w-28"      // حالت عمودی (کارت‌مانند)
                   }`}
                 >
                   <Image
-                    src={notice.image}
+                    src={safeNoticeImage}
                     alt={notice.title}
                     fill
                     className="object-cover group-hover/img:scale-105 transition-transform duration-300"
@@ -150,7 +153,7 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
 
       {/* Lightbox / Modal for Poster Preview */}
       <AnimatePresence>
-        {showImageModal && notice.image && (
+        {showImageModal && safeNoticeImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -169,7 +172,7 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
                 isHorizontal ? "h-[50vh]" : "h-[75vh]"
               }`}>
                 <Image
-                  src={notice.image}
+                  src={safeNoticeImage}
                   alt={notice.title}
                   fill
                   className="object-contain"
