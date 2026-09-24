@@ -32,7 +32,6 @@ export default function StudentDashboardPage() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // 🔒 اصلاح حیاتی: اضافه کردن credentials برای ارسال کوکی به API
       const res = await fetch("/api/student/dashboard", {
         credentials: "include",
       });
@@ -53,7 +52,7 @@ export default function StudentDashboardPage() {
           isComplete: json.data.isComplete ?? (league ? true : false),
           profile: {
             name: profile.name || "دانش‌آموز عزیز",
-            grade: profile.grade || 7,
+            grade: profile.grade || "", // اگر پایه ثبت نشده بود، خالی بماند
             level: profile.level || "عضو فعال",
             totalScore: totalScore,
             scoreToNextLevel: profile.scoreToNextLevel || 1000,
@@ -98,7 +97,7 @@ export default function StudentDashboardPage() {
       isComplete: false,
       profile: {
         name: "دانش‌آموز عزیز",
-        grade: 7,
+        grade: "", // خالی برای حالت خطا یا پیش‌فرض
         level: "عضو جدید",
         totalScore: 0,
         scoreToNextLevel: 1000,
@@ -153,7 +152,7 @@ export default function StudentDashboardPage() {
     isComplete: false,
     profile: {
       name: "دانش‌آموز",
-      grade: 7,
+      grade: "",
       level: "عضو جدید",
       totalScore: 0,
       scoreToNextLevel: 1000,

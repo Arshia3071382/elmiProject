@@ -1,9 +1,11 @@
+"use client";
+
 import { LogOut, Loader2, UserCog, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DashboardHeaderProps {
   name: string;
-  grade: number;
+  grade?: number | string; // اجازه دریافت مقدار خالی یا رشته‌ای
   level: string;
   avatar?: string;
   isLoggingOut: boolean;
@@ -51,7 +53,7 @@ export default function DashboardHeader({
 
         {/* اطلاعات متنی کاربر */}
         <div className="flex-1 min-w-0">
-          {/* نام کاربر و ایموجی دست (در صورت طولانی بودن نام، به صورت ریسپانسیو می‌شکفد و به خط بعد می‌رود بدون اینکه نقطه‌چین شود) */}
+          {/* نام کاربر و ایموجی دست */}
           <h1 className="text-lg sm:text-3xl font-extrabold tracking-tight font-[iranBold] flex items-center gap-1.5 flex-wrap">
             <span className="text-slate-900 shrink-0">سلام</span>
             <span className="inline-flex items-center gap-1.5 flex-wrap">
@@ -60,14 +62,24 @@ export default function DashboardHeader({
             </span>
           </h1>
 
-          {/* پایه تحصیلی و سطح دقیقا زیر نام */}
+          {/* پایه تحصیلی و سطح دقیقا زیر نام (نمایش شرطی پایه) */}
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 flex-wrap">
-            <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-50/80 text-blue-700 border border-blue-100/60 rounded-full text-[10px] sm:text-xs font-bold font-[iranSans-r] shrink-0">
-              پایه تحصیلی: {grade}
-            </span>
-            <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-emerald-50/80 text-emerald-700 border border-emerald-100/60 rounded-full text-[10px] sm:text-xs font-bold font-[iranSans-r] shrink-0">
-              {level}
-            </span>
+            {/* اگر پایه ثبت شده بود و صفر نبود، نمایش داده شود، وگرنه مخفی بماند */}
+            {grade && Number(grade) > 0 ? (
+              <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-50/80 text-blue-700 border border-blue-100/60 rounded-full text-[10px] sm:text-xs font-bold font-[iranSans-r] shrink-0">
+                پایه تحصیلی: {grade}
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-amber-50/80 text-amber-700 border border-amber-100/60 rounded-full text-[10px] sm:text-xs font-bold font-[iranSans-r] shrink-0">
+                پایه تحصیلی ثبت نشده
+              </span>
+            )}
+
+            {level && (
+              <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-emerald-50/80 text-emerald-700 border border-emerald-100/60 rounded-full text-[10px] sm:text-xs font-bold font-[iranSans-r] shrink-0">
+                {level}
+              </span>
+            )}
           </div>
         </div>
       </div>
