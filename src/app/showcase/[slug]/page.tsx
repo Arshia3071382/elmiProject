@@ -39,7 +39,7 @@ export default async function AlbumDetailPage({
 
   const typedAlbum = album as any;
 
-  // فیلتر کردن و ایمن‌سازی لینک‌ها با encodeURI برای جلوگیری از خطای کاراکترهای خاص و فاصله
+  // فیلتر کردن و ایمن‌سازی لینک‌ها با encodeURI
   const images = Array.isArray(typedAlbum.images)
     ? typedAlbum.images
         .filter(
