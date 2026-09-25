@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Sparkles,
   Calendar,
@@ -18,6 +17,7 @@ import {
 import AdminCalendarPanel from "@/component/adminpaneldet/AdminCalendarPanel";
 import AdminGradeLeaguePanel from "@/component/adminpaneldet/AdminGradeLeaguePanel";
 import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel";
+import StatsCards from "@/component/adminpaneldet/StatsCards";
 import Container from "@/component/Container";
 
 interface AdminUser {
@@ -37,10 +37,32 @@ export default function SeniorAdminDashboard() {
     text: string;
   } | null>(null);
 
+  // استیت آمار دوره‌ها و دانش‌آموزان برای پنل معین ارشد
+  const [adminStats, setAdminStats] = useState({
+    categoriesCount: 0,
+    coursesCount: 0,
+    averageCourses: 0,
+    elementaryGrades: [] as { grade: number; count: number }[],
+    middleGrades: [] as { grade: number; count: number }[],
+  });
+
   const handleShowMessage = (type: "success" | "error", text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  const fetchAdminStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/stats", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      if (res?.success && res.stats) {
+        setAdminStats(res.stats);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -52,6 +74,7 @@ export default function SeniorAdminDashboard() {
 
         if (res.ok && data.success && data.user) {
           setUser(data.user);
+          fetchAdminStats();
         } else {
           setError(data.error || "خطا در دریافت اطلاعات کاربر");
         }
@@ -63,7 +86,7 @@ export default function SeniorAdminDashboard() {
     }
 
     fetchUserData();
-  }, []);
+  }, [fetchAdminStats]);
 
   const handleLogout = async () => {
     try {
@@ -194,191 +217,202 @@ export default function SeniorAdminDashboard() {
               <AdminExamsPanel />
             </div>
           ) : (
-            /* لیست تمامی کارت‌های دسترسی معین */
-            <div>
-              <h2 className="text-sm font-bold text-slate-700 mb-4 px-1">
-                دسترسی‌های فعال شما
-              </h2>
+            /* بخش داشبورد اصلی معین شامل آمار و کارت‌های دسترسی */
+            <div className="space-y-6">
+              {/* کامپوننت آمار دوره‌ها و دانش‌آموزان به تفکیک پایه */}
+              <StatsCards 
+                categoriesCount={adminStats.categoriesCount} 
+                coursesCount={adminStats.coursesCount} 
+                averageCourses={adminStats.averageCourses}
+                elementaryGrades={adminStats.elementaryGrades}
+                middleGrades={adminStats.middleGrades}
+              />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* ماژول تقویم */}
-                {user?.permissions?.includes("calendar") && (
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-105 transition-transform">
-                          <Calendar className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg">
-                          فعال
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-slate-800 text-sm mb-1">
-                        مدیریت تقویم آموزشی
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        تنظیم روزهای ماه، تاریخ‌ها و رویدادهای تقویم آموزشی سامانه.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActiveTab("calendar")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-blue-600 cursor-pointer"
-                    >
-                      ورود به مدیریت تقویم
-                    </button>
-                  </div>
-                )}
+              <div>
+                <h2 className="text-sm font-bold text-slate-700 mb-4 px-1">
+                  دسترسی‌های فعال شما
+                </h2>
 
-                {/* ماژول اطلاعیه‌ها */}
-                {user?.permissions?.includes("notices") && (
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-105 transition-transform">
-                          <Bell className="w-6 h-6" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* ماژول تقویم */}
+                  {user?.permissions?.includes("calendar") && (
+                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-105 transition-transform">
+                            <Calendar className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg">
+                            فعال
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
-                          فعال
-                        </span>
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">
+                          مدیریت تقویم آموزشی
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          تنظیم روزهای ماه، تاریخ‌ها و رویدادهای تقویم آموزشی سامانه.
+                        </p>
                       </div>
-                      <h3 className="font-bold text-slate-800 text-sm mb-1">
-                        مدیریت اطلاعیه‌ها
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        ارسال، ویرایش و انتشار اطلاعیه‌ها و بنرهای خبری سامانه.
-                      </p>
+                      <button
+                        onClick={() => setActiveTab("calendar")}
+                        className="w-full py-2.5 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-blue-600 cursor-pointer"
+                      >
+                        ورود به مدیریت تقویم
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("notices")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-emerald-600 cursor-pointer"
-                    >
-                      ورود به اطلاعیه‌ها
-                    </button>
-                  </div>
-                )}
+                  )}
 
-                {/* ماژول دوره‌ها */}
-                {user?.permissions?.includes("courses") && (
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:scale-105 transition-transform">
-                          <BookOpen className="w-6 h-6" />
+                  {/* ماژول اطلاعیه‌ها */}
+                  {user?.permissions?.includes("notices") && (
+                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-105 transition-transform">
+                            <Bell className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                            فعال
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 bg-violet-50 text-violet-600 rounded-lg">
-                          فعال
-                        </span>
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">
+                          مدیریت اطلاعیه‌ها
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          ارسال، ویرایش و انتشار اطلاعیه‌ها و بنرهای خبری سامانه.
+                        </p>
                       </div>
-                      <h3 className="font-bold text-slate-800 text-sm mb-1">
-                        مدیریت دوره‌های آموزشی
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        مدیریت سرفصل‌ها، فایل‌ها و محتوای دوره‌های آموزشی.
-                      </p>
+                      <button
+                        onClick={() => setActiveTab("notices")}
+                        className="w-full py-2.5 bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-emerald-600 cursor-pointer"
+                      >
+                        ورود به اطلاعیه‌ها
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("courses")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-violet-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-violet-600 cursor-pointer"
-                    >
-                      ورود به دوره‌ها
-                    </button>
-                  </div>
-                )}
+                  )}
 
-                {/* ماژول مشاوره */}
-                {user?.permissions?.includes("counseling") && (
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:scale-105 transition-transform">
-                          <MessageSquare className="w-6 h-6" />
+                  {/* ماژول دوره‌ها */}
+                  {user?.permissions?.includes("courses") && (
+                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-violet-50 text-violet-600 rounded-xl group-hover:scale-105 transition-transform">
+                            <BookOpen className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 bg-violet-50 text-violet-600 rounded-lg">
+                            فعال
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg">
-                          فعال
-                        </span>
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">
+                          مدیریت دوره‌های آموزشی
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          مدیریت سرفصل‌ها، فایل‌ها و محتوای دوره‌های آموزشی.
+                        </p>
                       </div>
-                      <h3 className="font-bold text-slate-800 text-sm mb-1">
-                        اتاق‌های مشاوره
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        پاسخگویی و هدایت چت‌های مشاوره کاربران و متقاضیان.
-                      </p>
+                      <button
+                        onClick={() => setActiveTab("courses")}
+                        className="w-full py-2.5 bg-slate-50 hover:bg-violet-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-violet-600 cursor-pointer"
+                      >
+                        ورود به دوره‌ها
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("counseling")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-amber-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-amber-600 cursor-pointer"
-                    >
-                      ورود به مشاوره
-                    </button>
-                  </div>
-                )}
+                  )}
 
-                {/* ماژول لیگ علمی پایه */}
-                {user?.permissions?.includes("grade_league") && (
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-xl group-hover:scale-105 transition-transform">
-                          <Trophy className="w-6 h-6" />
+                  {/* ماژول مشاوره */}
+                  {user?.permissions?.includes("counseling") && (
+                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:scale-105 transition-transform">
+                            <MessageSquare className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg">
+                            فعال
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 bg-yellow-50 text-yellow-600 rounded-lg">
-                          فعال
-                        </span>
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">
+                          اتاق‌های مشاوره
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          پاسخگویی و هدایت چت‌های مشاوره کاربران و متقاضیان.
+                        </p>
                       </div>
-                      <h3 className="font-bold text-slate-800 text-sm mb-1">
-                        لیگ علمی پایه
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        مدیریت، نظارت و ارزیابی فعالیت‌های لیگ علمی پایه.
-                      </p>
+                      <button
+                        onClick={() => setActiveTab("counseling")}
+                        className="w-full py-2.5 bg-slate-50 hover:bg-amber-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-amber-600 cursor-pointer"
+                      >
+                        ورود به مشاوره
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("grade_league")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-yellow-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-yellow-600 cursor-pointer"
-                    >
-                      ورود به لیگ علمی پایه
-                    </button>
-                  </div>
-                )}
+                  )}
 
-                {/* ماژول مدیریت آزمون‌ها */}
-                {user?.permissions?.includes("exams") && (
-                  <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-rose-50 text-rose-600 rounded-xl group-hover:scale-105 transition-transform">
-                          <FileText className="w-6 h-6" />
+                  {/* ماژول لیگ علمی پایه */}
+                  {user?.permissions?.includes("grade_league") && (
+                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-yellow-50 text-yellow-600 rounded-xl group-hover:scale-105 transition-transform">
+                            <Trophy className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 bg-yellow-50 text-yellow-600 rounded-lg">
+                            فعال
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 bg-rose-50 text-rose-600 rounded-lg">
-                          فعال
-                        </span>
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">
+                          لیگ علمی پایه
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          مدیریت، نظارت و ارزیابی فعالیت‌های لیگ علمی پایه.
+                        </p>
                       </div>
-                      <h3 className="font-bold text-slate-800 text-sm mb-1">
-                        مدیریت آزمون‌ها و کارنامه‌ها
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        ایجاد، ویرایش، حذف آزمون‌ها و مدیریت نتایج و کارنامه‌ها.
-                      </p>
+                      <button
+                        onClick={() => setActiveTab("grade_league")}
+                        className="w-full py-2.5 bg-slate-50 hover:bg-yellow-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-yellow-600 cursor-pointer"
+                      >
+                        ورود به لیگ علمی پایه
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("exams")}
-                      className="w-full py-2.5 bg-slate-50 hover:bg-rose-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-rose-600 cursor-pointer"
-                    >
-                      ورود به مدیریت آزمون‌ها
-                    </button>
+                  )}
+
+                  {/* ماژول مدیریت آزمون‌ها */}
+                  {user?.permissions?.includes("exams") && (
+                    <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl group-hover:scale-105 transition-transform">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 bg-rose-50 text-rose-600 rounded-lg">
+                            فعال
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-slate-800 text-sm mb-1">
+                          مدیریت آزمون‌ها و کارنامه‌ها
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                          ایجاد، ویرایش، حذف آزمون‌ها و مدیریت نتایج و کارنامه‌ها.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab("exams")}
+                        className="w-full py-2.5 bg-slate-50 hover:bg-rose-600 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200/60 hover:border-rose-600 cursor-pointer"
+                      >
+                        ورود به مدیریت آزمون‌ها
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* در صورت عدم وجود هیچ دسترسی */}
+                {(!user?.permissions || user.permissions.length === 0) && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center text-amber-800 mt-4">
+                    <p className="text-xs font-bold">
+                      هیچ دسترسی مشخصی برای حساب شما تعریف نشده است. لطفاً با مدیر
+                      سیستم تماس بگیرید.
+                    </p>
                   </div>
                 )}
               </div>
-
-              {/* در صورت عدم وجود هیچ دسترسی */}
-              {(!user?.permissions || user.permissions.length === 0) && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center text-amber-800">
-                  <p className="text-xs font-bold">
-                    هیچ دسترسی مشخصی برای حساب شما تعریف نشده است. لطفاً با مدیر
-                    سیستم تماس بگیرید.
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </div>
