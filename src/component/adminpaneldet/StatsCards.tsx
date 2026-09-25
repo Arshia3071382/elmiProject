@@ -3,6 +3,7 @@ import React from "react";
 interface GradeStat {
   grade: number;
   count: number;
+  unlistedCount?: number;
 }
 
 interface StatsCardsProps {
@@ -21,7 +22,7 @@ export default function StatsCards({
   middleGrades = [],
 }: StatsCardsProps) {
   const totalElementary = elementaryGrades.reduce((acc, curr) => acc + curr.count, 0);
-  const totalMiddle = middleGrades.reduce((acc, curr) => acc + curr.count, 0);
+  const totalMiddle = middleGrades.reduce((acc, curr) => acc + curr.count + (curr.unlistedCount || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -89,20 +90,30 @@ export default function StatsCards({
             </span>
           </div>
           <div className="space-y-3">
-            {middleGrades.map((item) => (
-              <div key={item.grade} className="space-y-1">
-                <div className="flex justify-between text-xs font-bold text-gray-600">
-                  <span>پایه {item.grade}</span>
-                  <span>{item.count} دانش‌آموز</span>
+            {middleGrades.map((item) => {
+              const hasUnlisted = item.grade === 7 && item.unlistedCount && item.unlistedCount > 0;
+              return (
+                <div key={item.grade} className="space-y-1">
+                  <div className="flex justify-between text-xs font-bold text-gray-600">
+                    <span>پایه {item.grade}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{item.count} دانش‌آموز</span>
+                      {hasUnlisted && (
+                        <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-[10px]">
+                          ({item.unlistedCount} ثبت‌نشده)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${totalMiddle > 0 ? ((item.count + (item.unlistedCount || 0)) / totalMiddle) * 100 : 0}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${totalMiddle > 0 ? (item.count / totalMiddle) * 100 : 0}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

@@ -11,27 +11,54 @@ export async function GET() {
     const categoriesCount = await Category.countDocuments();
     const coursesCount = await Course.countDocuments();
 
-    // استخراج تعداد دانش‌آموزان به تفکیک پایه از مدل Student
+    // استخراج دانش‌آموزان بر اساس پایه و وضعیت لیگ
     const gradeCounts = await Student.aggregate([
       {
         $group: {
-          _id: "$grade",
+          _id: {
+            grade: "$grade",
+            hasLeague: { $ne: ["$leagueProfile", null] }
+          },
           count: { $sum: 1 },
         },
       },
     ]);
 
-    // تفکیک مقطع ابتدایی (پایه‌های ۲ تا ۶)
+    // مقطع ابتدایی (پایه‌های ۲ تا ۶) - فقط کسانی که داخل لیگ هستند یا پایه معتبر دارند
     const elementaryGrades = [2, 3, 4, 5, 6].map((g) => ({
       grade: g,
-      count: gradeCounts.find((item) => item._id === g)?.count || 0,
+      count: gradeCounts
+        .filter((item) => item._id.grade === g)
+        .reduce((acc, curr) => acc + curr.count, 0),
     }));
 
-    // تفکیک مقطع راهنمایی (پایه‌های ۷ تا ۹)
-    const middleGrades = [7, 8, 9].map((g) => ({
-      grade: g,
-      count: gradeCounts.find((item) => item._id === g)?.count || 0,
-    }));
+    // تفکیک مقطع راهنمایی (پایه‌های ۷ تا ۹) به همراه شناسایی کاربران خارج از لیگ برای پایه ۷
+    const middleGrades = [7, 8, 9].map((g) => {
+      if (g === 7) {
+        // برای پایه هفتم، آنهایی که پروفایل لیگ ندارند را به عنوان ثبت‌نشده جدا می‌کنیم
+        const inLeagueCount = gradeCounts
+          .filter((item) => item._id.grade === 7 && item._id.hasLeague)
+          .reduce((acc, curr) => acc + curr.count, 0);
+
+        const unlistedCount = gradeCounts
+          .filter((item) => item._id.grade === 7 && !item._id.hasLeague)
+          .reduce((acc, curr) => acc + curr.count, 0);
+
+        return {
+          grade: g,
+          count: inLeagueCount,
+          unlistedCount: unlistedCount, // تعداد ثبت‌نشده‌ها در پایه ۷
+        };
+      }
+
+      return {
+        grade: g,
+        count: gradeCounts
+          .filter((item) => item._id.grade === g)
+          .reduce((acc, curr) => acc + curr.count, 0),
+        unlistedCount: 0,
+      };
+    });
 
     return NextResponse.json({
       success: true,

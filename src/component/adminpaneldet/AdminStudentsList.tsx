@@ -10,6 +10,7 @@ interface Student {
   username: string;
   grade: number | string;
   createdAt: string;
+  leagueProfile?: any;
 }
 
 interface AdminStudentsListProps {
@@ -84,8 +85,9 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
     // تطابق جستجوی متنی
     const matchesSearch = fullName.includes(term) || username.includes(term);
 
-    // تطابق پایه تحصیلی
-    const matchesGrade = selectedGrade === "all" || String(student.grade) === String(selectedGrade);
+    // تطابق پایه تحصیلی (همچنین در نظر گرفتن ثبت‌نشده‌ها)
+    const matchesGrade = selectedGrade === "all" || 
+      (selectedGrade === "unlisted" ? !student.leagueProfile : String(student.grade) === String(selectedGrade));
 
     // تطابق تاریخ ثبت‌نام
     let matchesDate = true;
@@ -148,6 +150,7 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
               className="w-full pr-9 pl-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none text-slate-700 font-medium"
             >
               <option value="all">همه پایه‌های تحصیلی</option>
+              <option value="unlisted">ثبت‌نشده (فاقد لیگ)</option>
               {availableGrades.map((grade) => (
                 <option key={String(grade)} value={String(grade)}>
                   پایه تحصیلی {grade}
@@ -191,7 +194,7 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
                 <th className="p-4">ردیف</th>
                 <th className="p-4">نام و نام خانوادگی</th>
                 <th className="p-4">نام کاربری / شماره</th>
-                <th className="p-4">پایه تحصیلی</th>
+                <th className="p-4">وضعیت / پایه تحصیلی</th>
                 <th className="p-4">تاریخ ثبت‌نام</th>
                 <th className="p-4 text-center">عملیات</th>
               </tr>
@@ -199,6 +202,7 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredStudents.map((student, index) => {
                 const fullName = `${student.firstName || ""} ${student.lastName || ""}`.trim();
+                const hasLeague = Boolean(student.leagueProfile);
                 return (
                   <tr key={student._id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 font-medium text-slate-400">{index + 1}</td>
@@ -209,9 +213,15 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
                       {student.username}
                     </td>
                     <td className="p-4">
-                      <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg font-bold text-[11px]">
-                        پایه {student.grade}
-                      </span>
+                      {hasLeague ? (
+                        <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg font-bold text-[11px]">
+                          پایه {student.grade}
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg font-bold text-[11px]">
+                          ثبت‌نشده
+                        </span>
+                      )}
                     </td>
                     <td className="p-4 text-slate-500">
                       {student.createdAt
