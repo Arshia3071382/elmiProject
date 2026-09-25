@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Users, Search, AlertCircle } from "lucide-react";
+import { Trash2, Users, Search, AlertCircle, Filter, Calendar } from "lucide-react";
 
 interface Student {
   _id: string;
@@ -20,6 +20,8 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // دریافت لیست دانش‌آموزان ثبت‌نام شده
@@ -70,38 +72,104 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
     }
   };
 
-  // فیلتر کردن بر اساس جستجو (نام، نام خانوادگی یا نام کاربری)
+  // استخراج پایه‌های تحصیلی منحصربه‌فرد برای منوی کشویی فیلتر
+  const availableGrades = Array.from(new Set(students.map((s) => s.grade))).sort((a, b) => Number(a) - Number(b));
+
+  // فیلتر کردن پیشرفته (نام، پایه تحصیلی، تاریخ ثبت‌نام)
   const filteredStudents = students.filter((student) => {
     const fullName = `${student.firstName || ""} ${student.lastName || ""}`.toLowerCase();
     const username = (student.username || "").toLowerCase();
     const term = searchTerm.toLowerCase();
-    return fullName.includes(term) || username.includes(term);
+    
+    // تطابق جستجوی متنی
+    const matchesSearch = fullName.includes(term) || username.includes(term);
+
+    // تطابق پایه تحصیلی
+    const matchesGrade = selectedGrade === "all" || String(student.grade) === String(selectedGrade);
+
+    // تطابق تاریخ ثبت‌نام
+    let matchesDate = true;
+    if (student.createdAt) {
+      const studentDate = new Date(student.createdAt);
+      const now = new Date();
+
+      if (dateFilter === "today") {
+        matchesDate = studentDate.toDateString() === now.toDateString();
+      } else if (dateFilter === "week") {
+        const weekAgo = new Date(now.setDate(now.getDate() - 7));
+        matchesDate = studentDate >= weekAgo;
+      } else if (dateFilter === "month") {
+        const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+        matchesDate = studentDate >= monthAgo;
+      }
+    } else if (dateFilter !== "all") {
+      matchesDate = false;
+    }
+
+    return matchesSearch && matchesGrade && matchesDate;
   });
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* هدر بخش */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base font-black text-slate-800 flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
-            <span>لیست دانش‌آموزان ثبت‌نام‌شده</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            مشاهده اطلاعات ثبت‌نام، پایه تحصیلی و مدیریت کاربران سامانه.
-          </p>
+      {/* هدر بخش و ابزارهای فیلتر */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-black text-slate-800 flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <span>لیست دانش‌آموزان ثبت‌نام‌شده</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              مدیریت، جستجو و فیلتر پیشرفته اطلاعات ثبت‌نام دانش‌آموزان سامانه.
+            </p>
+          </div>
         </div>
 
-        {/* سرچ باکس */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="جستجوی نام یا نام کاربری..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pr-9 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 transition-all"
-          />
+        {/* نوار جستجو و فیلترها */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+          {/* سرچ باکس نام / نام کاربری */}
+          <div className="relative w-full">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="جستجوی نام یا نام کاربری..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pr-9 pl-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 transition-all shadow-sm"
+            />
+          </div>
+
+          {/* فیلتر پایه تحصیلی */}
+          <div className="relative w-full">
+            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <select
+              value={selectedGrade}
+              onChange={(e) => setSelectedGrade(e.target.value)}
+              className="w-full pr-9 pl-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none text-slate-700 font-medium"
+            >
+              <option value="all">همه پایه‌های تحصیلی</option>
+              {availableGrades.map((grade) => (
+                <option key={String(grade)} value={String(grade)}>
+                  پایه تحصیلی {grade}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* فیلتر تاریخ ثبت‌نام */}
+          <div className="relative w-full">
+            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full pr-9 pl-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 transition-all shadow-sm cursor-pointer appearance-none text-slate-700 font-medium"
+            >
+              <option value="all">همه تاریخ‌های ثبت‌نام</option>
+              <option value="today">امروز</option>
+              <option value="week">۷ روز گذشته</option>
+              <option value="month">۳۰ روز گذشته</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -113,7 +181,7 @@ export default function AdminStudentsList({ onShowMessage }: AdminStudentsListPr
       ) : filteredStudents.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 text-center text-slate-500">
           <AlertCircle className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-          <p className="text-xs font-bold">هیچ دانش‌آموزی یافت نشد.</p>
+          <p className="text-xs font-bold">هیچ دانش‌آموزی با مشخصات جستجو شده یافت نشد.</p>
         </div>
       ) : (
         <div className="overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-sm">
