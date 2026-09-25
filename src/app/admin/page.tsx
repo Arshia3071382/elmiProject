@@ -22,6 +22,7 @@ import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel";
 import AdminBorhanPanel from "@/component/adminpaneldet/AdminBorhanPanel";
 import AdminStoriesPanel from "@/component/adminpaneldet/AdminStoriesPanel";
 import AdminLivePanel from "@/component/adminpaneldet/AdminLivePanel";
+import AdminStudentsList from "@/component/adminpaneldet/AdminStudentsList"; // اضافه شد
 
 import AdminToast from "./AdminToast";
 import { CourseTab } from "./constants";
@@ -226,6 +227,7 @@ export default function AdminPage() {
         )}
       </div>
     ),
+    students: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminStudentsList onShowMessage={showMessage} /></div>, // اضافه شد
     "elite-league": <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminEliteLeaguePanel onShowMessage={showMessage} /></div>,
     "grade-league": <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminGradeLeaguePanel /></div>,
     topics: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminTopicsPanel onShowMessage={showMessage} /></div>,
@@ -246,6 +248,7 @@ export default function AdminPage() {
   const menuItems: { id: string; label: string }[] = [
     { id: "dashboard", label: "داشبورد" },
     { id: "courses", label: "دوره‌ها" },
+    { id: "students", label: "دانش‌آموزان" }, // اضافه شد
     { id: "elite-league", label: "لیگ نخبگان" },
     { id: "grade-league", label: "لیگ مقاطع" },
     { id: "topics", label: "مباحث چت" },
