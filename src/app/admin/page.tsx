@@ -21,7 +21,7 @@ import AdminPodcastPanel from "@/component/adminpaneldet/AdminPodcastPanel";
 import AdminExamsPanel from "@/component/adminpaneldet/AdminExamsPanel";
 import AdminBorhanPanel from "@/component/adminpaneldet/AdminBorhanPanel";
 import AdminStoriesPanel from "@/component/adminpaneldet/AdminStoriesPanel";
-import AdminLivePanel from "@/component/adminpaneldet/AdminLivePanel"; // اضافه شد
+import AdminLivePanel from "@/component/adminpaneldet/AdminLivePanel";
 
 import AdminToast from "./AdminToast";
 import { CourseTab } from "./constants";
@@ -31,6 +31,16 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [contactMessages, setContactMessages] = useState<any[]>([]);
+  
+  // استیت آمار دوره‌ها و دانش‌آموزان
+  const [adminStats, setAdminStats] = useState({
+    categoriesCount: 0,
+    coursesCount: 0,
+    averageCourses: 0,
+    elementaryGrades: [] as { grade: number; count: number }[],
+    middleGrades: [] as { grade: number; count: number }[],
+  });
+
   const [selectedCategory, setSelectedCategory] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -95,11 +105,22 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchAdminStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/stats", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      if (res?.success && res.stats) {
+        setAdminStats(res.stats);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isChecking) {
-      Promise.all([fetchCategories(), fetchCourses(), fetchContactMessages()]);
+      Promise.all([fetchCategories(), fetchCourses(), fetchContactMessages(), fetchAdminStats()]);
     }
-  }, [isChecking, fetchCategories, fetchCourses, fetchContactMessages]);
+  }, [isChecking, fetchCategories, fetchCourses, fetchContactMessages, fetchAdminStats]);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +138,7 @@ export default function AdminPage() {
         setSelectedCategory(res.category._id);
         setShowCategoryModal(false);
         setNewCategoryName("");
+        fetchAdminStats();
       } else {
         showMessage("error", res?.error || "خطا در ثبت گروه");
       }
@@ -136,6 +158,7 @@ export default function AdminPage() {
       if (res?.success) {
         showMessage("success", "دوره با موفقیت اضافه شد");
         fetchCourses();
+        fetchAdminStats();
         return true;
       }
     } catch {
@@ -171,7 +194,13 @@ export default function AdminPage() {
   const panelComponents: Record<string, React.ReactNode> = {
     dashboard: (
       <div className="space-y-6">
-        <StatsCards categoriesCount={categories.length} coursesCount={courses.length} averageCourses={categories.length ? Number((courses.length / categories.length).toFixed(1)) : 0} />
+        <StatsCards 
+          categoriesCount={adminStats.categoriesCount} 
+          coursesCount={adminStats.coursesCount} 
+          averageCourses={adminStats.averageCourses}
+          elementaryGrades={adminStats.elementaryGrades}
+          middleGrades={adminStats.middleGrades}
+        />
         <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto">
           <AdminSidebar courses={courses} contactMessages={contactMessages} />
         </div>
@@ -211,7 +240,7 @@ export default function AdminPage() {
     permissions: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><SeniorPermissionManager onShowMessage={showMessage} /></div>,
     borhan: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminBorhanPanel onShowMessage={showMessage} /></div>,
     stories: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminStoriesPanel /></div>,
-    live: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminLivePanel /></div>, // اضافه شد
+    live: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminLivePanel /></div>,
   };
 
   const menuItems: { id: string; label: string }[] = [
@@ -231,7 +260,7 @@ export default function AdminPage() {
     { id: "permissions", label: "دسترسی‌ها" },
     { id: "borhan", label: "پروژه برهان" },
     { id: "stories", label: "استوری‌ها" },
-    { id: "live", label: "پخش زنده" }, // اضافه شد
+    { id: "live", label: "پخش زنده" },
   ];
 
   return (
@@ -264,7 +293,7 @@ export default function AdminPage() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 cursor-pointer shrink-0 ${
-                  isActive ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "text-gray-600 hover:bg-gray-150 hover:bg-gray-100"
+                  isActive ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 {item.label}
