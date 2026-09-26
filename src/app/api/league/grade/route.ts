@@ -275,8 +275,7 @@ export async function DELETE(req: Request) {
 export async function PATCH(req: Request) {
   await dbConnect();
   try {
-    const grades = [2, 3, 4, 5, 6, 7, 8, 9];
-
+    const grades = [2, 3, 4, 5, 6, 7, 8, 9, 10];
     for (const gradeNum of grades) {
       // ۱. ابتدا لیست دانش‌آموزان را بر اساس امتیاز قبلی دریافت می‌کنیم
       const studentsInGrade = await GradeStudent.find({ grade: gradeNum }).sort(

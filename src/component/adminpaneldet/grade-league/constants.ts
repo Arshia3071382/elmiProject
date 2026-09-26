@@ -8,6 +8,7 @@ export const GRADES = [
   { id: 7, label: "پایه هفتم" },
   { id: 8, label: "پایه هشتم" },
   { id: 9, label: "پایه نهم" },
+  { id: 10, label: "پایه دهم" },
 ];
 
 // Utility functions
@@ -18,14 +19,14 @@ export const toPersianDigits = (n: number | string): string => {
 export const toPersianDate = (dateString: string): string => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('fa-IR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  return new Intl.DateTimeFormat("fa-IR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
-    timeZone: 'Asia/Tehran'
+    timeZone: "Asia/Tehran",
   }).format(date);
 };

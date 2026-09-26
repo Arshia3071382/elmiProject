@@ -55,7 +55,7 @@ export default function AdminGradeLeaguePanel() {
   const [saving, setSaving] = useState<boolean>(false);
   const [searchActivity, setSearchActivity] = useState<string>("");
 
-  const allGrades = [2, 3, 4, 5, 6, 7, 8, 9];
+  const allGrades = [2, 3, 4, 5, 6, 7, 8, 9 , 10];
 
   const fetchStudents = useCallback(async () => {
     if (activeGrade === null) return;
@@ -313,7 +313,7 @@ export default function AdminGradeLeaguePanel() {
                 gradeId={activeGrade}
                 loading={loading}
                 onEdit={handleEditStudent}
-                onDelete={confirmDeleteStudent} // ارسال تابع بازکننده مودال به جای تابع حذف مستقیم
+                onDelete={confirmDeleteStudent} 
                 onOpenModal={handleOpenModal}
               />
             </div>

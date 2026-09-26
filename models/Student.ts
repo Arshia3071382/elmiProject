@@ -66,7 +66,7 @@ const StudentSchema = new Schema<IStudent>(
       type: Number,
       required: true,
       min: 2,
-      max: 9,
+      max: 10,
     },
     avatar: {
       type: String,

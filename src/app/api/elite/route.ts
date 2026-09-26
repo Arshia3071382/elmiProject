@@ -12,22 +12,34 @@ export async function GET(request: Request) {
     const category = searchParams.get("category") || "elementary";
     const isAdmin = searchParams.get("admin") === "true";
 
-    const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
-
+    const targetGrades =
+      category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9, 10];
     // دریافت تنظیمات نمایش جدول
     let setting = await LeagueSetting.findOne();
     if (!setting) {
-      setting = await LeagueSetting.create({ elementaryVisible: true, highschoolVisible: true });
+      setting = await LeagueSetting.create({
+        elementaryVisible: true,
+        highschoolVisible: true,
+      });
     }
 
-    const isVisible = category === "elementary" ? setting.elementaryVisible : setting.highschoolVisible;
+    const isVisible =
+      category === "elementary"
+        ? setting.elementaryVisible
+        : setting.highschoolVisible;
 
     if (isAdmin) {
-      const students = await GradeStudent.find({ grade: { $in: targetGrades } })
-        .sort({ totalScore: -1 });
+      const students = await GradeStudent.find({
+        grade: { $in: targetGrades },
+      }).sort({ totalScore: -1 });
 
-      const eliteRecords = await EliteStudent.find({ category, isPublished: true });
-      const eliteIds = new Set(eliteRecords.map((e: any) => e.studentId?.toString()));
+      const eliteRecords = await EliteStudent.find({
+        category,
+        isPublished: true,
+      });
+      const eliteIds = new Set(
+        eliteRecords.map((e: any) => e.studentId?.toString()),
+      );
 
       const result = students.map((student: any) => ({
         _id: student._id,
@@ -38,14 +50,23 @@ export async function GET(request: Request) {
         isPublished: eliteIds.has(student._id.toString()),
       }));
 
-      return NextResponse.json({ students: result, isVisible }, { status: 200 });
+      return NextResponse.json(
+        { students: result, isVisible },
+        { status: 200 },
+      );
     } else {
       // اگر جدول توسط ادمین غیرفعال شده باشد
       if (!isVisible) {
-        return NextResponse.json({ students: [], isVisible: false }, { status: 200 });
+        return NextResponse.json(
+          { students: [], isVisible: false },
+          { status: 200 },
+        );
       }
 
-      const eliteRecords = await EliteStudent.find({ category, isPublished: true })
+      const eliteRecords = await EliteStudent.find({
+        category,
+        isPublished: true,
+      })
         .sort({ score: -1 })
         .limit(20);
 
@@ -58,10 +79,16 @@ export async function GET(request: Request) {
         isPublished: true,
       }));
 
-      return NextResponse.json({ students: result, isVisible: true }, { status: 200 });
+      return NextResponse.json(
+        { students: result, isVisible: true },
+        { status: 200 },
+      );
     }
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch leaderboard data" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch leaderboard data" },
+      { status: 500 },
+    );
   }
 }
 
@@ -73,7 +100,10 @@ export async function PATCH(request: Request) {
     const { category, action } = body;
 
     if (!category) {
-      return NextResponse.json({ error: "Category is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Category is required" },
+        { status: 400 },
+      );
     }
 
     let setting = await LeagueSetting.findOne();
@@ -89,7 +119,10 @@ export async function PATCH(request: Request) {
         setting.highschoolVisible = false;
       }
       await setting.save();
-      return NextResponse.json({ message: "Hidden successfully" }, { status: 200 });
+      return NextResponse.json(
+        { message: "Hidden successfully" },
+        { status: 200 },
+      );
     }
 
     // اگر درخواست «نمایش» یا «تایید نهایی / انتشار» باشد
@@ -102,10 +135,13 @@ export async function PATCH(request: Request) {
       }
       await setting.save();
 
-      const targetGrades = category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9];
+      const targetGrades =
+        category === "elementary" ? [2, 3, 4, 5, 6] : [7, 8, 9, 10];
 
       // استخراج ۱۵ نفر برتر بر اساس بیشترین امتیاز
-      const topStudents = await GradeStudent.find({ grade: { $in: targetGrades } })
+      const topStudents = await GradeStudent.find({
+        grade: { $in: targetGrades },
+      })
         .sort({ totalScore: -1 })
         .limit(15);
 
@@ -124,7 +160,10 @@ export async function PATCH(request: Request) {
         await EliteStudent.insertMany(eliteDocs);
       }
 
-      return NextResponse.json({ message: "Table published and visible successfully" }, { status: 200 });
+      return NextResponse.json(
+        { message: "Table published and visible successfully" },
+        { status: 200 },
+      );
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -139,7 +178,8 @@ export async function DELETE(request: Request) {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+    if (!id)
+      return NextResponse.json({ error: "ID required" }, { status: 400 });
 
     await EliteStudent.findOneAndDelete({ studentId: id });
     return NextResponse.json({ status: 200 });

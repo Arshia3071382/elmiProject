@@ -92,6 +92,16 @@ const GRADES = [
     iconBg: "bg-blue-200/60 text-blue-800",
     cardBg: "bg-blue-50/70 hover:bg-blue-100/60 border-blue-200/80 hover:border-blue-400"
   },
+    { 
+    id: 10, 
+    label: "پایه دهم", 
+    description: "گروه شهید طوقانی", 
+    icon: Zap,
+    titleColor: "text-sky-950",
+    descColor: "text-sky-600",
+    iconBg: "bg-sky-200/60 text-sky-800",
+    cardBg: "bg-sky-50/70 hover:bg-sky-100/60 border-sky-200/80 hover:border-sky-400"
+  },
 ];
 
 export default function SelectGradePage() {

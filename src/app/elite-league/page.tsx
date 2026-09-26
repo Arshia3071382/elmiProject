@@ -226,7 +226,7 @@ export default function EliteLeaguePublicPage() {
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  مقطع متوسطه اول
+                  مقطع متوسطه 
                 </button>
               </div>
             </div>
