@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import LayoutShell from "@/component/app/LayoutShell";
+import dbConnect from "../../lib/dbConnect";
+import SeoSetting from "../../models/SeoSetting";
 
 export const viewport: Viewport = {
   themeColor: "#2563eb",
@@ -9,26 +11,45 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export const metadata: Metadata = {
-  title: "مجموعه علمی منتظران",
-  description: "سامانه علمی و آموزشی مجموعه علمی منتظران",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/icons/logo6.png",
-    apple: "/icons/logo6.png",
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "علمی منتظران",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  verification: {
-    google: "3m3laAK6ErCp97YaQwjPrRTUclcqJqxh2Xjs3ftwE_k",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let seoTitle = "مجموعه علمی منتظران";
+  let seoDescription = "سامانه علمی و آموزشی مجموعه علمی منتظران";
+  let seoKeywords: string | undefined;
+
+  try {
+    await dbConnect();
+    const setting = await SeoSetting.findOne();
+    if (setting) {
+      seoTitle = setting.title || seoTitle;
+      seoDescription = setting.description || seoDescription;
+      seoKeywords = setting.keywords || undefined;
+    }
+  } catch (err) {
+    console.error("خطا در دریافت تنظیمات سئو:", err);
+  }
+
+  return {
+    title: seoTitle,
+    description: seoDescription,
+    keywords: seoKeywords,
+    manifest: "/manifest.json",
+    icons: {
+      icon: "/icons/logo6.png",
+      apple: "/icons/logo6.png",
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "علمی منتظران",
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    verification: {
+      google: "3m3laAK6ErCp97YaQwjPrRTUclcqJqxh2Xjs3ftwE_k",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

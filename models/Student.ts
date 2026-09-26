@@ -8,7 +8,7 @@ export interface IStudent {
   nationalId: string;
   phone?: string;
   passwordHash: string;
-  grade: number;
+  grade?: number;
   avatar?: string;
   securityQuestion: string;
   securityPin: string; // اضافه شدن پین ۶ رقمی به صورت مجزا
@@ -64,7 +64,7 @@ const StudentSchema = new Schema<IStudent>(
     },
     grade: {
       type: Number,
-      required: true,
+      required: false,
       min: 2,
       max: 10,
     },

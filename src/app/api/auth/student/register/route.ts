@@ -140,7 +140,11 @@ export async function POST(req: Request) {
 
     const finalFirstName = gradeStudentRecord?.firstName || firstName?.trim();
     const finalLastName = gradeStudentRecord?.lastName || lastName?.trim();
-    const finalGrade = gradeStudentRecord?.grade || Number(grade) || 7;
+
+    // اگر دانش‌آموز در جدول لیگ ثبت نشده باشد، پایه او فعلاً نامشخص می‌ماند
+    // (دیگر هیچ مقدار پیش‌فرض یا حدسی مثل ۷ برای grade در نظر گرفته نمی‌شود)
+    // تا زمانی که توسط مدیریت در لیگ ثبت و پایه‌اش مشخص شود
+    const finalGrade = gradeStudentRecord ? gradeStudentRecord.grade : undefined;
 
     if (!gradeStudentRecord && (!finalFirstName || !finalLastName)) {
       return NextResponse.json(

@@ -103,8 +103,9 @@ export async function GET(req: Request) {
     // اگر کاربر در لیگ نخبگان (GradeStudent) ثبت‌نام نشده باشد
     const hasLeagueRegistration = Boolean(gradeRecord);
 
-    // اصلاح تعیین پایه: اولویت با اطلاعات جدول لیگ است، و اگر ثبت‌نام نکرده باشد مقادیر پیش‌فرض ۷ فیلتر می‌شوند
-    const grade = gradeRecord?.grade || (student.grade === 7 ? null : student.grade);
+    // تعیین پایه: اولویت با اطلاعات جدول لیگ است، در غیر این صورت پایه ثبت‌شده روی خود پروفایل دانش‌آموز
+    // (دیگر نیازی به فیلتر کردن دستی عدد ۷ نیست، چون سیستم ثبت‌نام دیگر مقدار جعلی برای grade نمی‌گذارد)
+    const grade = gradeRecord?.grade || student.grade || null;
     const totalScore = gradeRecord?.totalScore || 0;
 
     let sameGradeStudents: any[] = [];

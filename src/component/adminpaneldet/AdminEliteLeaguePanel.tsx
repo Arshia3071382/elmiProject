@@ -1,20 +1,33 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Trophy, Trash2, Edit3, Plus, X, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import {
+  Trophy,
+  Trash2,
+  Edit3,
+  Plus,
+  X,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 interface AdminEliteLeaguePanelProps {
   onShowMessage: (type: "success" | "error", text: string) => void;
 }
 
-export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeaguePanelProps) {
-  const [category, setCategory] = useState<"elementary" | "highschool">("elementary");
+export default function AdminEliteLeaguePanel({
+  onShowMessage,
+}: AdminEliteLeaguePanelProps) {
+  const [category, setCategory] = useState<"elementary" | "highschool">(
+    "elementary",
+  );
   const [students, setStudents] = useState<any[]>([]);
   const [isVisible, setIsVisible] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     id: "",
     name: "",
@@ -22,14 +35,16 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
     score: "",
   });
 
- const fetchStudents = useCallback(async () => {
+  const fetchStudents = useCallback(async () => {
     try {
-      const res = await fetch(`/api/elite?category=${category}&admin=true`).then((r) => r.json());
-      
+      const res = await fetch(
+        `/api/elite?category=${category}&admin=true`,
+      ).then((r) => r.json());
+
       if (res) {
         const visibleState = res.isVisible ?? true;
         setIsVisible(visibleState);
-        
+
         // اگر جدول مخفی شده باشد، در پنل ادمین هم لیست را خالی نشان دهیم تا بسته شود
         if (visibleState && Array.isArray(res.students)) {
           setStudents(res.students);
@@ -60,7 +75,10 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.score) {
-      return onShowMessage("error", "لطفاً تمامی فیلدها را به درستی تکمیل کنید");
+      return onShowMessage(
+        "error",
+        "لطفاً تمامی فیلدها را به درستی تکمیل کنید",
+      );
     }
 
     const payload = {
@@ -81,8 +99,18 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
       }).then((r) => r.json());
 
       if (!res.error) {
-        onShowMessage("success", isEditing ? "امتیاز با موفقیت بروزرسانی شد" : "دانش‌آموز به لیست اضافه شد");
-        setFormData({ id: "", name: "", grade: category === "elementary" ? "دوم" : "هفتم", score: "" });
+        onShowMessage(
+          "success",
+          isEditing
+            ? "امتیاز با موفقیت بروزرسانی شد"
+            : "دانش‌آموز به لیست اضافه شد",
+        );
+        setFormData({
+          id: "",
+          name: "",
+          grade: category === "elementary" ? "دوم" : "هفتم",
+          score: "",
+        });
         setIsEditing(false);
         fetchStudents();
       } else {
@@ -106,7 +134,9 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   const handleDelete = async (id: string) => {
     if (!confirm("آیا از حذف این دانش‌آموز اطمینان دارید؟")) return;
     try {
-      const res = await fetch(`/api/elite?id=${id}`, { method: "DELETE" }).then((r) => r.json());
+      const res = await fetch(`/api/elite?id=${id}`, { method: "DELETE" }).then(
+        (r) => r.json(),
+      );
       if (!res.error) {
         onShowMessage("success", "دانش‌آموز با موفقیت حذف شد");
         fetchStudents();
@@ -121,9 +151,17 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   // تایید نهایی و انتشار جدول ۱۵ نفر برتر مقطع
   const handlePublishTable = async () => {
     if (students.length === 0) {
-      return onShowMessage("error", "دانش‌آموزی برای انتشار در این مقطع وجود ندارد");
+      return onShowMessage(
+        "error",
+        "دانش‌آموزی برای انتشار در این مقطع وجود ندارد",
+      );
     }
-    if (!confirm(`آیا از تایید نهایی و انتشار ۱۵ نفر برتر مقطع ${category === "elementary" ? "ابتدایی" : "راهنمایی"} برای مشاهده کاربران اطمینان دارید؟`)) return;
+    if (
+      !confirm(
+        `آیا از تایید نهایی و انتشار ۱۵ نفر برتر مقطع ${category === "elementary" ? "ابتدایی" : "راهنمایی"} برای مشاهده کاربران اطمینان دارید؟`,
+      )
+    )
+      return;
 
     setIsPublishing(true);
     try {
@@ -134,7 +172,10 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
       }).then((r) => r.json());
 
       if (!res.error) {
-        onShowMessage("success", "نفرات برتر با موفقیت تایید و در سایت منتشر شدند!");
+        onShowMessage(
+          "success",
+          "نفرات برتر با موفقیت تایید و در سایت منتشر شدند!",
+        );
         fetchStudents();
       } else {
         onShowMessage("error", "خطا در انتشار لیست");
@@ -149,7 +190,12 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
   // تغییر وضعیت نمایش/عدم نمایش کلی جدول در سایت
   const handleToggleVisibility = async (show: boolean) => {
     const actionText = show ? "نمایش" : "عدم نمایش";
-    if (!confirm(`آیا از ${actionText} جدول لیگ نخبگان مقطع ${category === "elementary" ? "ابتدایی" : "راهنمایی"} اطمینان دارید؟`)) return;
+    if (
+      !confirm(
+        `آیا از ${actionText} جدول لیگ نخبگان مقطع ${category === "elementary" ? "ابتدایی" : "راهنمایی"} اطمینان دارید؟`,
+      )
+    )
+      return;
 
     setIsChangingVisibility(true);
     try {
@@ -160,7 +206,10 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
       }).then((r) => r.json());
 
       if (!res.error) {
-        onShowMessage("success", `وضعیت جدول با موفقیت به حالت ${actionText} تغییر یافت!`);
+        onShowMessage(
+          "success",
+          `وضعیت جدول با موفقیت به حالت ${actionText} تغییر یافت!`,
+        );
         fetchStudents();
       } else {
         onShowMessage("error", "خطا در تغییر وضعیت نمایش جدول");
@@ -178,21 +227,28 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
     .slice(0, 15);
 
   return (
-    <div dir="rtl" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 font-sans">
+    <div
+      dir="rtl"
+      className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 font-sans"
+    >
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 pb-4 mb-6 gap-4">
         <div className="flex items-center gap-3">
           <Trophy className="w-6 h-6 text-amber-500" />
           <div>
-            <h2 className="text-xl font-bold text-gray-800">لیگ نخبگان علمی (۱۵ نفر برتر ماهانه)</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              لیگ نخبگان علمی (۱۵ نفر برتر ماهانه)
+            </h2>
             <p className="text-xs text-gray-500 mt-0.5">
               وضعیت در سایت:{" "}
-              <span className={`font-bold ${isVisible ? "text-emerald-600" : "text-rose-600"}`}>
+              <span
+                className={`font-bold ${isVisible ? "text-emerald-600" : "text-rose-600"}`}
+              >
                 {isVisible ? "در حال نمایش به کاربران" : "مخفی‌شده (غیرفعال)"}
               </span>
             </p>
           </div>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex bg-gray-100 p-1 rounded-xl">
             <button
@@ -207,7 +263,7 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
               onClick={() => handleCategoryChange("highschool")}
               className={`px-4 py-2 text-xs md:text-sm font-bold rounded-lg transition-all ${category === "highschool" ? "bg-indigo-600 text-white shadow" : "text-gray-600 hover:text-gray-900"}`}
             >
-              راهنمایی (هفتم تا نهم)
+              راهنمایی و دهم (هفتم تا دهم)
             </button>
           </div>
 
@@ -245,9 +301,14 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end mb-6 text-sm text-gray-700">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end mb-6 text-sm text-gray-700"
+      >
         <div>
-          <label className="block text-gray-600 mb-1 font-medium">نام و نام خانوادگی:</label>
+          <label className="block text-gray-600 mb-1 font-medium">
+            نام و نام خانوادگی:
+          </label>
           <input
             type="text"
             value={formData.name}
@@ -259,10 +320,14 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
         </div>
 
         <div>
-          <label className="block text-gray-600 mb-1 font-medium">پایه تحصیلی:</label>
+          <label className="block text-gray-600 mb-1 font-medium">
+            پایه تحصیلی:
+          </label>
           <select
             value={formData.grade}
-            onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, grade: e.target.value })
+            }
             className="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:outline-none focus:border-blue-500"
           >
             {category === "elementary" ? (
@@ -278,17 +343,22 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
                 <option value="هفتم">هفتم راهنمایی</option>
                 <option value="هشتم">هشتم راهنمایی</option>
                 <option value="نهم">نهم راهنمایی</option>
+                <option value="دهم">دهم دبیرستان</option>
               </>
             )}
           </select>
         </div>
 
         <div>
-          <label className="block text-gray-600 mb-1 font-medium">امتیاز کل:</label>
+          <label className="block text-gray-600 mb-1 font-medium">
+            امتیاز کل:
+          </label>
           <input
             type="number"
             value={formData.score}
-            onChange={(e) => setFormData({ ...formData, score: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, score: e.target.value })
+            }
             required
             placeholder="مثال: 2450"
             className="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:outline-none focus:border-blue-500"
@@ -300,16 +370,25 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
             type="submit"
             className={`flex-1 text-white p-2.5 rounded-lg font-bold transition flex items-center justify-center gap-1 ${isEditing ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
           >
-            {isEditing ? <Edit3 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {isEditing ? (
+              <Edit3 className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
             {isEditing ? "ثبت ویرایش" : "افزودن به لیست"}
           </button>
-          
+
           {isEditing && (
             <button
               type="button"
               onClick={() => {
                 setIsEditing(false);
-                setFormData({ id: "", name: "", grade: category === "elementary" ? "دوم" : "هفتم", score: "" });
+                setFormData({
+                  id: "",
+                  name: "",
+                  grade: category === "elementary" ? "دوم" : "هفتم",
+                  score: "",
+                });
               }}
               className="bg-gray-300 hover:bg-gray-400 text-gray-700 p-2.5 rounded-lg transition"
             >
@@ -334,19 +413,36 @@ export default function AdminEliteLeaguePanel({ onShowMessage }: AdminEliteLeagu
           <tbody>
             {topFifteenStudents.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-gray-400 font-medium">هیچ رکوردی در این مقطع ثبت نشده است.</td>
+                <td
+                  colSpan={6}
+                  className="p-8 text-center text-gray-400 font-medium"
+                >
+                  هیچ رکوردی در این مقطع ثبت نشده است.
+                </td>
               </tr>
             ) : (
               topFifteenStudents.map((student, index) => (
-                <tr key={student._id || student.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <tr
+                  key={student._id || student.id}
+                  className="border-b border-gray-50 hover:bg-gray-50/50 transition"
+                >
                   <td className="p-3 text-right font-bold text-gray-500">
-                    <span className="text-amber-600">#</span>{index + 1}
+                    <span className="text-amber-600">#</span>
+                    {index + 1}
                   </td>
-                  <td className="p-3 font-semibold text-gray-800">{student.name}</td>
-                  <td className="p-3 text-right text-gray-600">{student.grade}</td>
-                  <td className="p-3 text-right font-bold text-emerald-600">{student.score?.toLocaleString()}</td>
+                  <td className="p-3 font-semibold text-gray-800">
+                    {student.name}
+                  </td>
+                  <td className="p-3 text-right text-gray-600">
+                    {student.grade}
+                  </td>
+                  <td className="p-3 text-right font-bold text-emerald-600">
+                    {student.score?.toLocaleString()}
+                  </td>
                   <td className="p-3 text-center">
-                    <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${student.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                    <span
+                      className={`px-2.5 py-1 text-xs rounded-full font-medium ${student.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                    >
                       {student.isPublished ? "منتشر شده" : "پیش‌نویس ادمین"}
                     </span>
                   </td>

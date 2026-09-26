@@ -23,6 +23,7 @@ import AdminBorhanPanel from "@/component/adminpaneldet/AdminBorhanPanel";
 import AdminStoriesPanel from "@/component/adminpaneldet/AdminStoriesPanel";
 import AdminLivePanel from "@/component/adminpaneldet/AdminLivePanel";
 import AdminStudentsList from "@/component/adminpaneldet/AdminStudentsList"; // اضافه شد
+import AdminSeoPanel from "@/component/adminpaneldet/AdminSeoPanel"; // اضافه شد
 
 import AdminToast from "./AdminToast";
 import { CourseTab } from "./constants";
@@ -243,6 +244,7 @@ export default function AdminPage() {
     borhan: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminBorhanPanel onShowMessage={showMessage} /></div>,
     stories: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminStoriesPanel /></div>,
     live: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminLivePanel /></div>,
+    seo: <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-gray-100 overflow-x-auto"><AdminSeoPanel onShowMessage={showMessage} /></div>, // اضافه شد
   };
 
   const menuItems: { id: string; label: string }[] = [
@@ -264,6 +266,7 @@ export default function AdminPage() {
     { id: "borhan", label: "پروژه برهان" },
     { id: "stories", label: "استوری‌ها" },
     { id: "live", label: "پخش زنده" },
+    { id: "seo", label: "سئو" }, // اضافه شد
   ];
 
   return (
