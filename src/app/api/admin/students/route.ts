@@ -34,20 +34,25 @@ export async function GET() {
 
     const syncPromises: Promise<any>[] = [];
 
-    for (const student of students) {
-      if (!student.leagueProfile) {
-        const cleanId = normalizeNationalId(student.nationalId);
-        const matchedGradeStudent = gradeStudentMap.get(cleanId);
+       for (const student of students) {
+      const cleanId = normalizeNationalId(student.nationalId);
+      const matchedGradeStudent = gradeStudentMap.get(cleanId);
 
-        if (matchedGradeStudent) {
+      if (matchedGradeStudent) {
+        const needsLeagueLink =
+          !student.leagueProfile ||
+          student.leagueProfile.toString() !== matchedGradeStudent._id.toString();
+        const needsGradeFix = student.grade !== matchedGradeStudent.grade;
+
+        if (needsLeagueLink || needsGradeFix) {
           student.leagueProfile = matchedGradeStudent._id;
           student.grade = matchedGradeStudent.grade;
           syncPromises.push(student.save());
+        }
 
-          if (!matchedGradeStudent.studentId) {
-            matchedGradeStudent.studentId = student._id;
-            syncPromises.push(matchedGradeStudent.save());
-          }
+        if (!matchedGradeStudent.studentId) {
+          matchedGradeStudent.studentId = student._id;
+          syncPromises.push(matchedGradeStudent.save());
         }
       }
     }

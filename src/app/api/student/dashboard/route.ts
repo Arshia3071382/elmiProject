@@ -5,14 +5,36 @@ import Student from "./../../../../../models/Student";
 import GradeStudent from "./../../../../../models/GradeStudent";
 import LeagueSetting from "./../../../../../models/LeagueSetting";
 import { EliteStudent } from "./../../../../../models/EliteStudent";
-import { jwtVerify } from "jose"; 
+import { jwtVerify } from "jose";
 
 export const dynamic = "force-dynamic";
 
 function normalizeNationalId(id: string): string {
   if (!id) return "";
-  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
-  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+  const persianNumbers = [
+    /۰/g,
+    /۱/g,
+    /۲/g,
+    /۳/g,
+    /۴/g,
+    /۵/g,
+    /۶/g,
+    /۷/g,
+    /۸/g,
+    /۹/g,
+  ];
+  const arabicNumbers = [
+    /٠/g,
+    /١/g,
+    /٢/g,
+    /٣/g,
+    /٤/g,
+    /٥/g,
+    /٦/g,
+    /٧/g,
+    /٨/g,
+    /٩/g,
+  ];
 
   let normalized = id.trim();
   for (let i = 0; i < 10; i++) {
@@ -30,9 +52,9 @@ export async function GET(req: Request) {
     const queryNationalId = searchParams.get("nationalId");
 
     const cookieStore = await cookies();
-    const token = 
-      cookieStore.get("token") || 
-      cookieStore.get("studentToken") || 
+    const token =
+      cookieStore.get("token") ||
+      cookieStore.get("studentToken") ||
       cookieStore.get("student_token");
 
     let student = null;
@@ -40,11 +62,13 @@ export async function GET(req: Request) {
     if (token && token.value) {
       try {
         const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
+          process.env.JWT_SECRET || "your-very-secure-secret-key-12345",
         );
         const { payload } = await jwtVerify(token.value, secret);
-        const studentId = (payload.userId || payload.id || payload.sub) as string;
-        
+        const studentId = (payload.userId ||
+          payload.id ||
+          payload.sub) as string;
+
         if (studentId) {
           student = await Student.findById(studentId);
         }
@@ -53,7 +77,9 @@ export async function GET(req: Request) {
         if (rawTokenVal.length === 24) {
           student = await Student.findById(rawTokenVal);
         } else {
-          student = await Student.findOne({ nationalId: normalizeNationalId(rawTokenVal) });
+          student = await Student.findOne({
+            nationalId: normalizeNationalId(rawTokenVal),
+          });
         }
       }
     }
@@ -84,7 +110,9 @@ export async function GET(req: Request) {
     }
 
     if (!gradeRecord && cleanStudentNationalId) {
-      gradeRecord = await GradeStudent.findOne({ nationalId: cleanStudentNationalId });
+      gradeRecord = await GradeStudent.findOne({
+        nationalId: cleanStudentNationalId,
+      });
       if (!gradeRecord) {
         const allGradeStudents = await GradeStudent.find({});
         gradeRecord = allGradeStudents.find(
@@ -94,6 +122,7 @@ export async function GET(req: Request) {
 
       if (gradeRecord) {
         student.leagueProfile = gradeRecord._id;
+        student.grade = gradeRecord.grade;
         await student.save();
         if (!gradeRecord.studentId) {
           gradeRecord.studentId = student._id;
@@ -117,41 +146,48 @@ export async function GET(req: Request) {
     let lowerStudent = null;
 
     if (hasLeagueRegistration) {
-      sameGradeStudents = await GradeStudent.find({ grade }).sort({ totalScore: -1 });
-      
+      sameGradeStudents = await GradeStudent.find({ grade }).sort({
+        totalScore: -1,
+      });
+
       if (gradeRecord && gradeRecord._id) {
         userIndex = sameGradeStudents.findIndex(
-          (s) => s._id.toString() === gradeRecord._id.toString()
+          (s) => s._id.toString() === gradeRecord._id.toString(),
         );
       }
 
       if (userIndex === -1 && student._id) {
         userIndex = sameGradeStudents.findIndex(
-          (s) => s.studentId && s.studentId.toString() === student._id.toString()
+          (s) =>
+            s.studentId && s.studentId.toString() === student._id.toString(),
         );
       }
-      
+
       if (userIndex === -1 && cleanStudentNationalId) {
         userIndex = sameGradeStudents.findIndex(
-          (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
+          (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId,
         );
       }
-      
+
       gradeRank = userIndex !== -1 ? userIndex + 1 : 1;
 
       if (userIndex !== -1) {
         if (userIndex > 0) {
           const higher = sameGradeStudents[userIndex - 1];
           higherStudent = {
-            name: `${higher.firstName || ""} ${higher.lastName || ""}`.trim() || "دانش‌آموز برتر",
+            name:
+              `${higher.firstName || ""} ${higher.lastName || ""}`.trim() ||
+              "دانش‌آموز برتر",
             score: higher.totalScore || 0,
           };
         }
-        
+
         if (userIndex < sameGradeStudents.length - 1) {
           const lower = sameGradeStudents[userIndex + 1];
           lowerStudent = {
-            name: `${lower.firstName || ""} ${lower.lastName || ""}`.trim() || "دانش‌آموز",
+            name:
+              `${lower.firstName || ""} ${lower.lastName || ""}`.trim() ||
+              "دانش‌آموز",
             score: lower.totalScore || 0,
           };
         }
@@ -207,19 +243,22 @@ export async function GET(req: Request) {
           level: "فعال",
           totalScore: hasLeagueRegistration ? totalScore : 0,
           scoreToNextLevel: 100 - (totalScore % 100),
-          avatar: student.avatar && student.avatar.startsWith("/") 
-            ? student.avatar 
-            : "/image/profile/p2.png",
+          avatar:
+            student.avatar && student.avatar.startsWith("/")
+              ? student.avatar
+              : "/image/profile/p2.png",
         },
         // اگر ثبت‌نام نکرده باشد، gradeLeague مقدار null برمی‌گردد
-        gradeLeague: hasLeagueRegistration ? {
-          score: totalScore,
-          rank: gradeRank,
-          totalStudents: sameGradeStudents.length || 1,
-          scientificLevelTitle: `پایه ${grade}`,
-          higherStudent: higherStudent, 
-          lowerStudent: lowerStudent, 
-        } : null,
+        gradeLeague: hasLeagueRegistration
+          ? {
+              score: totalScore,
+              rank: gradeRank,
+              totalStudents: sameGradeStudents.length || 1,
+              scientificLevelTitle: `پایه ${grade}`,
+              higherStudent: higherStudent,
+              lowerStudent: lowerStudent,
+            }
+          : null,
         eliteLeague: eliteLeagueData,
         badges: [
           { title: "عضو فعال", icon: "⭐" },
