@@ -147,11 +147,13 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   }
 
   const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/senior-admin')
+  const isPreviewRoute = pathname?.startsWith('/app-preview')
   const isHomePage = pathname === '/'
 
   const isWebsitePreloaderActive = !isPWA && isHomePage && !hasSeenPreloader
   const isHideLayout = isAdminRoute || (isMounted && isPWA) || isWebsitePreloaderActive
-  const showPWAShell = isMounted && isPWA && !isAdminRoute
+  // صفحه پیش‌نمایش پوسته و قاب مخصوص خودش را دارد
+  const showPWAShell = isMounted && isPWA && !isAdminRoute && !isPreviewRoute
 
   // محاسبه شرط عدم نمایش هدر و نوبار
   const isUiHidden = showPwaPreloader || isStoryOpen || isModalOpen
@@ -198,7 +200,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
                     if (!isLoggedIn) {
                       setIsLoginModalOpen(true)
                     } else {
-                      router.push('/student/dashboard')
+                      window.location.assign('/student/dashboard')
                     }
                   }
                 }}

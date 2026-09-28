@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+const PREVIEW_KEY = 'pwa_preview_mode'
+
 export function useIsPWA() {
   const [isPWA, setIsPWA] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -20,10 +22,29 @@ export function useIsPWA() {
       // ۳. بررسی TWA / Android WebAPK Referrer
       const isAndroidApp = document.referrer.includes('android-app://')
 
-      // ۴. بررسی URL Query Parameter
-      const isUrlPWA = window.location.search.includes('mode=pwa')
+      // ۴. بررسی URL Query Parameter یا صفحه پیش‌نمایش
+      const isUrlPWA =
+        window.location.search.includes('mode=pwa') ||
+        window.location.pathname.startsWith('/app-preview')
 
-      setIsPWA(isStandaloneMatch || isIOSStandalone || isAndroidApp || isUrlPWA)
+      // حالت پیش‌نمایش در همین تب به‌خاطر سپرده می‌شود تا با ناوبری کامل صفحه
+      // (مثلاً رفتن به /student/dashboard) از بین نرود
+      try {
+        if (isUrlPWA) sessionStorage.setItem(PREVIEW_KEY, '1')
+      } catch {}
+
+      let isRememberedPreview = false
+      try {
+        isRememberedPreview = sessionStorage.getItem(PREVIEW_KEY) === '1'
+      } catch {}
+
+      setIsPWA(
+        isStandaloneMatch ||
+          isIOSStandalone ||
+          isAndroidApp ||
+          isUrlPWA ||
+          isRememberedPreview
+      )
     }
 
     checkPWA()
@@ -36,9 +57,7 @@ export function useIsPWA() {
     }
 
     const mediaQuery = window.matchMedia('(display-mode: standalone)')
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsPWA(e.matches)
-    }
+    const handleChange = () => checkPWA()
 
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)

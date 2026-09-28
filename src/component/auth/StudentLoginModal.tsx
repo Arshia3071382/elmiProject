@@ -146,8 +146,15 @@ export default function StudentLoginModal({
       if (res.ok && data?.success) {
         setStatus("success");
 
+        // ذخیره‌سازی جامع اطلاعات در localStorage برای حل قطعی خطای 401 در اپلیکیشن و PWA
         if (data.student?.nationalId) {
           localStorage.setItem("studentNationalId", data.student.nationalId);
+        }
+        if (data.student?.name) {
+          localStorage.setItem("studentName", data.student.name);
+        }
+        if (data.token) {
+          localStorage.setItem("studentToken", data.token);
         }
         localStorage.setItem("studentPhone", phone.trim());
 
@@ -155,11 +162,13 @@ export default function StudentLoginModal({
           onSuccess?.();
           onLoginSuccess?.();
           handleResetAndClose();
-          window.location.assign(data.redirectUrl || "/student/dashboard");
+
+          // انتقال هوشمند همراه با کدملی به داشبورد
+          const nationalIdParam = data.student?.nationalId ? `?nationalId=${encodeURIComponent(data.student.nationalId)}` : "";
+          window.location.assign((data.redirectUrl || "/student/dashboard") + nationalIdParam);
         }, 800);
       } else {
         setStatus("error");
-        // اینجا متن ارور سرور (از جمله پیام مسدودیت Rate Limit) مستقیماً دریافت و نمایش داده می‌شود
         setErrorMessage(
           data?.message || data?.error || "نام کاربری یا رمز عبور اشتباه است."
         );
@@ -299,12 +308,19 @@ export default function StudentLoginModal({
           if (loginData.student?.nationalId) {
             localStorage.setItem("studentNationalId", loginData.student.nationalId);
           }
+          if (loginData.student?.name) {
+            localStorage.setItem("studentName", loginData.student.name);
+          }
+          if (loginData.token) {
+            localStorage.setItem("studentToken", loginData.token);
+          }
           localStorage.setItem("studentPhone", forgotIdentifier.trim());
 
           setTimeout(() => {
             resetForgotPasswordState();
             onClose();
-            window.location.assign(loginData.redirectUrl || "/student/dashboard");
+            const nationalIdParam = loginData.student?.nationalId ? `?nationalId=${encodeURIComponent(loginData.student.nationalId)}` : "";
+            window.location.assign((loginData.redirectUrl || "/student/dashboard") + nationalIdParam);
           }, 1000);
         } else {
           setForgotStatus("error");

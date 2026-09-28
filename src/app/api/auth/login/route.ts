@@ -11,8 +11,9 @@ const loginAttemptsMap = new Map<string, { count: number; lockoutUntil: number }
 
 export async function POST(req: Request) {
   try {
-    // استخراج IP کاربر برای محدودسازی نرخ درخواست
-    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
+    // استخراج IP کاربر برای محدودسازی نرخ درخواست (پشتیبانی بهتر از پروکسی‌ها)
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : (req.headers.get("x-real-ip") || "127.0.0.1");
     const now = Date.now();
     const record = loginAttemptsMap.get(ip);
 
@@ -52,8 +53,9 @@ export async function POST(req: Request) {
       process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
     );
 
-    // تشخیص خودکار امن بودن پروتکل (جلوگیری از بلاک شدن کوکی در HTTP)
-    const isHttps = req.url.startsWith("https://");
+    // تشخیص دقیق پروتکل با استفاده از هدرهای پراکسی (مثل x-forwarded-proto)
+    const protoHeader = req.headers.get("x-forwarded-proto");
+    const isHttps = protoHeader ? protoHeader === "https" : req.url.startsWith("https://");
 
     // ----------------------------------------------------
     // ۱. بررسی ادمین کل (Admin) و حالت ثبت‌نام اولین ادمین
@@ -74,7 +76,7 @@ export async function POST(req: Request) {
         .setExpirationTime("7d")
         .sign(secret);
 
-      loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
+      loginAttemptsMap.delete(ip);
 
       const response = NextResponse.json({
         success: true,
@@ -105,7 +107,7 @@ export async function POST(req: Request) {
           .setExpirationTime("7d")
           .sign(secret);
 
-        loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
+        loginAttemptsMap.delete(ip);
 
         const response = NextResponse.json({
           success: true,
@@ -139,7 +141,7 @@ export async function POST(req: Request) {
           .setExpirationTime("7d")
           .sign(secret);
 
-        loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
+        loginAttemptsMap.delete(ip);
 
         const response = NextResponse.json({
           success: true,
@@ -184,7 +186,7 @@ export async function POST(req: Request) {
           .setExpirationTime("7d")
           .sign(secret);
 
-        loginAttemptsMap.delete(ip); // ریست کردن خطاها پس از موفقیت
+        loginAttemptsMap.delete(ip);
 
         const response = NextResponse.json({
           success: true,
@@ -197,25 +199,29 @@ export async function POST(req: Request) {
           message: "ورود با موفقیت انجام شد.",
         });
 
-        response.cookies.set("student_token", token, {
+        // تنظیم هم‌زمان کوکی اختصاصی و کوکی عمومیِ توکن (برای سازگاری با Middlewareها)
+        const cookieOptions = {
           httpOnly: true,
           secure: isHttps,
-          sameSite: "lax",
+          sameSite: "lax" as const,
           path: "/",
           maxAge: 60 * 60 * 24 * 7,
-        });
+        };
+
+        response.cookies.set("student_token", token, cookieOptions);
+        response.cookies.set("token", token, cookieOptions); // اضافه شده برای رفع مشکل احتمالی میدل‌ور
 
         return response;
       }
     }
 
-    // اگر ورود ناموفق بود، شمارنده خطای این IP را افزایش می‌دهیم
+    // اگر ورود ناموفق بود
     if (!record) {
       loginAttemptsMap.set(ip, { count: 1, lockoutUntil: 0 });
     } else {
       record.count += 1;
       if (record.count >= 5) {
-        record.lockoutUntil = now + 3 * 60 * 1000; // مسدود کردن به مدت ۳ دقیقه
+        record.lockoutUntil = now + 3 * 60 * 1000;
         record.count = 0;
       }
     }

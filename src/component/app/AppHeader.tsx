@@ -1,22 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  Menu, 
-  X, 
-  LogIn, 
-  UserPlus, 
+import {
+  Menu,
+  X,
+  LogIn,
+  UserPlus,
   User,
-  Trophy, 
-  Rocket, 
-  GraduationCap, 
+  Trophy,
+  Rocket,
+  GraduationCap,
   ChevronLeft,
+  ChevronDown,
+  LayoutDashboard,
   Sparkles,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import StudentLoginModal from "@/component/auth/StudentLoginModal";
 import StudentRegisterModal from "@/component/auth/StudentRegisterModal";
@@ -25,7 +27,7 @@ interface AppHeaderProps {
   onMenuClick?: () => void;
   isLoggedIn?: boolean;
   studentName?: string;
-  onLogout?: () => void;
+  onLogout?: () => void | Promise<void>;
   onOpenLoginModal?: () => void;
 }
 
@@ -41,9 +43,20 @@ export default function AppHeader({
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const [isLoggedIn, setIsLoggedIn] = useState(initialIsLoggedIn);
   const [studentName, setStudentName] = useState(initialStudentName || "");
+
+  const propsRef = useRef({
+    loggedIn: initialIsLoggedIn,
+    name: initialStudentName || "",
+  });
+  propsRef.current = {
+    loggedIn: initialIsLoggedIn,
+    name: initialStudentName || "",
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,11 +66,13 @@ export default function AppHeader({
       const studentNationalId = localStorage.getItem("studentNationalId");
       const storedName = localStorage.getItem("studentName");
 
-      const loggedIn = Boolean(studentPhone || studentNationalId);
+      const loggedIn =
+        Boolean(studentPhone || studentNationalId) || propsRef.current.loggedIn;
       setIsLoggedIn(loggedIn);
 
-      if (loggedIn && storedName) {
-        setStudentName(storedName);
+      if (loggedIn) {
+        const name = storedName || propsRef.current.name;
+        setStudentName(name === "دانش‌آموز" ? "" : name);
       } else {
         setStudentName("");
       }
@@ -66,7 +81,6 @@ export default function AppHeader({
     checkAuthStatus();
     window.addEventListener("storage", checkAuthStatus);
 
-    // مدیریت کش سافاری آیفون (bfcache) در زمان بازگشت به صفحه
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
         checkAuthStatus();
@@ -81,13 +95,34 @@ export default function AppHeader({
       window.removeEventListener("pageshow", handlePageShow);
       clearInterval(interval);
     };
-  }, [initialIsLoggedIn]);
+  }, []);
 
   useEffect(() => {
     if (initialIsLoggedIn !== undefined) {
-      setIsLoggedIn(initialIsLoggedIn);
+      const hasLocal =
+        typeof window !== "undefined" &&
+        Boolean(
+          localStorage.getItem("studentPhone") ||
+            localStorage.getItem("studentNationalId")
+        );
+      setIsLoggedIn(initialIsLoggedIn || hasLocal);
     }
   }, [initialIsLoggedIn]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [isProfileMenuOpen]);
 
   const toggleDrawer = () => {
     if (onMenuClick) {
@@ -106,23 +141,16 @@ export default function AppHeader({
 
   const handleLoginSuccess = () => {
     setIsLoginOpen(false);
-    setIsLoggedIn(true);
-    
     const studentPhone = localStorage.getItem("studentPhone");
     const studentNationalId = localStorage.getItem("studentNationalId");
     setIsLoggedIn(Boolean(studentPhone || studentNationalId));
 
     const storedName = localStorage.getItem("studentName");
     if (storedName) setStudentName(storedName);
-
-    router.push("/student/dashboard");
-    router.refresh();
   };
 
   const handleRegisterSuccess = () => {
     setIsRegisterOpen(false);
-    setIsLoggedIn(true);
-
     const studentPhone = localStorage.getItem("studentPhone");
     const studentNationalId = localStorage.getItem("studentNationalId");
     setIsLoggedIn(Boolean(studentPhone || studentNationalId));
@@ -130,32 +158,58 @@ export default function AppHeader({
     const storedName = localStorage.getItem("studentName");
     if (storedName) setStudentName(storedName);
 
-    router.push("/student/dashboard");
-    router.refresh();
+    const nationalId = typeof window !== "undefined" ? localStorage.getItem("studentNationalId") : null;
+    if (nationalId) {
+      router.push(`/student/dashboard?nationalId=${encodeURIComponent(nationalId)}`);
+    } else {
+      router.push("/student/dashboard");
+    }
   };
 
-  const handleLogoutClick = () => {
+  // ورود به پنل با ارسال هوشمند کدملی برای حل مشکل خطای 401 در اپلیکیشن و PWA
+  const handleEnterPanel = () => {
+    setIsProfileMenuOpen(false);
     setIsDrawerOpen(false);
+
+    const nationalId = typeof window !== "undefined" ? localStorage.getItem("studentNationalId") : null;
+    
+    if (nationalId) {
+      router.push(`/student/dashboard?nationalId=${encodeURIComponent(nationalId)}`);
+    } else {
+      router.push("/student/dashboard");
+    }
+  };
+
+  const handleLogoutClick = async () => {
+    setIsProfileMenuOpen(false);
+    setIsDrawerOpen(false);
+
+    try {
+      if (onLogout) {
+        await onLogout();
+      } else {
+        await fetch("/api/auth/student/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
+    [
+      "studentPhone",
+      "studentNationalId",
+      "studentName",
+      "studentToken",
+      "token",
+    ].forEach((k) => localStorage.removeItem(k));
+
     setIsLoggedIn(false);
     setStudentName("");
-    
-    // پاک کردن اطلاعات از حافظه مرورگر
-    localStorage.removeItem("studentPhone");
-    localStorage.removeItem("studentNationalId");
-    localStorage.removeItem("studentName");
-    localStorage.removeItem("studentToken");
-    localStorage.removeItem("token");
-    
-    if (typeof window !== "undefined") {
-      sessionStorage.clear();
-    }
 
-    if (onLogout) {
-      onLogout();
-    }
-
-    // استفاده از window.location.href برای جلوگیری از بارگذاری صفحه از کش آیفون
-    window.location.href = "/";
+    const inPreview = window.location.pathname.startsWith("/app-preview");
+    window.location.href = inPreview ? "/app-preview" : `/${window.location.search}`;
   };
 
   return (
@@ -181,18 +235,45 @@ export default function AppHeader({
 
         <div className="flex items-center gap-2">
           {isMounted && isLoggedIn ? (
-            <button
-              onClick={() => router.push('/student/dashboard')}
-              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-[#0d52b5] active:scale-95 transition-all flex items-center gap-2 shadow-sm font-[iranBold] text-xs border border-white"
-              title="مشاهده پروفایل"
-            >
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <User className="w-3.5 h-3.5 text-[#0d52b5]" />
-              </div>
-              <span className="whitespace-nowrap">
-                {studentName ? studentName : "مشاهده پروفایل"}
-              </span>
-            </button>
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                onClick={() => setIsProfileMenuOpen((p) => !p)}
+                className="flex items-center gap-1 p-1.5 pr-2 rounded-full bg-white text-[#0d52b5] active:scale-95 transition-all shadow-sm border border-white"
+                aria-label="منوی کاربر"
+                aria-expanded={isProfileMenuOpen}
+              >
+                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="w-4 h-4 text-[#0d52b5]" />
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform ${isProfileMenuOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {isProfileMenuOpen && (
+                <div className="absolute left-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                  {studentName && (
+                    <div className="px-4 py-2.5 border-b border-slate-100 text-[11px] text-slate-500 font-[iranBold] truncate">
+                      {studentName}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleEnterPanel}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-[iranBold] text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-[#0d52b5]" />
+                    ورود به پنل
+                  </button>
+                  <button
+                    onClick={handleLogoutClick}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-[iranBold] text-rose-600 hover:bg-rose-50 active:bg-rose-100 transition-colors border-t border-slate-100"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    خروج
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <button
@@ -203,7 +284,7 @@ export default function AppHeader({
               >
                 <LogIn className="w-4 h-4 text-white" />
               </button>
-              
+
               <button
                 onClick={() => setIsRegisterOpen(true)}
                 className="p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/15 active:scale-95 transition-all flex items-center justify-center"
@@ -272,19 +353,16 @@ export default function AppHeader({
                       </div>
                       <div>
                         <span className="text-xs font-[iranBold] text-slate-800 block">
-                          {studentName || 'دانش‌آموز'}
+                          {studentName || "دانش‌آموز"}
                         </span>
                         <span className="text-[10px] text-emerald-600 font-[iranBold] block">وارد شده‌اید</span>
                       </div>
                     </div>
                     <button
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        router.push('/student/dashboard');
-                      }}
+                      onClick={handleEnterPanel}
                       className="text-xs text-[#0d52b5] font-[iranBold] bg-white px-2.5 py-1 rounded-xl border border-blue-200 shadow-sm"
                     >
-                      پروفایل
+                      ورود به پنل
                     </button>
                   </div>
                 ) : (

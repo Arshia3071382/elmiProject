@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import AppHome from '@/component/app/AppHome'
 import AppHeader from '@/component/app/AppHeader'
 import AppCountdownBanner from '@/component/app/AppCountdownBanner'
-import AppStories from '@/component/app/AppStories' // ۱. ایمپورت استوری‌ها
+import AppStories from '@/component/app/AppStories'
 import AppQuickActions from '@/component/app/AppQuickActions'
 import AppLeagueCard from '@/component/app/AppLeagueCard'
 import AppQuickAccess from '@/component/app/AppQuickAccess'
@@ -130,7 +130,6 @@ export default function AppPreviewPage() {
     setIsLoginModalOpen(false)
     setIsLoggedIn(true)
     fetchUserData()
-    router.refresh()
   }
 
   const handleLogout = async () => {
@@ -152,7 +151,6 @@ export default function AppPreviewPage() {
     keysToRemove.forEach(key => localStorage.removeItem(key))
 
     handleLoggedOutState()
-    router.refresh()
   }
 
   return (
@@ -187,7 +185,6 @@ export default function AppPreviewPage() {
                   imageSrc="/image/appHero.jpg"
                 />
 
-                {/* ۲. اضافه‌شدن استوری‌ها دقیقا زیر بنر شمارش معکوس */}
                 <AppStories />
 
                 <AppQuickActions
@@ -228,7 +225,7 @@ export default function AppPreviewPage() {
                     if (!isLoggedIn) {
                       setIsLoginModalOpen(true)
                     } else {
-                      router.push('/student/dashboard')
+                      router.push('/student/dashboard') // اصلاح شده به router.push
                     }
                   }
                 }}

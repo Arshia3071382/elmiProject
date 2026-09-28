@@ -11,30 +11,8 @@ export const dynamic = "force-dynamic";
 
 function normalizeNationalId(id: string): string {
   if (!id) return "";
-  const persianNumbers = [
-    /۰/g,
-    /۱/g,
-    /۲/g,
-    /۳/g,
-    /۴/g,
-    /۵/g,
-    /۶/g,
-    /۷/g,
-    /۸/g,
-    /۹/g,
-  ];
-  const arabicNumbers = [
-    /٠/g,
-    /١/g,
-    /٢/g,
-    /٣/g,
-    /٤/g,
-    /٥/g,
-    /٦/g,
-    /٧/g,
-    /٨/g,
-    /٩/g,
-  ];
+  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
 
   let normalized = id.trim();
   for (let i = 0; i < 10; i++) {
@@ -49,48 +27,55 @@ export async function GET(req: Request) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const queryNationalId = searchParams.get("nationalId");
+    
+    // دریافت کدملی از Query Parameter (مفید برای اپلیکیشن‌ها و PWA که کوکی ارسال نمی‌کنند)
+    const queryNationalId = searchParams.get("nationalId") || req.headers.get("x-student-nationalid");
 
     const cookieStore = await cookies();
     const token =
+      cookieStore.get("student_token") ||
       cookieStore.get("token") ||
-      cookieStore.get("studentToken") ||
-      cookieStore.get("student_token");
+      cookieStore.get("studentToken");
 
     let student = null;
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || "your-very-secure-secret-key-12345"
+    );
 
+    // ۱. بررسی از طریق توکن کوکی
     if (token && token.value) {
       try {
-        const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET || "your-very-secure-secret-key-12345",
-        );
         const { payload } = await jwtVerify(token.value, secret);
-        const studentId = (payload.userId ||
-          payload.id ||
-          payload.sub) as string;
+        const studentId = (payload._id || payload.studentId || payload.userId || payload.id || payload.nationalId || payload.sub) as string;
 
         if (studentId) {
-          student = await Student.findById(studentId);
+          if (studentId.length !== 24) {
+            student = await Student.findOne({ nationalId: normalizeNationalId(studentId) });
+          } else {
+            student = await Student.findById(studentId);
+          }
         }
       } catch (e) {
         const rawTokenVal = token.value;
         if (rawTokenVal.length === 24) {
-          student = await Student.findById(rawTokenVal);
-        } else {
+          student = await Student.findById(rawTokenVal).catch(() => null);
+        }
+        if (!student) {
           student = await Student.findOne({
             nationalId: normalizeNationalId(rawTokenVal),
-          });
+          }).catch(() => null);
         }
       }
     }
 
+    // ۲. بررسی جایگزین از طریق کدملی مستقیم (ارسال شده از اپلیکیشن)
     if (!student && queryNationalId) {
       const cleanQueryId = normalizeNationalId(queryNationalId);
       student = await Student.findOne({ nationalId: cleanQueryId });
       if (!student) {
         const allStudents = await Student.find({});
         student = allStudents.find(
-          (s) => normalizeNationalId(s.nationalId) === cleanQueryId,
+          (s) => normalizeNationalId(s.nationalId) === cleanQueryId
         );
       }
     }
@@ -98,7 +83,7 @@ export async function GET(req: Request) {
     if (!student) {
       return NextResponse.json(
         { success: false, error: "دسترسی غیرمجاز یا کاربر یافت نشد." },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -116,7 +101,7 @@ export async function GET(req: Request) {
       if (!gradeRecord) {
         const allGradeStudents = await GradeStudent.find({});
         gradeRecord = allGradeStudents.find(
-          (gs) => normalizeNationalId(gs.nationalId) === cleanStudentNationalId,
+          (gs) => normalizeNationalId(gs.nationalId) === cleanStudentNationalId
         );
       }
 
@@ -131,11 +116,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // اگر کاربر در لیگ نخبگان (GradeStudent) ثبت‌نام نشده باشد
     const hasLeagueRegistration = Boolean(gradeRecord);
-
-    // تعیین پایه: اولویت با اطلاعات جدول لیگ است، در غیر این صورت پایه ثبت‌شده روی خود پروفایل دانش‌آموز
-    // (دیگر نیازی به فیلتر کردن دستی عدد ۷ نیست، چون سیستم ثبت‌نام دیگر مقدار جعلی برای grade نمی‌گذارد)
     const grade = gradeRecord?.grade || student.grade || null;
     const totalScore = gradeRecord?.totalScore || 0;
 
@@ -152,20 +133,19 @@ export async function GET(req: Request) {
 
       if (gradeRecord && gradeRecord._id) {
         userIndex = sameGradeStudents.findIndex(
-          (s) => s._id.toString() === gradeRecord._id.toString(),
+          (s) => s._id.toString() === gradeRecord._id.toString()
         );
       }
 
       if (userIndex === -1 && student._id) {
         userIndex = sameGradeStudents.findIndex(
-          (s) =>
-            s.studentId && s.studentId.toString() === student._id.toString(),
+          (s) => s.studentId && s.studentId.toString() === student._id.toString()
         );
       }
 
       if (userIndex === -1 && cleanStudentNationalId) {
         userIndex = sameGradeStudents.findIndex(
-          (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId,
+          (s) => normalizeNationalId(s.nationalId) === cleanStudentNationalId
         );
       }
 
@@ -175,9 +155,7 @@ export async function GET(req: Request) {
         if (userIndex > 0) {
           const higher = sameGradeStudents[userIndex - 1];
           higherStudent = {
-            name:
-              `${higher.firstName || ""} ${higher.lastName || ""}`.trim() ||
-              "دانش‌آموز برتر",
+            name: `${higher.firstName || ""} ${higher.lastName || ""}`.trim() || "دانش‌آموز برتر",
             score: higher.totalScore || 0,
           };
         }
@@ -185,9 +163,7 @@ export async function GET(req: Request) {
         if (userIndex < sameGradeStudents.length - 1) {
           const lower = sameGradeStudents[userIndex + 1];
           lowerStudent = {
-            name:
-              `${lower.firstName || ""} ${lower.lastName || ""}`.trim() ||
-              "دانش‌آموز",
+            name: `${lower.firstName || ""} ${lower.lastName || ""}`.trim() || "دانش‌آموز",
             score: lower.totalScore || 0,
           };
         }
@@ -212,7 +188,7 @@ export async function GET(req: Request) {
         }).sort({ score: -1 });
 
         const eliteIndex = sameCategoryElite.findIndex(
-          (e) => e._id.toString() === eliteRecord._id.toString(),
+          (e) => e._id.toString() === eliteRecord._id.toString()
         );
 
         const eliteRank = eliteIndex !== -1 ? eliteIndex + 1 : 0;
@@ -248,7 +224,6 @@ export async function GET(req: Request) {
               ? student.avatar
               : "/image/profile/p2.png",
         },
-        // اگر ثبت‌نام نکرده باشد، gradeLeague مقدار null برمی‌گردد
         gradeLeague: hasLeagueRegistration
           ? {
               score: totalScore,
@@ -277,7 +252,7 @@ export async function GET(req: Request) {
     console.error("Dashboard API Error:", err);
     return NextResponse.json(
       { success: false, error: err.message },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
