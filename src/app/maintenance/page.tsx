@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,10 +11,10 @@ export default function ServerMaintenancePage() {
         {/* تصویر لِگوی تعمیرات سرور (ریسپانسیو برای موبایل و دسکتاپ) */}
         <div className="relative w-full h-56 sm:h-80 mb-5 sm:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-inner border border-slate-100 bg-slate-900">
           <Image
-            src="/image/c2.jpg" // تصویر لگویی که فرستادید
+            src="/image/server-maintenance.jpg" // تصویر لگویی که فرستادید
             alt="قطعی سرور و بروزرسانی"
             fill
-            className="object-contain" // استفاده از contain تا تمام اجزای عکس لگو کاملاً مشخص باشد
+            className="object-contain"
             priority
           />
         </div>
