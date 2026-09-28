@@ -15,7 +15,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     fetch(event.request).catch(() => {
-      // اگر ارتباط با شبکه برقرار نشد (اینترنت کاربر قطع است)
+      // اگر اینترنت کاربر قطع شد
       if (event.request.headers.get('accept')?.includes('text/html')) {
         return new Response(
           `<!DOCTYPE html>
@@ -23,14 +23,13 @@ self.addEventListener('fetch', (event) => {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>قطع ارتباط با شبکه</title>
-            <!-- فونت وزیرمتن برای خوانایی و زیبایی استاندارد -->
+            <title>اینترنت پرید!</title>
             <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
             <style>
               body { 
                 font-family: 'Vazirmatn', Tahoma, sans-serif; 
-                background: #f8fafc; 
-                color: #1e293b; 
+                background: #0f172a; 
+                color: #f8fafc; 
                 display: flex; 
                 justify-content: center; 
                 align-items: center; 
@@ -40,71 +39,105 @@ self.addEventListener('fetch', (event) => {
                 text-align: center; 
               }
               .box { 
-                background: white; 
+                background: #1e293b; 
                 padding: 30px 24px; 
-                border-radius: 20px; 
-                box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.08); 
-                max-width: 420px; 
+                border-radius: 24px; 
+                box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3); 
+                max-width: 400px; 
                 width: 100%; 
-                border: 1px solid #e2e8f0;
+                border: 1px solid #334155;
+              }
+              .img-container {
+                width: 100%;
+                height: 180px;
+                border-radius: 14px;
+                margin-bottom: 20px;
+                background: #0f172a;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                border: 1px solid #334155;
               }
               img {
                 width: 100%;
-                height: auto;
-                max-height: 180px;
+                height: 100%;
                 object-fit: contain;
-                border-radius: 12px;
-                margin-bottom: 20px;
-                background: #0f172a;
-                padding: 10px;
+              }
+              .offline-icon {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: #f87171;
               }
               .badge {
                 display: inline-block;
-                background: #fef2f2;
-                color: #dc2626;
+                background: rgba(239, 68, 68, 0.15);
+                color: #f87171;
                 padding: 6px 16px;
                 border-radius: 50px;
-                font-size: 0.85rem;
-                font-weight: 600;
+                font-size: 0.8rem;
+                font-weight: bold;
                 margin-bottom: 14px;
-                border: 1px solid #fee2e2;
+                border: 1px solid rgba(239, 68, 68, 0.3);
               }
               h1 { 
                 font-size: 1.25rem; 
                 margin: 0 0 10px 0; 
-                color: #1e293b; 
-                font-weight: 700;
+                color: #f1f5f9; 
               }
               p { 
-                font-size: 0.95rem; 
-                color: #64748b; 
+                font-size: 0.9rem; 
+                color: #94a3b8; 
                 margin-bottom: 24px; 
                 line-height: 1.6;
               }
               button { 
-                background: #0f172a; 
+                background: #3b82f6; 
                 color: white; 
                 border: none; 
                 padding: 12px 24px; 
-                border-radius: 12px; 
+                border-radius: 14px; 
                 cursor: pointer; 
                 font-size: 0.95rem; 
-                font-weight: 600;
+                font-weight: bold;
                 width: 100%;
-                transition: background 0.2s;
+                transition: all 0.2s;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
                 font-family: 'Vazirmatn', sans-serif;
               }
-              button:hover { background: #1e293b; }
+              button:hover { 
+                background: #2563eb; 
+                transform: translateY(-1px);
+              }
             </style>
           </head>
           <body>
             <div class="box">
-              <!-- استفاده از تصویر جایگزین پایدار برای حالت آفلاین -->
-              <img src="/image/c3.jpg" alt="قطع ارتباط اینترنت" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ffffff\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M1 1l22 22\'/><path d=\'M16.72 11.06A10.94 10.94 0 0 1 19 12.55\'/><path d=\'M5 12.55a10.94 10.94 0 0 1 5.17-2.39\'/><path d=\'M10.71 5.05A16 16 0 0 1 22.58 9\'/><path d=\'M1.42 9a15.91 15.91 0 0 1 4.7-2.88\'/><path d=\'M8.53 16.11a6 6 0 0 1 6.95 0\'/><line x1=\'12\' y1=\'20\' x2=\'12.01\' y2=\'20\'/></svg>';">
-              <div class="badge">⚠️ عدم دسترسی به شبکه</div>
-              <h1>ارتباط با اینترنت برقرار نیست</h1>
-              <p>در حال حاضر اتصال شما به اینترنت قطع می‌باشد. لطفاً پس از بررسی وضعیت شبکه و تجهیزات خود، مجدداً تلاش فرمایید.</p>
-              <button onclick="window.location.reload()">تلاش مجدد و بروزرسانی صفحه</button>
+              <div class="img-container">
+                <!-- تلاش برای بارگذاری عکس اصلی، اگر نبود آیکون جایگزین می‌شود -->
+                <img src="/image/c3.jpg" alt="قطعی اینترنت" onerror="this.style.display='none'; document.getElementById('fallback-icon').style.display='flex';">
+                
+                <!-- آیکون جایگزین قطعی نت در صورت عدم وجود تصویر -->
+                <div id="fallback-icon" class="offline-icon" style="display: none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                    <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                  </svg>
+                  <span style="font-size: 11px; margin-top: 6px; color: #94a3b8;">سیگنال گم شد!</span>
+                </div>
+              </div>
+
+              <div class="badge">🔌 سیم‌ها رو جویدن؟!</div>
+              <h1>اینترنت پر کشید!</h1>
+              <p>انگار کابل‌ها باهات قهر کردن یا مودم خوابش برده. یه نگاهی بهش بنداز، شاید بیدار شد!</p>
+              <button onclick="window.location.reload()">جانِ من دوباره امتحان کن</button>
             </div>
           </body>
           </html>`,
