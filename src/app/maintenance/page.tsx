@@ -2,21 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function ServerMaintenancePage() {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="min-h-screen bg-white mt-10 sm:mt-25 flex flex-col items-center justify-center p-4 sm:p-6 text-center font-sans" dir="rtl">
       <div className="max-w-xl w-full bg-slate-50 border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm flex flex-col items-center">
         
-        {/* تصویر لِگوی تعمیرات سرور (ریسپانسیو برای موبایل و دسکتاپ) */}
-        <div className="relative w-full h-56 sm:h-80 mb-5 sm:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-inner border border-slate-100 bg-slate-900">
-          <Image
-            src="/image/server-maintenance.jpg" // تصویر لگویی که فرستادید
-            alt="قطعی سرور و بروزرسانی"
-            fill
-            className="object-contain"
-            priority
-          />
+        {/* تصویر لِگوی تعمیرات سرور با تضمین نمایش */}
+        <div className="relative w-full h-56 sm:h-80 mb-5 sm:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-inner border border-slate-100 bg-slate-900 flex items-center justify-center">
+          {!imgError ? (
+            <Image
+              src="/image/c2.jpg"
+              alt="قطعی سرور و بروزرسانی"
+              fill
+              unoptimized // برای جلوگیری از خطاهای پردازش تصویر در زمان مشکلات سرور
+              className="object-contain"
+              priority
+              onError={() => setImgError(true)} // اگر به هر دلیلی عکس لود نشد، حالت جایگزین فعال شود
+            />
+          ) : (
+            // حالت جایگزین در صورت لود نشدن عکس اصلی
+            <div className="flex flex-col items-center justify-center text-slate-400 p-4">
+              <span className="text-5xl mb-2">🛠️</span>
+              <span className="text-sm font-medium">در حال تعمیر و بروزرسانی سرور</span>
+            </div>
+          )}
         </div>
 
         {/* برچسب هشدار قطعی سرور */}
