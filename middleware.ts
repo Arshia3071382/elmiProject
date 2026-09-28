@@ -4,6 +4,24 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ۱. بررسی حالت قطعی و بروزرسانی سرور (Maintenance Mode)
+  const isMaintenanceMode = process.env.MAINTENANCE_MODE === "true";
+
+  if (isMaintenanceMode) {
+    // اجازه دسترسی آزاد به صفحه تعمیرات، فایل‌های استاتیک و پوشه تصاویر برای لود شدن عکس لِگو
+    if (
+      pathname.startsWith("/maintenance") ||
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/image") ||
+      pathname.startsWith("/favicon.ico")
+    ) {
+      return NextResponse.next();
+    }
+
+    // هدایت تمام درخواست‌های سایت به صفحه تعمیرات
+    return NextResponse.rewrite(new URL("/maintenance", request.url));
+  }
+
   // استخراج دقیق و مستقل توکن‌ها (جلوگیری از نفوذ متقابل نقش‌ها)
   const adminToken = request.cookies.get("admin_token")?.value;
   const seniorAdminToken = 
@@ -50,13 +68,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin",
-    "/admin/:path*", 
-    "/senior-admin", 
-    "/senior-admin/:path*", 
-    "/teacher",
-    "/teacher/:path*",
-    "/student",
-    "/student/:path*"
+    /* بررسی کل مسیرهای سایت برای اعمال حالت تعمیرات و حفظ امنیت پنل‌ها */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
