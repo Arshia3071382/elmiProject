@@ -1,7 +1,7 @@
 // Notice card component
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Calendar, CheckCircle2, Eye, X } from "lucide-react";
@@ -23,6 +23,18 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
 
   // ایمن‌سازی لینک تصویر برای جلوگیری از خطای کاراکترهای خاص و فاصله روی VPS
   const safeNoticeImage = notice.image ? encodeURI(notice.image.trim()) : "";
+
+  // قفل کردن اسکرول صفحه هنگام باز شدن مودال (به‌ویژه برای آیفون و موبایل)
+  useEffect(() => {
+    if (showImageModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showImageModal]);
 
   return (
     <>
@@ -160,17 +172,32 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowImageModal(false)}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+            className="fixed inset-0 z-[99999] bg-white/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-3 md:p-6 cursor-pointer overflow-hidden"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-2xl w-full max-h-[90vh] overflow-hidden rounded-2xl bg-white p-3 shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative max-w-2xl w-full max-h-[92vh] flex flex-col rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/60 dark:border-white/10 p-4 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className={`relative w-full overflow-hidden rounded-xl bg-gray-100 ${
-                isHorizontal ? "h-[50vh]" : "h-[75vh]"
+              {/* Header inside modal (Title & Close Button on top) */}
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200/60 dark:border-white/10 shrink-0">
+                <h4 className="text-sm md:text-base font-bold text-slate-900 dark:text-white truncate px-1" style={{ fontFamily: "iranBold" }}>
+                  {notice.title}
+                </h4>
+                <button
+                  onClick={() => setShowImageModal(false)}
+                  className="bg-slate-100 hover:bg-slate-200 dark:bg-white/20 dark:hover:bg-white/30 text-slate-700 dark:text-white p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  aria-label="بستن"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Image Container */}
+              <div className={`relative w-full overflow-hidden rounded-2xl bg-slate-100 dark:bg-black/40 flex-1 min-h-[50vh] ${
+                isHorizontal ? "h-[50vh]" : "h-[65vh]"
               }`}>
                 <Image
                   src={safeNoticeImage}
@@ -179,17 +206,6 @@ export default function NoticeCard({ notice, index, onMarkAsRead }: NoticeCardPr
                   unoptimized // <--- جلوگیری از خطای لایت‌باکس روی VPS
                   className="object-contain"
                 />
-              </div>
-              <div className="mt-3 flex items-center justify-between px-2">
-                <h4 className="text-sm font-bold text-slate-800 truncate" style={{ fontFamily: "iranBold" }}>
-                  {notice.title}
-                </h4>
-                <button
-                  onClick={() => setShowImageModal(false)}
-                  className="bg-gray-100 hover:bg-gray-200 text-slate-700 p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
             </motion.div>
           </motion.div>

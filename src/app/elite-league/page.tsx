@@ -194,7 +194,7 @@ export default function EliteLeaguePublicPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-600 mb-4 border border-amber-200 shadow-inner">
                 <Trophy className="w-8 h-8" />
               </div>
-              <h1 className="text-2.5xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3 font-iranBold flex items-center justify-center gap-2 flex-wrap">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3 font-iranBold flex items-center justify-center gap-2 flex-wrap">
                 <span className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(217,119,6,0.2)] py-2 px-1">
                   لیگ نخبگان علمی
                 </span>
