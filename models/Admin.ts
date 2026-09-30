@@ -12,6 +12,10 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    securityPin: {
+      type: String,
+      default: "", 
+    },
     role: {
       type: String,
       default: "admin",
