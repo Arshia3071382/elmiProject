@@ -10,6 +10,7 @@ interface AdminSecurityModalProps {
 }
 
 export default function AdminSecurityModal({ isOpen, onSuccess, onClose }: AdminSecurityModalProps) {
+  // Internal state — all managed inside this component
   const [securityCode, setSecurityCode] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,15 +34,23 @@ export default function AdminSecurityModal({ isOpen, onSuccess, onClose }: Admin
 
       if (res.ok && data.success) {
         setSecurityCode("");
-        onSuccess(); // باز کردن بخش مورد نظر
+        setShowCode(false);
+        onSuccess();
       } else {
         setErrorMsg(data.message || "خطا در احراز هویت");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("خطا در ارتباط با سرور");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    setSecurityCode("");
+    setShowCode(false);
+    setErrorMsg("");
+    onClose();
   };
 
   return (
@@ -76,6 +85,7 @@ export default function AdminSecurityModal({ isOpen, onSuccess, onClose }: Admin
                 value={securityCode}
                 onChange={(e) => setSecurityCode(e.target.value)}
                 required
+                maxLength={8}
                 className="w-full pl-10 pr-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono tracking-widest"
                 placeholder="••••••••"
               />
@@ -99,7 +109,7 @@ export default function AdminSecurityModal({ isOpen, onSuccess, onClose }: Admin
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition font-bold text-sm cursor-pointer"
             >
               انصراف
