@@ -50,11 +50,15 @@ const CHECKLIST_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
+interface ChecklistManagementPanelProps {
+  onShowMessage: (type: "success" | "error", text: string) => void;
+  username: string; // دریافت نام کاربری معین
+}
+
 export default function ChecklistManagementPanel({
   onShowMessage,
-}: {
-  onShowMessage: (type: "success" | "error", text: string) => void;
-}) {
+  username,
+}: ChecklistManagementPanelProps) {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [activeSubTab, setActiveSubTab] = useState<"create" | "archive">("create");
 
@@ -77,20 +81,26 @@ export default function ChecklistManagementPanel({
     setTimeout(() => setLocalMessage(null), 4000);
   };
 
+  // ساخت کلید منحصر به فرد برای هر معین در localStorage
+  const storageKey = `admin_checklists_v2_${username}`;
+
   useEffect(() => {
-    const saved = localStorage.getItem("admin_checklists_v2");
+    if (!username) return;
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         setItems(JSON.parse(saved));
       } catch (e) {
         console.error(e);
       }
+    } else {
+      setItems([]); // اگر معین جدیدی بود، لیست خالی باشد
     }
-  }, []);
+  }, [username, storageKey]);
 
   const saveItems = (updated: ChecklistItem[]) => {
     setItems(updated);
-    localStorage.setItem("admin_checklists_v2", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -126,7 +136,7 @@ export default function ChecklistManagementPanel({
     saveItems([newItem, ...items]);
     setTitle("");
     setStudentName("");
-    showLocalMessage("success", "چک‌‌لیست با موفقیت ثبت و به بایگانی اضافه شد.");
+    showLocalMessage("success", "چک‌لیست با موفقیت ثبت و به بایگانی اضافه شد.");
     setActiveSubTab("archive");
   };
 
@@ -201,10 +211,10 @@ export default function ChecklistManagementPanel({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-black text-slate-800">
-            مدیریت چک‌لیست‌های کلاس
+            مدیریت چک‌لیست‌های اختصاصی ({username})
           </h3>
           <p className="text-xs text-slate-500 mt-1">
-            ثبت و پیگیری سریع نکات کلاس در چهار دسته‌بندی اصلی.
+            ثبت و پیگیری نکات کلاس مخصوص حساب کاربری شما.
           </p>
         </div>
 
@@ -227,7 +237,7 @@ export default function ChecklistManagementPanel({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            بایگانی ({items.length})
+            بایگانی من ({items.length})
           </button>
         </div>
       </div>
@@ -411,7 +421,7 @@ export default function ChecklistManagementPanel({
               <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                 <Archive className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-600">
-                  هیچ موردی در بایگانی یافت نشد
+                  هیچ موردی در بایگانی شما یافت نشد
                 </p>
                 <p className="text-[11px] text-slate-400 mt-1">
                   می‌توانید از تب «ثبت نکته جدید»، مورد جدید اضافه کنید.
@@ -498,7 +508,7 @@ export default function ChecklistManagementPanel({
         </div>
       )}
 
-      {/* نمایش پیام موفقیت یا خطا به صورت شناور در پایین سمت راست صفحه */}
+      {/* پیام موفقیت/خطا شناور در پایین سمت راست */}
       {localMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce">
           <div

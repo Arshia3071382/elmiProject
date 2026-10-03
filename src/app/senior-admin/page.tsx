@@ -212,7 +212,10 @@ export default function SeniorAdminDashboard() {
             </div>
           ) : activeTab === "checklist" ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-4 md:p-6 shadow-sm">
-              <ChecklistManagementPanel onShowMessage={handleShowMessage} />
+              <ChecklistManagementPanel
+                onShowMessage={handleShowMessage}
+                username={user?.username || "default_admin"}
+              />
             </div>
           ) : (
             <div className="space-y-6">

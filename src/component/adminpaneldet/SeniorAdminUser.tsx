@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Shield, Check, Save, Trophy, Calendar, Bell, BookOpen, MessageSquare, UserCheck, UserPlus, Key, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Shield, Check, Save, Trophy, Calendar, Bell, BookOpen, MessageSquare, UserCheck, UserPlus, Key, Loader2, AlertCircle, CheckCircle2, Trash2, Edit3, X } from "lucide-react";
 
 interface SeniorAdmin {
   _id?: string;
@@ -23,6 +23,7 @@ export default function SeniorAdminUser() {
   const [admins, setAdmins] = useState<SeniorAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingUsername, setSavingUsername] = useState<string | null>(null);
+  const [deletingUsername, setDeletingUsername] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // فرم ایجاد معین ارشد جدید
@@ -30,6 +31,12 @@ export default function SeniorAdminUser() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // مدیریت حالت مودال ویرایش
+  const [editingAdmin, setEditingAdmin] = useState<SeniorAdmin | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -127,6 +134,79 @@ export default function SeniorAdminUser() {
     }
   };
 
+  // قابلیت حذف معین ارشد
+  const handleDeleteAdmin = async (targetUsername: string) => {
+    if (!confirm(`آیا از حذف حساب معین ارشد (${targetUsername}) اطمینان دارید؟ این عمل غیرقابل بازگشت است.`)) {
+      return;
+    }
+
+    setDeletingUsername(targetUsername);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`/api/senior-admin/manage-permissions?username=${encodeURIComponent(targetUsername)}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: "success", text: `حساب معین ارشد (${targetUsername}) با موفقیت حذف شد.` });
+        setAdmins((prev) => prev.filter((a) => a.username !== targetUsername));
+      } else {
+        setMessage({ type: "error", text: data.error || "خطا در حذف معین ارشد." });
+      }
+    } catch {
+      setMessage({ type: "error", text: "خطا در ارتباط با سرور جهت حذف." });
+    } finally {
+      setDeletingUsername(null);
+    }
+  };
+
+  // باز کردن مودال ویرایش
+  const handleOpenEditModal = (admin: SeniorAdmin) => {
+    setEditingAdmin(admin);
+    setEditName(admin.name || "");
+    setEditPassword("");
+  };
+
+  // ذخیره اطلاعات ویرایش شده
+  const handleUpdateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdmin) return;
+
+    setUpdating(true);
+    setMessage(null);
+
+    try {
+      const payload: any = {
+        username: editingAdmin.username,
+        name: editName.trim(),
+      };
+      if (editPassword) {
+        payload.password = editPassword;
+      }
+
+      const res = await fetch("/api/senior-admin/manage-permissions", {
+        method: "PATCH", // یا PUT بسته به انطباق با بک‌اند
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: "success", text: `اطلاعات معین (${editingAdmin.username}) با موفقیت ویرایش شد.` });
+        setEditingAdmin(null);
+        fetchAdmins();
+      } else {
+        setMessage({ type: "error", text: data.error || "خطا در ویرایش اطلاعات." });
+      }
+    } catch {
+      setMessage({ type: "error", text: "خطا در ارتباط با سرور." });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       {/* هدر بخش و تب‌ها */}
@@ -138,7 +218,7 @@ export default function SeniorAdminUser() {
           <div>
             <h2 className="text-sm font-black text-slate-800">مدیریت معین‌های ارشد و دسترسی‌ها</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              ایجاد حساب کاربری، تنظیم رمز عبور و تعیین سطح دسترسی معین‌های علمی.
+              ایجاد حساب کاربری، تنظیم رمز عبور، ویرایش مشخصات و تعیین سطح دسترسی معین‌های علمی.
             </p>
           </div>
         </div>
@@ -248,7 +328,7 @@ export default function SeniorAdminUser() {
           ) : (
             admins.map((admin) => (
               <div key={admin.username} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
                   <div className="flex items-center gap-2.5">
                     <UserCheck className="w-5 h-5 text-blue-600" />
                     <div>
@@ -257,21 +337,49 @@ export default function SeniorAdminUser() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleSavePermissions(admin.username, admin.permissions || [])}
-                    disabled={savingUsername === admin.username}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
-                  >
-                    {savingUsername === admin.username ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>ذخیره دسترسی‌ها</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* دکمه ویرایش */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(admin)}
+                      className="inline-flex items-center gap-1 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold rounded-xl transition-all border border-amber-200 cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>ویرایش</span>
+                    </button>
+
+                    {/* دکمه حذف */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAdmin(admin.username)}
+                      disabled={deletingUsername === admin.username}
+                      className="inline-flex items-center gap-1 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 disabled:opacity-50 text-xs font-bold rounded-xl transition-all border border-rose-200 cursor-pointer"
+                    >
+                      {deletingUsername === admin.username ? (
+                        <div className="w-3.5 h-3.5 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                      <span>حذف</span>
+                    </button>
+
+                    {/* دکمه ذخیره دسترسی‌ها */}
+                    <button
+                      type="button"
+                      onClick={() => handleSavePermissions(admin.username, admin.permissions || [])}
+                      disabled={savingUsername === admin.username}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+                    >
+                      {savingUsername === admin.username ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>ذخیره دسترسی‌ها</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* لیست تیک ماژول‌ها */}
@@ -314,6 +422,72 @@ export default function SeniorAdminUser() {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* مودال ویرایش معین ارشد */}
+      {editingAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-amber-600" />
+                ویرایش اطلاعات معین ارشد: <span className="font-mono text-blue-600">{editingAdmin.username}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingAdmin(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateAdmin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">نام و نام خانوادگی جدید</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="نام کامل"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">
+                  رمز عبور جدید <span className="text-slate-400 font-normal">(در صورت عدم تمایل به تغییر، خالی بگذارید)</span>
+                </label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingAdmin(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer"
+                >
+                  {updating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>ذخیره تغییرات</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

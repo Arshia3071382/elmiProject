@@ -19,7 +19,6 @@ export async function GET() {
 
     await dbConnect();
 
-    // اصلاح فیلد `-password` به جای `-passwordHash`
     const admins = await SeniorAdmin.find({
       role: "senior_admin",
       isActive: true,
@@ -182,6 +181,129 @@ export async function PUT(req: Request) {
     console.error("PUT manage permissions error:", error);
     return NextResponse.json(
       { success: false, error: "خطا در بروزرسانی دسترسی‌ها" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - ویرایش نام یا رمز عبور معین ارشد
+export async function PATCH(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("admin_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "احراز هویت نشده‌اید" },
+        { status: 401 }
+      );
+    }
+
+    await dbConnect();
+
+    const body = await req.json();
+    const { username, name, password } = body;
+
+    if (!username || typeof username !== "string") {
+      return NextResponse.json(
+        { success: false, error: "نام کاربری معتبر نیست" },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+    if (name) {
+      updateData.name = name.trim();
+    }
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 12);
+    }
+
+    const updatedAdmin = await SeniorAdmin.findOneAndUpdate(
+      {
+        username: username.trim(),
+        role: "senior_admin",
+        isActive: true,
+      },
+      {
+        $set: updateData,
+      },
+      {
+        new: true,
+      }
+    )
+      .select("-password -__v")
+      .lean();
+
+    if (!updatedAdmin) {
+      return NextResponse.json(
+        { success: false, error: "معین موردنظر پیدا نشد" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      admin: {
+        ...updatedAdmin,
+        _id: updatedAdmin._id.toString(),
+      },
+      message: "اطلاعات معین با موفقیت بروزرسانی شد",
+    });
+  } catch (error: any) {
+    console.error("PATCH manage permissions error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "خطا در بروزرسانی اطلاعات معین" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - حذف معین ارشد
+export async function DELETE(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("admin_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "احراز هویت نشده‌اید" },
+        { status: 401 }
+      );
+    }
+
+    await dbConnect();
+
+    const { searchParams } = new URL(req.url);
+    const username = searchParams.get("username");
+
+    if (!username) {
+      return NextResponse.json(
+        { success: false, error: "نام کاربری مشخص نشده است" },
+        { status: 400 }
+      );
+    }
+
+    const deletedAdmin = await SeniorAdmin.findOneAndDelete({
+      username: username.trim(),
+      role: "senior_admin",
+    });
+
+    if (!deletedAdmin) {
+      return NextResponse.json(
+        { success: false, error: "معین موردنظر پیدا نشد" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "معین ارشد با موفقیت حذف شد",
+    });
+  } catch (error: any) {
+    console.error("DELETE manage permissions error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "خطا در حذف معین ارشد" },
       { status: 500 }
     );
   }

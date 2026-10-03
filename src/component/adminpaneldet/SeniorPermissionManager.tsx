@@ -1,5 +1,3 @@
-// src/component/adminpaneldet/SeniorPermissionManager.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,6 +32,18 @@ export default function SeniorPermissionManager({
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // States مربوط به ویرایش معین
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<SeniorAdmin | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [updating, setUpdating] = useState(false);
+
+  // States مربوط به حذف معین
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAdmin, setDeletingAdmin] = useState<SeniorAdmin | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // دریافت لیست معین‌ها
   const fetchAdmins = async () => {
@@ -104,6 +114,81 @@ export default function SeniorPermissionManager({
     }
   };
 
+  // ذخیره اطلاعات ویرایش شده (نام یا رمز عبور)
+  const handleUpdateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdmin || !editName.trim()) {
+      onShowMessage("error", "نام معین نمی‌تواند خالی باشد");
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const res = await fetch("/api/senior-admin/manage-permissions", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: editingAdmin.username,
+          name: editName.trim(),
+          password: editPassword.trim() ? editPassword : undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        onShowMessage("success", "اطلاعات معین با موفقیت بروزرسانی شد");
+        setShowEditModal(false);
+        setEditingAdmin(null);
+        setEditName("");
+        setEditPassword("");
+        fetchAdmins();
+      } else {
+        onShowMessage("error", data.error || "خطا در بروزرسانی اطلاعات");
+      }
+    } catch (error) {
+      console.error("Error updating admin:", error);
+      onShowMessage("error", "خطا در ارتباط با سرور");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // حذف معین ارشد
+  const handleDeleteAdmin = async () => {
+    if (!deletingAdmin) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/senior-admin/manage-permissions?username=${encodeURIComponent(
+          deletingAdmin.username
+        )}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        onShowMessage("success", "معین ارشد با موفقیت حذف شد");
+        setShowDeleteModal(false);
+        setDeletingAdmin(null);
+        fetchAdmins();
+      } else {
+        onShowMessage("error", data.error || "خطا در حذف معین ارشد");
+      }
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      onShowMessage("error", "خطا در ارتباط با سرور");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // تغییر وضعیت یک دسترسی
   const togglePermission = (adminId: string, permission: Permission) => {
     const admin = admins.find((a) => a._id === adminId);
@@ -129,7 +214,7 @@ export default function SeniorPermissionManager({
     }));
   };
 
-  // ذخیره تغییرات برای یک معین
+  // ذخیره تغییرات دسترسی برای یک معین
   const savePermissions = async (adminId: string) => {
     const admin = admins.find((a) => a._id === adminId);
     if (!admin) return;
@@ -299,6 +384,99 @@ export default function SeniorPermissionManager({
         </div>
       )}
 
+      {/* مودال ویرایش اطلاعات معین ارشد */}
+      {showEditModal && editingAdmin && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              ویرایش اطلاعات معین: {editingAdmin.username}
+            </h3>
+            <form onSubmit={handleUpdateAdmin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  نام و نام خانوادگی
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  رمز عبور جدید (اختیاری)
+                </label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="اگر نمی‌خواهید تغییر کند خالی بگذارید"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingAdmin(null);
+                  }}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-all cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {updating ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* مودال تایید حذف معین ارشد */}
+      {showDeleteModal && deletingAdmin && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100 animate-in fade-in zoom-in duration-200 text-center">
+            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+              !
+            </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">
+              حذف معین ارشد
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              آیا از حذف حساب کاربری <strong className="text-gray-800">{deletingAdmin.name}</strong> ({deletingAdmin.username}) اطمینان دارید؟ این عملیات غیرقابل بازگشت است.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingAdmin(null);
+                }}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-all cursor-pointer"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAdmin}
+                disabled={deleting}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-red-500/20 cursor-pointer disabled:opacity-50"
+              >
+                {deleting ? "در حال حذف..." : "بله، حذف شود"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* لیست معین‌های موجود */}
       <div className="space-y-4">
         {admins.length === 0 ? (
@@ -342,21 +520,48 @@ export default function SeniorPermissionManager({
                   </div>
                 </div>
 
-                {admin.role !== "super_admin" && (
-                  <button
-                    onClick={() => savePermissions(admin._id)}
-                    disabled={saving[admin._id] || !hasChanges(admin._id)}
-                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                      saving[admin._id]
-                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        : hasChanges(admin._id)
-                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {saving[admin._id] ? "در حال ذخیره..." : "ذخیره تغییرات"}
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {admin.role !== "super_admin" && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setEditingAdmin(admin);
+                          setEditName(admin.name);
+                          setEditPassword("");
+                          setShowEditModal(true);
+                        }}
+                        className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                      >
+                        ویرایش مشخصات
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeletingAdmin(admin);
+                          setShowDeleteModal(true);
+                        }}
+                        className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                      >
+                        حذف
+                      </button>
+                    </>
+                  )}
+
+                  {admin.role !== "super_admin" && (
+                    <button
+                      onClick={() => savePermissions(admin._id)}
+                      disabled={saving[admin._id] || !hasChanges(admin._id)}
+                      className={`px-5 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                        saving[admin._id]
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : hasChanges(admin._id)
+                          ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      {saving[admin._id] ? "در حال ذخیره..." : "ذخیره دسترسی‌ها"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -393,7 +598,7 @@ export default function SeniorPermissionManager({
 
               {hasChanges(admin._id) && (
                 <div className="mt-4 text-xs font-bold text-blue-600 flex items-center gap-1">
-                  <span>⚠️</span> تغییرات ذخیره نشده است؛ لطفاً روی دکمه ذخیره کلیک کنید.
+                  <span>⚠️</span> تغییرات دسترسی ذخیره نشده است؛ لطفاً روی دکمه ذخیره دسترسی‌ها کلیک کنید.
                 </div>
               )}
             </div>
