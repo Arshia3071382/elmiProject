@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy } from "lucide-react";
+import { Trophy, Award, Star } from "lucide-react";
 import Image from "next/image";
 import Container from "./Container";
 
@@ -15,7 +15,7 @@ export default function EliteLeagueBanner() {
     seconds: 0,
   });
 
-  // State برای اسلایدر دو صفحه ای
+  // State برای اسلایدر سه صفحه ای (۰، ۱، ۲)
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -37,10 +37,10 @@ export default function EliteLeagueBanner() {
     return () => clearInterval(interval);
   }, [targetDate]);
 
-  // تغییر خودکار اسلایدر هر ۶ ثانیه
+  // تغییر خودکار اسلایدر هر ۶ ثانیه (بین ۳ اسلاید)
   useEffect(() => {
     const slideInterval = setInterval(() => {
-      setCurrentSlide((prev) => (prev === 0 ? 1 : 0));
+      setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1));
     }, 6000);
     return () => clearInterval(slideInterval);
   }, []);
@@ -66,7 +66,9 @@ export default function EliteLeagueBanner() {
           ${
             currentSlide === 0
               ? "border-[#F97316]/40 shadow-[0_0_60px_rgba(249,115,22,0.18)]"
-              : "border-emerald-300/50 shadow-[0_0_80px_rgba(34,197,94,0.15)]"
+              : currentSlide === 1
+              ? "border-emerald-300/50 shadow-[0_0_80px_rgba(34,197,94,0.15)]"
+              : "border-amber-400/60 shadow-[0_0_80px_rgba(251,191,36,0.25)]"
           }
         `}
           initial={{ opacity: 1 }}
@@ -172,6 +174,79 @@ export default function EliteLeagueBanner() {
             )}
           </AnimatePresence>
 
+          {/* پس‌زمینه اسلاید سوم (لوکس، گرم و هیجان‌انگیز برنزی-کهربایی با درخشش طلایی و سفید) */}
+          <AnimatePresence mode="wait">
+            {currentSlide === 2 && (
+              <motion.div
+                key="bg-3"
+                className="absolute inset-0 pointer-events-none overflow-hidden z-0"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #2A1705 0%, #150C03 50%, #1F1002 100%)",
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* نورهای متحرک و پویا جهت ایجاد هیجان */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                    x: [-20, 20, -20],
+                  }}
+                  transition={{
+                    duration: 7,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute -top-24 left-1/3 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"
+                />
+                <motion.div
+                  animate={{
+                    scale: [1.1, 0.9, 1.1],
+                    opacity: [0.2, 0.4, 0.2],
+                    y: [-15, 15, -15],
+                  }}
+                  transition={{
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute -bottom-24 right-1/4 w-80 h-80 bg-yellow-600/15 rounded-full blur-3xl"
+                />
+
+                {/* ذرات درخشان ملایم شبیه به ستاره‌های طلایی و سفید کوچک */}
+                {[...Array(15)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{
+                      y: Math.random() * 120,
+                      x: Math.random() * 1200,
+                      opacity: 0.2,
+                      scale: Math.random() * 0.8 + 0.5,
+                    }}
+                    animate={{
+                      opacity: [0.2, 0.9, 0.2],
+                      scale: [0.8, 1.3, 0.8],
+                    }}
+                    transition={{
+                      duration: 2 + Math.random() * 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                    }}
+                    className="absolute w-1 h-1 bg-amber-200 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+                    style={{
+                      top: `${Math.random() * 100}%`,
+                      left: `${i * 7}%`,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* بخش محتوا با ارتفاع کاملاً ثابت و یکسان در تمام حالت‌ها */}
           <div className="relative z-10 flex flex-col items-center justify-between h-[105px] sm:h-[135px] py-2 sm:py-3">
             <div className="w-full flex items-center justify-center flex-1">
@@ -238,7 +313,7 @@ export default function EliteLeagueBanner() {
                       <Trophy className="w-4 h-4 sm:w-7 sm:h-7 text-[#FBBF24] drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-bounce shrink-0" />
                     </div>
                   </motion.div>
-                ) : (
+                ) : currentSlide === 1 ? (
                   /* صفحه دوم: ورود به سایت منتظران */
                   <motion.div
                     key="slide-2"
@@ -305,11 +380,57 @@ export default function EliteLeagueBanner() {
                       </div>
                     </a>
                   </motion.div>
+                ) : (
+                  /* صفحه سوم: معرفی رتبه برتر (با پس‌زمینه گرم برنزی-کهربایی، پالت طلایی و سفید) */
+                  <motion.div
+                    key="slide-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4 }}
+                    className="w-full flex items-center justify-between px-2 sm:px-6"
+                  >
+                    <div className="flex items-center gap-3 sm:gap-5">
+                      {/* تصویر عمودی رتبه برتر با قاب طلایی روشن */}
+                      <div className="relative h-[65px] w-[50px] sm:h-[105px] sm:w-[80px] shrink-0 rounded-xl overflow-hidden border-2 border-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.4)] bg-[#1a0f02]">
+                        <Image
+                          src="/image/bartar.jpeg"
+                          alt="آقای مهدی نجفی - رتبه ۶ کشوری کنکور"
+                          fill
+                          sizes="(max-width: 640px) 50px, 80px"
+                          className="object-cover"
+                        />
+                      </div>
+
+                      {/* اطلاعات رتبه برتر با متن‌های سفید و طلایی */}
+                      <div className="flex flex-col justify-center text-right">
+                        <div className="flex items-center gap-1.5 mb-0.5 sm:mb-1">
+                          <span className="text-[10px] sm:text-xs font-bold text-amber-200 bg-amber-500/20 border border-amber-300/40 px-2 py-0.5 rounded-md shadow-sm">
+                            افتخار مجموعه علمی منتظران
+                          </span>
+                          <Star className="w-3 h-3 text-amber-300 fill-amber-300 hidden sm:block" />
+                        </div>
+
+                        <h3 className="text-sm sm:text-xl lg:text-2xl font-black text-white tracking-wide">
+                          آقای <span className="text-amber-300 drop-shadow-[0_0_10px_rgba(252,211,77,0.5)]">مهدی نجفی</span>
+                        </h3>
+
+                        <p className="text-[11px] sm:text-sm text-slate-100 font-medium mt-0.5">
+                          کسب <span className="text-amber-300 font-bold">رتبه ۶ کشوری</span> کنکور سراسری ۱۴۰۵ (رشته ریاضی)
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* آیکون مدال با بک‌گراند و درخشش هماهنگ */}
+                    <div className="hidden md:flex h-12 w-12 items-center justify-center rounded-2xl bg-[#351e06] border border-amber-300/60 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.3)] shrink-0">
+                      <Award className="w-6 h-6 text-amber-300" />
+                    </div>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* نقطه/نشانگرهای اسلایدر */}
+            {/* نقطه/نشانگرهای اسلایدر (۳ نقطه) */}
             <div className="flex items-center gap-2 mt-1">
               <button
                 onClick={() => setCurrentSlide(0)}
@@ -328,6 +449,15 @@ export default function EliteLeagueBanner() {
                     : "bg-slate-400/60 w-1.5"
                 }`}
                 aria-label="صفحه دوم"
+              />
+              <button
+                onClick={() => setCurrentSlide(2)}
+                className={`h-1.5 rounded-full transition-all ${
+                  currentSlide === 2
+                    ? "bg-amber-300 w-5 sm:w-8"
+                    : "bg-slate-400/60 w-1.5"
+                }`}
+                aria-label="صفحه سوم"
               />
             </div>
           </div>
