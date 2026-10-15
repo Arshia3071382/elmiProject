@@ -77,25 +77,32 @@ export async function GET(req: Request) {
 
     const grade = gradeRecord?.grade || student.grade || 6;
 
+    // دریافت تمامی آزمون‌های منتشر شده برای پایه دانش‌آموز
     const exams = await Exam.find({
       grade: grade,
       isPublished: true,
     }).sort({ createdAt: -1 });
 
     const studentExams = exams.map((exam) => {
-      const myResult = exam.results.find(
-        (r: any) =>
-          r.studentId === student._id.toString() ||
-          normalizeNationalId(r.nationalId) === cleanStudentNationalId
-      );
+      // جستجوی نتیجه دانش‌آموز با مقایسه امن‌تر ObjectId و کد ملی
+      const myResult = exam.results.find((r: any) => {
+        const matchId = r.studentId && r.studentId.toString() === student._id.toString();
+        const matchNationalId = r.nationalId && cleanStudentNationalId && normalizeNationalId(r.nationalId) === cleanStudentNationalId;
+        return matchId || matchNationalId;
+      });
 
       return {
         _id: exam._id,
         title: exam.title,
         createdAt: exam.createdAt,
-        myResult: myResult || null,
+        subjects: exam.subjects || [], // ارسال دروس آزمون برای نمایش در پنل
+        myResult: myResult || {
+          scores: [],
+          totalPercentage: 0,
+          isCompleted: false,
+        },
       };
-    }).filter((item) => item.myResult !== null);
+    }); // حذف فیلتر .filter که باعث مخفی شدن آزمون‌های بدون نمره می‌شد
 
     return NextResponse.json({ success: true, exams: studentExams });
   } catch (error: any) {

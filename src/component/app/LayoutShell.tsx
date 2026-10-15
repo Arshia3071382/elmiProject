@@ -148,12 +148,13 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/senior-admin')
   const isPreviewRoute = pathname?.startsWith('/app-preview')
+  const isConferenceRoute = pathname?.startsWith('/conference-showcase')
   const isHomePage = pathname === '/'
 
   const isWebsitePreloaderActive = !isPWA && isHomePage && !hasSeenPreloader
-  const isHideLayout = isAdminRoute || (isMounted && isPWA) || isWebsitePreloaderActive
+  const isHideLayout = isAdminRoute || isConferenceRoute || (isMounted && isPWA) || isWebsitePreloaderActive
   // صفحه پیش‌نمایش پوسته و قاب مخصوص خودش را دارد
-  const showPWAShell = isMounted && isPWA && !isAdminRoute && !isPreviewRoute
+  const showPWAShell = isMounted && isPWA && !isAdminRoute && !isPreviewRoute && !isConferenceRoute
 
   // محاسبه شرط عدم نمایش هدر و نوبار
   const isUiHidden = showPwaPreloader || isStoryOpen || isModalOpen

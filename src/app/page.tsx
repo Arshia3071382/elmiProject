@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useIsPWA } from "./../../hooks/useIsPWA";
+import { HelpCircle } from "lucide-react"; // اضافه کردن آیکون راهنما
 
 // کامپوننت‌های ضروری وب
 import Preloader from "@/component/Preloader";
@@ -22,7 +23,7 @@ import AppQuickActions from "@/component/app/AppQuickActions";
 import AppLeagueCard from "@/component/app/AppLeagueCard";
 import AppQuickAccess from "@/component/app/AppQuickAccess";
 import AppPreloader from "@/component/app/AppPreloader";
-import AppStories from "@/component/app/AppStories"; // اضافه شدن ایمپورت استوری‌ها
+import AppStories from "@/component/app/AppStories";
 
 const CounterStats = dynamic(() => import("@/component/CounterStats"), { ssr: false });
 const ScienceHub = dynamic(() => import("@/component/ScienceHub"), { ssr: false });
@@ -254,7 +255,6 @@ function PWAAppHome() {
           imageSrc="/image/appHero.jpg"
         />
 
-        {/* استوری‌ها درست اینجا و دقیقاً زیر بنر شمارش معکوس قرار گرفتند */}
         <AppStories />
 
         <AppQuickActions
@@ -307,14 +307,24 @@ function PWAAppHome() {
 // کامپوننت اصلی مدیریت مسیر که نسخه وب و PWA را تفکیک می‌کند
 export default function Home() {
   const { isPWA, isMounted } = useIsPWA();
+  const router = useRouter();
 
   if (!isMounted) {
     return <div className="min-h-screen bg-white" />;
   }
 
-  if (isPWA) {
-    return <PWAAppHome />;
-  }
+  return (
+    <div className="relative min-h-screen flex flex-col">
+      {isPWA ? <PWAAppHome /> : <ExistingWebsiteHome />}
 
-  return <ExistingWebsiteHome />;
+     {/* دکمه شناور دایره‌ای شکل راهنما (انتقال به صفحه کنفرانس) */}
+      <button
+        onClick={() => router.push("/conference-showcase")} 
+        className="fixed bottom-5 left-5 z-50 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        title="ویترین همایش و راهنما"
+      >
+        <HelpCircle className="w-6 h-6" />
+      </button>
+    </div>
+  );
 }
