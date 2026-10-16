@@ -6,7 +6,7 @@ import {
   Crown, Shield, Award, Trophy, Users, Brain, Zap, Video, MessageSquare, LineChart,
   FlaskConical, Sparkles, LayoutGrid, ChevronRight, ChevronLeft, BookOpen, Cpu, Terminal,
   Gamepad2, FileSpreadsheet, Smartphone, Monitor, Heart, Play, Pause, Maximize2, Minimize2,
-  CheckCircle2, Target, ImageOff, Bell,
+  CheckCircle2, Target, ImageOff, Bell, TrendingUp,
 } from "lucide-react";
 import { levels, classScores, scienceScores, impactScores } from "./../../../data/leagueData";
 
@@ -22,6 +22,8 @@ type Img = { src: string; caption?: string; sub?: string };
 const C = "/image/conf";
 const LOGO = "/icons/logo6.png";
 const LEVEL_IMAGES = [1, 2, 3, 4, 5, 6, 7].map((n) => `/image/levels/le${n}.png`); // اسم و بازه از leagueData
+// اگر مسیر عکس پسوند نداشته باشد (مثل "/image/app")، این پسوندها به‌ترتیب امتحان می‌شوند
+const EXTS = ["png", "jpg", "jpeg", "webp", "JPG", "PNG"];
 
 const media: Record<string, Img[]> = {
   exam: [{ src: `${C}/main.png` }], // صفحه اصلی سایت (عمودی، سمت راست)
@@ -33,23 +35,28 @@ const media: Record<string, Img[]> = {
     { src: `${C}/stup2.png`, caption: "فاصله تا برترین‌ها", sub: "امتیاز لازم برای صعود" },
     { src: `${C}/stup3.png`, caption: "مدال‌ها و کارنامه", sub: "دستاوردها و نمودار پیشرفت" },
   ],
+  // سه عکس اسلاید کارنامه: نام فایل‌ها را با فایل‌های واقعی‌تان یکی کنید (پسوند لازم نیست)
+  report: [
+    { src: `${C}/azp1`, caption: "کارنامه تحصیلی", sub: "نمرات و وضعیت درسی" },
+    { src: `${C}/azp2`, caption: "درصد پیشرفت", sub: "میزان رشد نسبت به ماه قبل" },
+    { src: `${C}/azp3`, caption: "نمودار روند پیشرفت", sub: "مسیر رشد در طول سال" },
+  ],
   // این سه فایل هنوز در پروژه نیستند: با همین نام در public/image/conf بگذارید یا مسیر را عوض کنید
   mentorPanel: [
-    { src: `${C}/men1.png`, caption: "چک‌لیست نکات کلاس‌ها" },
-    { src: `${C}/men2.png`, caption: "ثبت کارنامه درسی" },
-    { src: `${C}/men3.png`, caption: "ثبت امتیازات لیگ نخبگان" },
+    { src: `${C}/adp2.png`, caption: "ثبت کارنامه درسی" },
+    { src: `${C}/adp1.png`, caption: "ثبت امتیازات لیگ نخبگان" },
   ],
   media: [{ src: `${C}/station.png`, caption: "ایستگاه کنجکاوی" }],
-  appSlide: [{ src: "/image/appHero.jpg" }], // صفحه موبایل (عمودی، سمت راست)
+  appSlide: [{ src: "/image/conf/app" }], // public/image/app.* : صفحه موبایل (عمودی، سمت راست). پسوند خودکار پیدا می‌شود
 };
 
 // نوع قاب هر اسلاید: plain | browser | phone | neon
 const frameKind: Record<string, "plain" | "browser" | "phone" | "neon"> = {
   exam: "browser", leagues: "plain", academy: "browser", goftino: "phone",
-  studentPanel: "plain", mentorPanel: "browser", media: "neon", appSlide: "phone",
+  studentPanel: "plain", report: "browser", mentorPanel: "browser", media: "neon", appSlide: "phone",
 };
 const frameUrl: Record<string, string> = {
-  exam: "montazeran.ir", academy: "montazeran.ir/courses", mentorPanel: "montazeran.ir/admin",
+  exam: "montazeran.ir", academy: "montazeran.ir/courses", report: "montazeran.ir/student/dashboard", mentorPanel: "montazeran.ir/admin",
 };
 
 /* ═════════════ اسلایدها ═════════════ */
@@ -64,6 +71,7 @@ const steps = [
   { id: "academy", title: "دوره‌های آموزشی", subtitle: "ویدیوهای تخصصی و مهارت‌آموزی", accent: "#22d3ee", icon: BookOpen, kicker: "در سایت و کانال آپارات مجموعه" },
   { id: "goftino", title: "گفتینو", subtitle: "مشاور تحصیلی هوشمند", accent: "#2dd4bf", icon: MessageSquare, kicker: "پاسخ‌گویی آنی و راهنمایی تخصصی" },
   { id: "studentPanel", title: "پنل دانش‌آموز", subtitle: "امکانات پیشرفته پیگیری وضعیت", accent: "#818cf8", icon: Brain, kicker: "جایگاه من در رقابت" },
+  { id: "report", title: "کارنامه و پیشرفت", subtitle: "کارنامه تحصیلی و درصد پیشرفت دانش‌آموز", accent: "#f472b6", icon: TrendingUp, kicker: "رشد من، ماه به ماه" },
   { id: "mentorPanel", title: "پنل معین‌ها", subtitle: "ابزارهای نظارتی و مدیریتی", accent: "#60a5fa", icon: Shield, kicker: "نظارت و مدیریت علمی" },
   { id: "media", title: "ایستگاه کنجکاوی", subtitle: "مقالات داغ علمی و فناوری", accent: "#fb923c", icon: FlaskConical, kicker: "نجوم، فیزیک و فناوری‌های نوین" },
   { id: "appSlide", title: "اپلیکیشن علمی", subtitle: "سامانه همراه منتظران", accent: "#38bdf8", icon: Smartphone, kicker: "همیشه همراه" },
@@ -100,6 +108,7 @@ export default function ConferenceDeck() {
   const [zoom, setZoom] = useState<Img | null>(null);
   const [failed, setFailed] = useState<Record<string, boolean>>({});
   const [ratios, setRatios] = useState<Record<string, number>>({}); // نسبت عرض به ارتفاع هر عکس
+  const [extTry, setExtTry] = useState<Record<string, number>>({}); // شمارنده امتحان پسوند برای مسیرهای بدون پسوند
   const indexRef = useRef(0);
 
   const step = steps[index];
@@ -186,10 +195,37 @@ export default function ConferenceDeck() {
   const kind = frameKind[step.id] ?? "plain";
 
   const markFailed = (src: string) => setFailed((f) => ({ ...f, [src]: true }));
+  const hasExt = (src: string) => /\.\w{2,5}$/.test(src);
+  const resolve = (src: string) => (hasExt(src) ? src : `${src}.${EXTS[extTry[src] ?? 0]}`);
+  const onImgError = (src: string) => {
+    if (!hasExt(src) && (extTry[src] ?? 0) < EXTS.length - 1) setExtTry((t) => ({ ...t, [src]: (t[src] ?? 0) + 1 }));
+    else markFailed(src);
+  };
   const markRatio = (src: string, e: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
     if (w && h) setRatios((r) => (r[src] ? r : { ...r, [src]: w / h }));
   };
+
+  /* امتیازدهی: «تحقیق علمی» همیشه ۱۵۰ امتیاز نمایش داده می‌شود و حتماً در لیست هست */
+  type Row = (string | number)[];
+  const norm = (v: unknown) => String(v).replace(/ي/g, "ی").replace(/ك/g, "ک");
+  const isResearch = (r: Row) => norm(r[0]).includes("تحقیق علمی");
+  const fixRows = (list: unknown): Row[] => rows(list).map((r) => (isResearch(r) ? [r[0], 150] : r));
+  const pick = (list: Row[]): Row[] => {
+    const s = list.slice(0, 4);
+    const t = list.find(isResearch);
+    if (t && !s.includes(t)) s[s.length - 1] = t;
+    return s;
+  };
+  const clsRows = fixRows(classScores);
+  let sciRows = fixRows(scienceScores);
+  const impRows = fixRows(impactScores);
+  if (![...clsRows, ...sciRows, ...impRows].some(isResearch)) sciRows = [...sciRows.slice(0, 3), ["تحقیق علمی", 150]];
+  const scoreCols = [
+    { t: "امتیاز کلاس", c: "#60a5fa", r: pick(clsRows) },
+    { t: "فعالیت علمی", c: "#c084fc", r: pick(sciRows) },
+    { t: "اثرگذاری", c: "#fbbf24", r: pick(impRows) },
+  ];
 
   /* هدر اسلاید */
   const headerEl = (
@@ -306,7 +342,7 @@ export default function ConferenceDeck() {
                     </div>
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={it.src} alt={it.caption ?? ""} onLoad={(e) => markRatio(it.src, e)} onError={() => markFailed(it.src)} className="block w-full" style={{ aspectRatio: ar }} />
+                    <img src={resolve(it.src)} alt={it.caption ?? ""} onLoad={(e) => markRatio(it.src, e)} onError={() => onImgError(it.src)} className="block w-full" style={{ aspectRatio: ar }} />
                   )}
                   {kind === "phone" && <span className="pointer-events-none absolute left-1/2 top-2 h-1.5 w-20 -translate-x-1/2 rounded-full bg-black/60" />}
                 </button>
@@ -328,8 +364,14 @@ export default function ConferenceDeck() {
     <div
       dir="rtl"
       className="relative flex h-screen w-full flex-col overflow-hidden bg-[#050816] text-slate-100 antialiased"
-      style={{ fontFamily: 'var(--font-vazirmatn), Vazirmatn, "IRANSans", Tahoma, sans-serif' }}
+      style={{ fontFamily: '"IRANSansXDeck", var(--font-vazirmatn), Vazirmatn, Tahoma, sans-serif' }}
     >
+      {/* فونت پروژه (IRANSansX داخل public/font) تا همه‌ی عنوان‌ها واضح و هماهنگ با سایت دیده شوند */}
+      <style>{`
+        @font-face{font-family:"IRANSansXDeck";src:url("/font/IRANSansXFaNum-Regular.ttf") format("truetype");font-weight:400;font-display:swap}
+        @font-face{font-family:"IRANSansXDeck";src:url("/font/IRANSansXFaNum-Bold.ttf") format("truetype");font-weight:600 900;font-display:swap}
+      `}</style>
+
       {/* پس‌زمینه */}
       <div className="pointer-events-none absolute inset-0">
         <motion.div className="absolute -right-24 -top-32 h-[620px] w-[620px] rounded-full blur-[130px]" animate={{ background: `${step.accent}38`, x: [0, 40, 0] }} transition={{ background: { duration: 1.2 }, x: { duration: 18, repeat: Infinity, ease: "easeInOut" } }} />
@@ -371,12 +413,16 @@ export default function ConferenceDeck() {
             <motion.div key="grid" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }} className="grid h-full auto-rows-fr grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
               {steps.map((s, i) => (
                 <motion.button key={s.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => selectStep(i)}
-                  className={`${glass} group relative flex flex-col justify-between overflow-hidden p-5 text-right transition-all duration-300 hover:-translate-y-1 hover:border-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400`}>
-                  <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100" style={{ background: `${s.accent}55` }} />
-                  <div className="relative flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: `${s.accent}22`, color: s.accent }}><s.icon className="h-6 w-6" /></div>
+                  className="group relative flex min-h-0 flex-col justify-between overflow-hidden rounded-3xl border bg-slate-900/85 p-4 text-right transition-all duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+                  style={{ borderColor: `${s.accent}66`, boxShadow: `0 14px 40px -20px ${s.accent}88` }}>
+                  <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full opacity-40 blur-3xl transition-opacity duration-300 group-hover:opacity-100" style={{ background: `${s.accent}66` }} />
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: `${s.accent}26`, color: s.accent }}><s.icon className="h-6 w-6" /></div>
+                    <span className="text-lg font-bold" style={{ color: s.accent }}>{fa(i + 1)}</span>
+                  </div>
                   <div className="relative">
-                    <div className="text-xl font-bold text-white">{s.title}</div>
-                    <div className="mt-1 text-base text-slate-400">{s.subtitle}</div>
+                    <div className="font-black leading-snug text-white" style={{ fontSize: "clamp(1.2rem, 2.5vh, 1.8rem)" }}>{s.title}</div>
+                    <div className="mt-1 leading-snug text-slate-300" style={{ fontSize: "clamp(0.9rem, 1.8vh, 1.2rem)" }}>{s.subtitle}</div>
                   </div>
                 </motion.button>
               ))}
@@ -448,11 +494,7 @@ export default function ConferenceDeck() {
                 {/* ۵: امتیازدهی (کارت‌های کوچک‌تر تا عنوان کامل دیده شود) */}
                 {step.id === "scores" && (
                   <div className="grid grid-cols-3 gap-5">
-                    {[
-                      { t: "امتیاز کلاس", c: "#60a5fa", r: rows(classScores).slice(0, 4) },
-                      { t: "فعالیت علمی", c: "#c084fc", r: rows(scienceScores).slice(0, 4) },
-                      { t: "اثرگذاری", c: "#fbbf24", r: rows(impactScores).slice(0, 4) },
-                    ].map((col) => (
+                    {scoreCols.map((col) => (
                       <motion.div key={col.t} variants={rise} className={`${glass} overflow-hidden`}>
                         <div className="px-5 py-3 text-lg font-bold" style={{ background: `${col.c}1f`, color: col.c, borderBottom: `1px solid ${col.c}33` }}>{col.t}</div>
                         <div className="divide-y divide-white/5">
@@ -569,7 +611,7 @@ export default function ConferenceDeck() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setZoom(null)} className="fixed inset-0 z-50 flex cursor-zoom-out flex-col items-center gap-4 overflow-y-auto bg-black/90 p-6 backdrop-blur-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={zoom.src} alt={zoom.caption ?? ""}
+              src={resolve(zoom.src)} alt={zoom.caption ?? ""}
               className={`my-auto rounded-2xl shadow-2xl ${(ratios[zoom.src] ?? 1) < 0.75 ? "h-auto w-[min(62vw,860px)]" : "max-h-[88vh] max-w-[94vw] object-contain"}`}
             />
             {zoom.caption && <div className="shrink-0 text-2xl font-bold text-white">{zoom.caption}</div>}
