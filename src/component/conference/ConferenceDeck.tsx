@@ -1,572 +1,581 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Crown, Shield, Award, Trophy, Users, Brain, Zap, 
-  Video, MessageSquare, LineChart, FlaskConical, Sparkles, CheckCircle2,
-  LayoutGrid, ChevronRight, ChevronLeft, ArrowRight, BookOpen, Radio, Calendar, Cpu, Terminal, Gamepad2, FileSpreadsheet
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import {
+  Crown, Shield, Award, Trophy, Users, Brain, Zap, Video, MessageSquare, LineChart,
+  FlaskConical, Sparkles, LayoutGrid, ChevronRight, ChevronLeft, BookOpen, Cpu, Terminal,
+  Gamepad2, FileSpreadsheet, Smartphone, Monitor, Heart, Play, Pause, Maximize2, Minimize2,
+  CheckCircle2, Target, ImageOff, Bell,
 } from "lucide-react";
-import { conferenceSteps, ShowcaseStep } from "./../../../data/conferenceShowcaseData";
-import { levels, classScores, scienceScores, examScores, impactScores } from "./../../../data/leagueData";
+import { levels, classScores, scienceScores, impactScores } from "./../../../data/leagueData";
+
+/* ═════════════ تنظیمات: عکس‌ها و زمان‌بندی (فقط این بخش را ویرایش کنید) ═════════════ */
+
+const REVEAL_GAP = 1;     // فاصله نمایش هر عکس/کارت (ثانیه)
+const REVEAL_START = 0.6; // تأخیر اولین مورد بعد از ورود اسلاید
+const AUTOPLAY_BASE = 10; // زمان پایه هر اسلاید در پخش خودکار (+ یک ثانیه به ازای هر عکس)
+const LEVELS_SECONDS = 25; // مدت اسلاید مدال‌ها در پخش خودکار
+const MEDAL_SECONDS_EACH = 5; // سرعت قطار مدال‌ها: هر مدال چند ثانیه طول بکشد تا رد شود
+
+type Img = { src: string; caption?: string; sub?: string };
+const C = "/image/conf";
+const LOGO = "/icons/logo6.png";
+const LEVEL_IMAGES = [1, 2, 3, 4, 5, 6, 7].map((n) => `/image/levels/le${n}.png`); // اسم و بازه از leagueData
+
+const media: Record<string, Img[]> = {
+  exam: [{ src: `${C}/main.png` }], // صفحه اصلی سایت (عمودی، سمت راست)
+  leagues: [1, 2, 3, 4].map((n) => ({ src: `${C}/leg${n}.png` })),
+  academy: [1, 2, 3].map((n) => ({ src: `${C}/cou${n}.png` })),
+  goftino: [1, 2, 3].map((n) => ({ src: `${C}/gof${n}.png` })),
+  studentPanel: [
+    { src: `${C}/stup1.png`, caption: "رادار تعقیب‌کننده جدول", sub: "جایگاه لحظه‌ای نسبت به رقبا" },
+    { src: `${C}/stup2.png`, caption: "فاصله تا برترین‌ها", sub: "امتیاز لازم برای صعود" },
+    { src: `${C}/stup3.png`, caption: "مدال‌ها و کارنامه", sub: "دستاوردها و نمودار پیشرفت" },
+  ],
+  // این سه فایل هنوز در پروژه نیستند: با همین نام در public/image/conf بگذارید یا مسیر را عوض کنید
+  mentorPanel: [
+    { src: `${C}/men1.png`, caption: "چک‌لیست نکات کلاس‌ها" },
+    { src: `${C}/men2.png`, caption: "ثبت کارنامه درسی" },
+    { src: `${C}/men3.png`, caption: "ثبت امتیازات لیگ نخبگان" },
+  ],
+  media: [{ src: `${C}/station.png`, caption: "ایستگاه کنجکاوی" }],
+  appSlide: [{ src: "/image/appHero.jpg" }], // صفحه موبایل (عمودی، سمت راست)
+};
+
+// نوع قاب هر اسلاید: plain | browser | phone | neon
+const frameKind: Record<string, "plain" | "browser" | "phone" | "neon"> = {
+  exam: "browser", leagues: "plain", academy: "browser", goftino: "phone",
+  studentPanel: "plain", mentorPanel: "browser", media: "neon", appSlide: "phone",
+};
+const frameUrl: Record<string, string> = {
+  exam: "montazeran.ir", academy: "montazeran.ir/courses", mentorPanel: "montazeran.ir/admin",
+};
+
+/* ═════════════ اسلایدها ═════════════ */
+
+const steps = [
+  { id: "intro", title: "معرفی سامانه", subtitle: "سامانه جامع علمی آموزشی منتظران", accent: "#60a5fa", icon: Sparkles, kicker: "" },
+  { id: "structure", title: "کادر تشکیلاتی", subtitle: "مدیریت سه سطحی و ساختار یافته", accent: "#fbbf24", icon: Crown, kicker: "ویژه ناظران" },
+  { id: "exam", title: "آزمون مدارس", subtitle: "جذب و تعیین سطح هوشمند", accent: "#38bdf8", icon: Monitor, kicker: "سامانه آزمون آنلاین" },
+  { id: "leagues", title: "لیگ نخبگان علمی منتظران", subtitle: "رقابت‌های پویا و جوایز ماهانه", accent: "#a78bfa", icon: Trophy, kicker: "جوایز ماهانه و فصلی" },
+  { id: "scores", title: "امتیازدهی", subtitle: "معیارهای جامع ارزیابی دانش‌آموز", accent: "#34d399", icon: LineChart, kicker: "شفاف و قابل پیگیری" },
+  { id: "levels", title: "سطح‌بندی علمی", subtitle: "نشان شهدا و درجات علمی", accent: "#f59e0b", icon: Award, kicker: "از آغاز راه تا اوج" },
+  { id: "academy", title: "دوره‌های آموزشی", subtitle: "ویدیوهای تخصصی و مهارت‌آموزی", accent: "#22d3ee", icon: BookOpen, kicker: "در سایت و کانال آپارات مجموعه" },
+  { id: "goftino", title: "گفتینو", subtitle: "مشاور تحصیلی هوشمند", accent: "#2dd4bf", icon: MessageSquare, kicker: "پاسخ‌گویی آنی و راهنمایی تخصصی" },
+  { id: "studentPanel", title: "پنل دانش‌آموز", subtitle: "امکانات پیشرفته پیگیری وضعیت", accent: "#818cf8", icon: Brain, kicker: "جایگاه من در رقابت" },
+  { id: "mentorPanel", title: "پنل معین‌ها", subtitle: "ابزارهای نظارتی و مدیریتی", accent: "#60a5fa", icon: Shield, kicker: "نظارت و مدیریت علمی" },
+  { id: "media", title: "ایستگاه کنجکاوی", subtitle: "مقالات داغ علمی و فناوری", accent: "#fb923c", icon: FlaskConical, kicker: "نجوم، فیزیک و فناوری‌های نوین" },
+  { id: "appSlide", title: "اپلیکیشن علمی", subtitle: "سامانه همراه منتظران", accent: "#38bdf8", icon: Smartphone, kicker: "همیشه همراه" },
+  { id: "thanksSlide", title: "تشکر و پایان", subtitle: "قدردانی از همراهی شما", accent: "#34d399", icon: Heart, kicker: "" },
+];
+
+/* ═════════════ ابزارها ═════════════ */
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+const glass = "rounded-3xl border border-white/10 bg-white/[0.045] backdrop-blur-md";
+const chip = "flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-5 py-2 text-lg text-slate-200";
+const fa = (v: number | string) => String(v).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[+d]);
+const rows = (v: unknown): (string | number)[][] => (Array.isArray(v) ? (v as (string | number)[][]) : []);
+
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } };
+const rise: Variants = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } };
+const slideVariants: Variants = {
+  enter: (d: number) => ({ opacity: 0, x: d * -60, scale: 0.985 }),
+  center: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.5, ease: EASE } },
+  exit: (d: number) => ({ opacity: 0, x: d * 60, scale: 0.985, transition: { duration: 0.28 } }),
+};
+
+type LevelRow = { name: string; from: number | string; to: number | string };
+
+/* ═════════════ کامپوننت اصلی ═════════════ */
 
 export default function ConferenceDeck() {
-  const [activeId, setActiveId] = useState<string>("intro");
-  const [viewMode, setViewMode] = useState<"grid" | "slider">("grid");
+  const total = steps.length;
+  const [index, setIndex] = useState(0);
+  const [dir, setDir] = useState(1);
+  const [viewMode, setViewMode] = useState<"grid" | "slider">("slider");
+  const [playing, setPlaying] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [zoom, setZoom] = useState<Img | null>(null);
+  const [failed, setFailed] = useState<Record<string, boolean>>({});
+  const [ratios, setRatios] = useState<Record<string, number>>({}); // نسبت عرض به ارتفاع هر عکس
+  const indexRef = useRef(0);
 
-  const currentIndex: number = conferenceSteps.findIndex((s: ShowcaseStep) => s.id === activeId);
-  const currentStep: ShowcaseStep = conferenceSteps[currentIndex] || conferenceSteps[0];
+  const step = steps[index];
+  const Icon = step.icon;
 
-  // بخش URL عکس‌ها (به راحتی قابل تغییر توسط شما)
-  const images = {
-    // لوگوی هدر بالای صفحه سمت راست
-    headerLogo: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop",
-    
-    // اسلاید ۱: معرفی
-    introLogo: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop",
+  // مدال‌ها: اسم و بازه امتیاز از leagueData
+  const levelList = levels as unknown as LevelRow[];
+  const levelSrc: (LevelRow | null)[] = levelList.length ? levelList : LEVEL_IMAGES.map(() => null);
+  const levelItems: Img[] = levelSrc.map((l, i) => ({
+    src: LEVEL_IMAGES[i] ?? "",
+    caption: l?.name,
+    sub: l ? `${fa(l.from)} تا ${fa(l.to)} امتیاز` : undefined,
+  }));
 
-    // اسلاید ۳: آزمون مدارس
-    examImage: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop",
+  const itemsOf = (id: string): Img[] => (id === "levels" ? levelItems : media[id] ?? []);
+  const durationOf = (i: number) => {
+    const id = steps[i].id;
+    return id === "levels" ? LEVELS_SECONDS : AUTOPLAY_BASE + itemsOf(id).length * REVEAL_GAP;
+  };
 
-    // اسلاید ۴: لیگ نخبگان علمی
-    leagueBaseTable: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop",
-    leagueEliteTable: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop",
-
-    // اسلاید ۸: گفتینو (چند تصویر)
-    goftino1: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=400&auto=format&fit=crop",
-    goftino2: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?q=80&w=400&auto=format&fit=crop",
-    goftino3: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=400&auto=format&fit=crop",
-
-    // اسلاید ۹: پنل دانش‌آموز (عکس برای هر ویژگی)
-    studentRadar: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=400&auto=format&fit=crop",
-    studentRank: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop",
-    studentMedals: "https://images.unsplash.com/photo-1567427017947-545c5f2d16ad?q=80&w=400&auto=format&fit=crop",
-
-    // اسلاید ۱۰: پنل معین‌ها
-    mentorChecklist: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=400&auto=format&fit=crop",
-    mentorReportCard: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=400&auto=format&fit=crop",
-    mentorLeagueScores: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=400&auto=format&fit=crop",
-
-    // اسلاید ۱۱: ایستگاه کنجکاوی
-    curiosity1: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=400&auto=format&fit=crop",
-    curiosity2: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=400&auto=format&fit=crop",
-    curiosity3: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=400&auto=format&fit=crop",
-
-    // اسلاید ۱۲: سایر امکانات سامانه
-    extraLive: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=400&auto=format&fit=crop",
-    extraPodcast: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=80&w=400&auto=format&fit=crop",
-    extraCountdown: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=400&auto=format&fit=crop",
-    extraBorhan: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=400&auto=format&fit=crop",
-    extraShowcase: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=400&auto=format&fit=crop",
+  const go = useCallback((n: number) => {
+    const t = Math.max(0, Math.min(total - 1, n));
+    setDir(t >= indexRef.current ? 1 : -1);
+    indexRef.current = t;
+    setIndex(t);
+  }, [total]);
+  const next = useCallback(() => go(indexRef.current + 1), [go]);
+  const prev = useCallback(() => go(indexRef.current - 1), [go]);
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+    else document.exitFullscreen?.().catch(() => {});
   };
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (viewMode !== "slider") return;
-      if (e.key === "ArrowLeft") handleNext();
-      if (e.key === "ArrowRight") handlePrev();
+    const onFs = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  // کلیدها (راست‌به‌چپ: فلش چپ = بعدی؛ PageUp/PageDown برای ریموت پرزنتیشن)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowLeft": case "PageDown": case " ": e.preventDefault(); if (viewMode === "slider") next(); break;
+        case "ArrowRight": case "PageUp": e.preventDefault(); if (viewMode === "slider") prev(); break;
+        case "Home": go(0); break;
+        case "End": go(total - 1); break;
+        case "Escape": setViewMode("grid"); setPlaying(false); break;
+        case "Enter": if (viewMode === "grid") setViewMode("slider"); break;
+        case "p": case "P": setPlaying((v) => !v); setViewMode("slider"); break;
+        case "f": case "F": toggleFullscreen(); break;
+      }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, viewMode]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewMode, next, prev, go, total]);
 
-  const handleNext = () => {
-    if (currentIndex < conferenceSteps.length - 1) {
-      setActiveId(conferenceSteps[currentIndex + 1].id);
-    }
+  // وقتی عکس تمام‌صفحه است، هر کلیدی فقط آن را می‌بندد
+  useEffect(() => {
+    if (!zoom) return;
+    const h = (e: KeyboardEvent) => { e.stopImmediatePropagation(); e.preventDefault(); setZoom(null); };
+    window.addEventListener("keydown", h, true);
+    return () => window.removeEventListener("keydown", h, true);
+  }, [zoom]);
+
+  // پخش خودکار
+  useEffect(() => {
+    if (!playing || viewMode !== "slider") return;
+    if (index >= total - 1) { setPlaying(false); return; }
+    const t = setTimeout(next, durationOf(index) * 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, viewMode, index, total, next]);
+
+  const selectStep = (i: number) => { go(i); setViewMode("slider"); };
+
+  /* ───── داده‌های رندر اسلاید فعلی ───── */
+  const items = step.id === "levels" ? [] : itemsOf(step.id);
+  const hasGallery = items.length > 0;
+  const side = step.id === "exam" || step.id === "appSlide";        // عکس عمودی سمت راست
+  const rowExtras = step.id === "leagues" || step.id === "academy"; // هدر و محتوای کمکی در یک ردیف
+  const bigTitle = step.id === "intro" || step.id === "thanksSlide";
+  const centered = ["intro", "structure", "thanksSlide"].includes(step.id);
+  const kind = frameKind[step.id] ?? "plain";
+
+  const markFailed = (src: string) => setFailed((f) => ({ ...f, [src]: true }));
+  const markRatio = (src: string, e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+    if (w && h) setRatios((r) => (r[src] ? r : { ...r, [src]: w / h }));
   };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setActiveId(conferenceSteps[currentIndex - 1].id);
-    }
-  };
+  /* هدر اسلاید */
+  const headerEl = (
+    <motion.div variants={rise} className="flex shrink-0 items-center gap-4">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border" style={{ background: `${step.accent}1f`, borderColor: `${step.accent}55`, color: step.accent, boxShadow: `0 0 40px ${step.accent}33` }}>
+        <Icon className="h-7 w-7" />
+      </div>
+      <div>
+        {step.kicker && <div className="text-sm font-medium" style={{ color: step.accent }}>{step.kicker}</div>}
+        <h2 className="text-3xl font-black leading-tight text-white xl:text-4xl">{step.title}</h2>
+        <p className="mt-0.5 text-base text-slate-400">{step.subtitle}</p>
+      </div>
+    </motion.div>
+  );
 
-  const selectStep = (id: string) => {
-    setActiveId(id);
-    setViewMode("slider");
-  };
+  /* محتوای کمکی کنار هدر یا ستون متن */
+  const extrasEl =
+    step.id === "exam" ? (
+      <motion.div variants={rise} className="space-y-5">
+        <p className="text-xl leading-9 text-slate-300">جذب دانش‌آموزان از مدارس و طبقه‌بندی هوشمند آن‌ها بر اساس تراز آزمون و ارزیابی استاندارد.</p>
+        {["جذب دانش‌آموزان از مدارس", "تعیین سطح هوشمند بر اساس تراز", "ارزیابی استاندارد و نتیجه آنی"].map((t) => (
+          <div key={t} className="flex items-center gap-3 text-2xl text-slate-100"><CheckCircle2 className="h-7 w-7 shrink-0 text-sky-400" /> {t}</div>
+        ))}
+      </motion.div>
+    ) : step.id === "appSlide" ? (
+      <motion.div variants={rise} className="space-y-6">
+        <p className="text-xl leading-9 text-slate-300">دسترسی سریع و همیشه همراه به همه امکانات سامانه؛ آزمون‌های آنلاین، کارنامه درسی و پیگیری لیگ‌های علمی در قالب اپلیکیشن موبایل.</p>
+        <div className="flex flex-col items-start gap-3">
+          {[["نسخه اندروید و PWA", Smartphone], ["اعلان‌های آنی آزمون", Bell], ["کارنامه و لیگ در جیب شما", Trophy]].map(([t, I]) => {
+            const Ic = I as React.ElementType;
+            return <span key={t as string} className={chip}><Ic className="h-5 w-5 text-sky-300" /> {t as string}</span>;
+          })}
+        </div>
+      </motion.div>
+    ) : step.id === "leagues" ? (
+      <div className="flex gap-4">
+        {[
+          { icon: Trophy, color: "#60a5fa", title: "لیگ علمی پایه", tag: "رقابت درون‌پایه‌ای", desc: "جوایز ماهانه برای نفرات برتر هر پایه" },
+          { icon: Users, color: "#c084fc", title: "لیگ نخبگان مقطع", tag: "رقابت سراسری", desc: "جام نخبگان و جوایز پایان سال" },
+        ].map((c) => (
+          <motion.div key={c.title} variants={rise} className={`${glass} flex items-center gap-3 px-4 py-3`} style={{ borderColor: `${c.color}40`, background: `linear-gradient(135deg, ${c.color}14, transparent 70%)` }}>
+            <div className="rounded-xl p-2.5" style={{ background: `${c.color}1f`, color: c.color }}><c.icon className="h-6 w-6" /></div>
+            <div>
+              <div className="flex items-center gap-2"><span className="text-lg font-bold text-white">{c.title}</span><span className="text-sm" style={{ color: c.color }}>{c.tag}</span></div>
+              <p className="text-sm text-slate-300">{c.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    ) : step.id === "academy" ? (
+      <div className="flex shrink-0 items-center gap-3">
+        {[
+          { t: "آموزش آفیس", i: FileSpreadsheet, c: "#60a5fa" }, { t: "ریاضی راهنمایی", i: BookOpen, c: "#c084fc" },
+          { t: "فیزیک کنکور", i: Zap, c: "#fbbf24" }, { t: "فتوشاپ با هوش مصنوعی", i: Cpu, c: "#22d3ee" },
+          { t: "پایتون پیشرفته", i: Terminal, c: "#34d399" }, { t: "بازی‌سازی با هوش مصنوعی", i: Gamepad2, c: "#fb7185" },
+        ].map((k, i) => (
+          <motion.div
+            key={k.t}
+            initial={{ opacity: 0, scale: 0.6, rotate: -8 }} animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.2 + i * 0.12 }}
+            className="relative flex aspect-square w-[8.4rem] flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border p-2 text-center"
+            style={{ borderColor: `${k.c}55`, background: `linear-gradient(160deg, ${k.c}2a, transparent 75%)`, boxShadow: `0 10px 30px -12px ${k.c}66` }}
+          >
+            <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2.6, repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }} style={{ color: k.c }}>
+              <k.i className="h-10 w-10" />
+            </motion.div>
+            <span className="text-sm font-bold leading-5 text-slate-100">{k.t}</span>
+            <motion.span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-white/10" animate={{ x: ["0%", "420%"] }} transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 3 + i * 0.7, ease: "easeInOut" }} />
+          </motion.div>
+        ))}
+      </div>
+    ) : null;
+
+  /* گالری: هر عکس داخل قابی می‌نشیند که دقیقاً هم‌اندازه خود عکس است (بدون حاشیه اضافه) و تا حد ممکن بزرگ می‌شود */
+  const galleryEl = hasGallery && (
+    <div className={side ? "h-full w-[36%] shrink-0" : "min-h-0 flex-1"}>
+      <div className="grid h-full min-h-0 gap-6" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`, gridAutoRows: "minmax(0, 1fr)" }}>
+        {items.map((it, i) => {
+          const ar = ratios[it.src] ?? 1.6;
+          const bar = kind === "browser" ? 2.25 : 0; // ارتفاع نوار مرورگر (rem)
+          const tilt = step.id === "mentorPanel" ? (i - (items.length - 1) / 2) * -8 : 0;
+          const ring =
+            kind === "phone" ? `0 0 0 7px #0b1020, 0 0 0 9px ${step.accent}99, 0 30px 80px -20px ${step.accent}88`
+            : kind === "neon" ? `0 0 0 2px ${step.accent}, 0 0 40px ${step.accent}88, 0 0 110px ${step.accent}44`
+            : `0 0 0 1px ${step.accent}55, 0 30px 80px -24px ${step.accent}88`;
+          return (
+            <motion.figure
+              key={`${step.id}-${i}`}
+              initial={{ opacity: 0, y: 40, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.6, ease: EASE, delay: REVEAL_START + i * REVEAL_GAP }}
+              className="flex min-h-0 min-w-0 flex-col gap-3"
+            >
+              <div className={`flex min-h-0 flex-1 items-center ${side ? "justify-start" : "justify-center"}`} style={{ containerType: "size" } as React.CSSProperties}>
+                <button
+                  onClick={() => !failed[it.src] && setZoom(it)}
+                  className="relative block cursor-zoom-in overflow-hidden bg-slate-950 transition-transform duration-300 hover:scale-[1.02]"
+                  style={{
+                    width: `min(100cqw, calc((100cqh - ${bar}rem) * ${ar}))`,
+                    borderRadius: kind === "phone" ? "2.2rem" : "1.1rem",
+                    boxShadow: ring,
+                    transform: tilt ? `perspective(1600px) rotateY(${tilt}deg)` : undefined,
+                  }}
+                >
+                  {kind === "browser" && (
+                    <div className="flex items-center gap-3 bg-slate-900 px-4" style={{ height: `${bar}rem` }}>
+                      <span className="flex gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-rose-400/80" /><i className="h-2.5 w-2.5 rounded-full bg-amber-400/80" /><i className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" /></span>
+                      <span dir="ltr" className="mx-auto rounded-full border border-white/10 bg-black/30 px-4 py-0.5 font-mono text-[11px] text-slate-400">{frameUrl[step.id] ?? "montazeran.ir"}</span>
+                    </div>
+                  )}
+                  {!it.src || failed[it.src] ? (
+                    <div className="flex w-full flex-col items-center justify-center gap-3 text-slate-600" style={{ aspectRatio: ar }}>
+                      <ImageOff className="h-12 w-12" />
+                      {process.env.NODE_ENV !== "production" && <span dir="ltr" className="px-4 text-center font-mono text-xs">{it.src || "no image"}</span>}
+                    </div>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={it.src} alt={it.caption ?? ""} onLoad={(e) => markRatio(it.src, e)} onError={() => markFailed(it.src)} className="block w-full" style={{ aspectRatio: ar }} />
+                  )}
+                  {kind === "phone" && <span className="pointer-events-none absolute left-1/2 top-2 h-1.5 w-20 -translate-x-1/2 rounded-full bg-black/60" />}
+                </button>
+              </div>
+              {(it.caption || it.sub) && (
+                <figcaption className="shrink-0 text-center">
+                  {it.caption && <div className="text-xl font-bold text-white">{it.caption}</div>}
+                  {it.sub && <div className="mt-0.5 text-base text-slate-400">{it.sub}</div>}
+                </figcaption>
+              )}
+            </motion.figure>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="w-full h-full flex flex-col justify-between relative z-10 max-w-7xl mx-auto">
-      
-      {/* هدر ناوبری همایش */}
-      <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-        <div className="flex items-center gap-3">
-          {/* جایگزینی آیکون چرخان با لوگوی علمی مجموعه در هدر */}
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden border border-blue-400/30">
-            <img src={images.headerLogo} alt="لوگوی علمی" className="w-full h-full object-cover rounded-xl" />
-          </div>
-          <div>
-            <h1 className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-blue-400">
-              سامانه علمی منتظران
-            </h1>
-            <p className="text-xs text-slate-400">ویترین تعاملی همایش</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 ${
-              viewMode === "grid" 
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105" 
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" /> انتخاب موضوع
-          </button>
-          <button
-            onClick={() => setViewMode("slider")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 ${
-              viewMode === "slider" 
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105" 
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Video className="w-4 h-4" /> نمای اسلایدر
-          </button>
-        </div>
+    <div
+      dir="rtl"
+      className="relative flex h-screen w-full flex-col overflow-hidden bg-[#050816] text-slate-100 antialiased"
+      style={{ fontFamily: 'var(--font-vazirmatn), Vazirmatn, "IRANSans", Tahoma, sans-serif' }}
+    >
+      {/* پس‌زمینه */}
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div className="absolute -right-24 -top-32 h-[620px] w-[620px] rounded-full blur-[130px]" animate={{ background: `${step.accent}38`, x: [0, 40, 0] }} transition={{ background: { duration: 1.2 }, x: { duration: 18, repeat: Infinity, ease: "easeInOut" } }} />
+        <motion.div className="absolute -bottom-40 -left-32 h-[700px] w-[700px] rounded-full blur-[130px]" animate={{ background: `${step.accent}30`, x: [0, -50, 0] }} transition={{ background: { duration: 1.2 }, x: { duration: 22, repeat: Infinity, ease: "easeInOut" } }} />
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "56px 56px", maskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)", WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)" }} />
       </div>
 
-      {/* محتوای اصلی */}
-      <div className="my-auto py-3">
-        <AnimatePresence mode="wait">
-          
+      {/* هدر */}
+      <header className="relative z-10 flex shrink-0 items-center justify-between gap-4 px-6 py-3 xl:px-8">
+        <div className="flex items-center gap-4">
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-lg shadow-blue-500/30">
+            {failed[LOGO] ? <span className="text-xl font-black text-white">م</span>
+              // eslint-disable-next-line @next/next/no-img-element
+              : <img src={LOGO} alt="لوگو" onError={() => markFailed(LOGO)} className="h-full w-full object-contain p-1.5" />}
+          </div>
+          <div>
+            <div className="text-lg font-bold text-white">سامانه علمی منتظران</div>
+            <div className="text-sm text-slate-400">ویترین تعاملی همایش</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.05] p-1">
+            {([["grid", "انتخاب موضوع", LayoutGrid], ["slider", "نمای اسلایدر", Video]] as const).map(([m, label, I]) => (
+              <button key={m} onClick={() => setViewMode(m)} className={`flex items-center gap-2 rounded-xl px-4 py-1.5 text-base font-medium transition-colors ${viewMode === m ? "bg-blue-600 text-white shadow-md shadow-blue-600/30" : "text-slate-400 hover:text-white"}`}>
+                <I className="h-4 w-4" /> {label}
+              </button>
+            ))}
+          </div>
+          <button onClick={toggleFullscreen} title="تمام‌صفحه (F)" className="rounded-xl border border-white/10 bg-white/[0.05] p-2.5 text-slate-300 transition-colors hover:text-white">
+            {fullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* محتوا (بدون اسکرول) */}
+      <main className="relative z-10 min-h-0 flex-1 px-6 pb-2 xl:px-8">
+        <AnimatePresence mode="wait" custom={dir}>
           {viewMode === "grid" ? (
-            <motion.div
-              key="grid-mode"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[72vh] overflow-y-auto pr-1"
-            >
-              {conferenceSteps.map((step: ShowcaseStep, idx: number) => (
-                <motion.button
-                  key={step.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.03 }}
-                  onClick={() => selectStep(step.id)}
-                  className="group relative bg-slate-900/70 hover:bg-gradient-to-br hover:from-slate-900 hover:to-blue-950/60 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-5 text-right transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-blue-500/10 flex flex-col justify-between min-h-[130px]"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-slate-500 group-hover:text-blue-400 font-bold">
-                      0{idx + 1}
-                    </span>
-                    <span className="p-2 bg-slate-800 group-hover:bg-blue-600/20 group-hover:text-blue-400 rounded-xl text-slate-300 transition-colors">
-                      <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-base font-extrabold text-white group-hover:text-blue-300 transition-colors">
-                      {step.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-1">
-                      {step.subtitle}
-                    </p>
+            <motion.div key="grid" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }} className="grid h-full auto-rows-fr grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              {steps.map((s, i) => (
+                <motion.button key={s.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => selectStep(i)}
+                  className={`${glass} group relative flex flex-col justify-between overflow-hidden p-5 text-right transition-all duration-300 hover:-translate-y-1 hover:border-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400`}>
+                  <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100" style={{ background: `${s.accent}55` }} />
+                  <div className="relative flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: `${s.accent}22`, color: s.accent }}><s.icon className="h-6 w-6" /></div>
+                  <div className="relative">
+                    <div className="text-xl font-bold text-white">{s.title}</div>
+                    <div className="mt-1 text-base text-slate-400">{s.subtitle}</div>
                   </div>
                 </motion.button>
               ))}
             </motion.div>
           ) : (
-            
-            <motion.div
-              key={`slider-${activeId}`}
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="bg-slate-900/90 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden min-h-[480px] flex flex-col justify-center"
-            >
-              {/* اسلاید ۱: معرفی با لوگوی مجموعه */}
-              {activeId === "intro" && (
-                <div className="text-center space-y-6 max-w-2xl mx-auto">
-                  <motion.div 
-                    initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ duration: 0.6 }}
-                    className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/40 border border-blue-400/40 p-1.5"
+            <motion.div key={step.id} custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit" className={`${glass} relative h-full overflow-hidden p-6 shadow-2xl shadow-black/40`}>
+              <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${step.accent}, transparent)` }} />
+
+              <motion.div variants={stagger} initial="hidden" animate="show" className={`flex h-full min-h-0 w-full flex-col gap-5 ${centered ? "justify-center" : ""} ${bigTitle ? "items-center text-center" : ""}`}>
+
+                {/* هدر (اسلایدهای عادی؛ در حالت side داخل ستون متن است) */}
+                {!bigTitle && !side && (rowExtras ? <div className="flex shrink-0 items-center justify-between gap-6">{headerEl}{extrasEl}</div> : headerEl)}
+
+                {/* ۱: معرفی */}
+                {step.id === "intro" && (
+                  <>
+                    <motion.div variants={rise} className="relative flex h-40 w-40 items-center justify-center">
+                      {[0, 1].map((i) => (
+                        <motion.span key={i} className="absolute inset-0 rounded-[2.2rem] border" style={{ borderColor: `${step.accent}66` }} animate={{ scale: [1, 1.55], opacity: [0.6, 0] }} transition={{ duration: 3, repeat: Infinity, delay: i * 1.5, ease: "easeOut" }} />
+                      ))}
+                      <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-[2rem] bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 shadow-2xl shadow-blue-500/40">
+                        {failed[LOGO] ? <span className="text-6xl font-black text-white">م</span>
+                          // eslint-disable-next-line @next/next/no-img-element
+                          : <img src={LOGO} alt="لوگوی مجموعه" onError={() => markFailed(LOGO)} className="h-full w-full object-contain p-3" />}
+                      </div>
+                    </motion.div>
+                    <motion.h1 variants={rise} className="text-5xl font-black leading-[1.4] text-white xl:text-7xl">
+                      سامانه جامع علمی آموزشی <span className="bg-gradient-to-l from-sky-300 via-blue-400 to-indigo-300 bg-clip-text text-transparent">منتظران</span>
+                    </motion.h1>
+                    <motion.p variants={rise} className="max-w-3xl text-xl leading-9 text-slate-300">جایی که یادگیری به رقابت سالم، و رقابت به رشد علمی تبدیل می‌شود.</motion.p>
+                    <motion.div variants={rise} className="flex flex-wrap justify-center gap-3">
+                      {[["گیمیفیکیشن علمی", Gamepad2], ["آزمون آنلاین", Monitor], ["سطح‌بندی دانش‌آموزان", Award], ["هدایت تحصیلی", Target]].map(([t, I]) => {
+                        const Ic = I as React.ElementType;
+                        return <span key={t as string} className={chip}><Ic className="h-5 w-5 text-sky-300" /> {t as string}</span>;
+                      })}
+                    </motion.div>
+                  </>
+                )}
+
+                {/* ۲: کادر تشکیلاتی: سه کارت افقی، یکی‌یکی با فاصله ۱ ثانیه */}
+                {step.id === "structure" && (
+                  <div className="flex items-stretch gap-4 py-6">
+                    {[
+                      { icon: Crown, color: "#fbbf24", title: "مسئول علمی", desc: "راهبری کلان علمی و سیاست‌گذاری مجموعه" },
+                      { icon: Shield, color: "#60a5fa", title: "معین ارشد علمی", desc: "معین کل مقطع تحصیلی (ابتدایی یا راهنمایی)" },
+                      { icon: Award, color: "#34d399", title: "معین علمی پایه", desc: "مسئول مستقیم علمی و هدایت تحصیلی هر پایه" },
+                    ].map((t, i) => (
+                      <React.Fragment key={t.title}>
+                        {i > 0 && (
+                          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: REVEAL_START + i * REVEAL_GAP - 0.4 }} className="flex items-center text-slate-500">
+                            <ChevronLeft className="h-10 w-10" />
+                          </motion.div>
+                        )}
+                        <motion.div
+                          initial={{ opacity: 0, y: 40, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ duration: 0.6, ease: EASE, delay: REVEAL_START + i * REVEAL_GAP }}
+                          className={`${glass} flex flex-1 flex-col items-center justify-center p-10 text-center`}
+                          style={{ borderColor: `${t.color}40`, background: `linear-gradient(160deg, ${t.color}18, transparent 70%)` }}
+                        >
+                          <div className="mb-6 flex h-32 w-32 items-center justify-center rounded-full border-2" style={{ borderColor: t.color, background: `${t.color}1a`, color: t.color, boxShadow: `0 0 60px ${t.color}45` }}><t.icon className="h-14 w-14" /></div>
+                          <h3 className="text-3xl font-bold text-white">{t.title}</h3>
+                          <p className="mt-4 text-xl leading-9 text-slate-300">{t.desc}</p>
+                        </motion.div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+
+                {/* ۵: امتیازدهی (کارت‌های کوچک‌تر تا عنوان کامل دیده شود) */}
+                {step.id === "scores" && (
+                  <div className="grid grid-cols-3 gap-5">
+                    {[
+                      { t: "امتیاز کلاس", c: "#60a5fa", r: rows(classScores).slice(0, 4) },
+                      { t: "فعالیت علمی", c: "#c084fc", r: rows(scienceScores).slice(0, 4) },
+                      { t: "اثرگذاری", c: "#fbbf24", r: rows(impactScores).slice(0, 4) },
+                    ].map((col) => (
+                      <motion.div key={col.t} variants={rise} className={`${glass} overflow-hidden`}>
+                        <div className="px-5 py-3 text-lg font-bold" style={{ background: `${col.c}1f`, color: col.c, borderBottom: `1px solid ${col.c}33` }}>{col.t}</div>
+                        <div className="divide-y divide-white/5">
+                          {col.r.map((r, i) => (
+                            <div key={i} className="flex items-center justify-between gap-3 px-5 py-2.5 text-base">
+                              <span className="text-slate-200">{r[0]}</span>
+                              <span dir="ltr" className="rounded-lg bg-emerald-400/10 px-2.5 py-0.5 font-bold text-emerald-400">+{fa(r[1])}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ۶: سطح‌بندی: مدال‌های بزرگ در قالب قطار بی‌وقفه و بی‌انتها */}
+                {step.id === "levels" && (
+                  <div
+                    dir="ltr"
+                    className="relative min-h-0 flex-1 overflow-hidden"
+                    style={{ maskImage: "linear-gradient(90deg, transparent, black 7%, black 93%, transparent)", WebkitMaskImage: "linear-gradient(90deg, transparent, black 7%, black 93%, transparent)" }}
                   >
-                    <img src={images.introLogo} alt="لوگوی مجموعه" className="w-full h-full object-cover rounded-2xl" />
-                  </motion.div>
-                  <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
-                    سامانه جامع علمی آموزشی <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">منتظران</span>
-                  </h2>
-                  <p className="text-slate-300 text-sm leading-relaxed max-w-xl mx-auto">
-                    پلتفرم هوشمند گیمیفیکیشن، برگزاری آزمون‌های آنلاین، سطح‌بندی علمی دانش‌آموزان و هدایت تحصیلی تخصصی.
-                  </p>
-                </div>
-              )}
-
-              {/* اسلاید ۲: ساختار */}
-              {activeId === "structure" && (
-                <div className="space-y-6">
-                  <div className="text-center max-w-xl mx-auto">
-                    <h3 className="text-2xl font-black text-white">کادر تشکیلاتی مجموعه</h3>
-                    <p className="text-slate-400 text-xs mt-1">مدیریت سه سطحی و ساختار یافته علمی</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl text-center shadow-lg">
-                      <Crown className="w-9 h-9 text-amber-400 mx-auto mb-3" />
-                      <h4 className="font-bold text-white text-base">مسئول علمی</h4>
-                      <p className="text-xs text-slate-400 mt-2">راهبری کلان علمی مجموعه</p>
-                    </motion.div>
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl text-center shadow-lg">
-                      <Shield className="w-9 h-9 text-blue-400 mx-auto mb-3" />
-                      <h4 className="font-bold text-white text-base">معین ارشد علمی</h4>
-                      <p className="text-xs text-slate-400 mt-2">معین کل مقطع (ابتدایی یا راهنمایی)</p>
-                    </motion.div>
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl text-center shadow-lg">
-                      <Award className="w-9 h-9 text-emerald-400 mx-auto mb-3" />
-                      <h4 className="font-bold text-white text-base">معین علمی پایه</h4>
-                      <p className="text-xs text-slate-400 mt-2">مسئول علمی مستقیم هر پایه</p>
-                    </motion.div>
-                  </div>
-                </div>
-              )}
-
-              {/* اسلاید ۳: آزمون مدارس (عکس در کنار بدون متن امتیاز ۳۰) */}
-              {activeId === "exam" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-                    <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full text-xs font-bold border border-cyan-500/20">جذب و تعیین سطح</span>
-                    <h3 className="text-2xl md:text-3xl font-black text-white">برگزاری آزمون‌های آنلاین مدارس</h3>
-                    <p className="text-slate-300 text-xs md:text-sm leading-relaxed">
-                      جذب دانش‌آموزان از مدارس و طبقه‌بندی هوشمند آن‌ها جهت تشکیل کلاس‌های درسی بر اساس تراز و ارزیابی استاندارد.
-                    </p>
-                  </motion.div>
-                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl h-56">
-                    <img src={images.examImage} alt="آزمون مدارس" className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-4">
-                      <span className="text-xs font-bold text-cyan-300 bg-cyan-950/80 px-3 py-1 rounded-lg border border-cyan-500/30">سیستم آزمون هوشمند</span>
-                    </div>
-                  </motion.div>
-                </div>
-              )}
-
-              {/* اسلاید ۴: تایتل بزرگ لیگ نخبگان علمی + نمایش جایگاه جداول */}
-              {activeId === "leagues" && (
-                <div className="space-y-5">
-                  <div className="text-center">
-                    <motion.h3 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
-                      لیگ نخبگان علمی
-                    </motion.h3>
-                    <p className="text-slate-400 text-xs mt-1">رقابت‌های پویا، جوایز ارزنده ماهانه و فصلی</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-slate-950/80 border border-blue-900/40 p-4 rounded-2xl flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-1.5">
-                          <Trophy className="w-6 h-6 text-blue-400" />
-                          <h4 className="text-sm font-bold text-white">لیگ علمی پایه</h4>
+                    <motion.div
+                      className="absolute inset-0 flex w-max"
+                      animate={{ x: ["0%", "-50%"] }}
+                      transition={{ duration: Math.max(levelItems.length, 1) * MEDAL_SECONDS_EACH, ease: "linear", repeat: Infinity }}
+                    >
+                      {[...levelItems, ...levelItems].map((m, i) => (
+                        <div key={i} className="flex h-full shrink-0 flex-col items-center gap-2 px-10">
+                          <div className="flex items-center justify-center" style={{ height: "calc(100% - 4.5rem)", aspectRatio: "1" }}>
+                            {!m.src || failed[m.src] ? (
+                              <Award className="h-1/2 w-1/2 text-slate-700" />
+                            ) : (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={m.src} alt={m.caption ?? ""} onError={() => markFailed(m.src)} className="h-full w-full object-contain" style={{ filter: `drop-shadow(0 20px 40px ${step.accent}66)` }} />
+                            )}
+                          </div>
+                          <div dir="rtl" className="text-center">
+                            {m.caption && <div className="text-2xl font-bold text-white">{m.caption}</div>}
+                            {m.sub && <div className="text-base text-slate-400">{m.sub}</div>}
+                          </div>
                         </div>
-                        <p className="text-[11px] text-slate-400">رقابت درون‌پایه‌ای با جوایز ویژه ماهانه برای برترین‌ها.</p>
-                      </div>
-                      <div className="mt-3 h-32 rounded-xl overflow-hidden border border-slate-800 relative shadow-inner">
-                        <img src={images.leagueBaseTable} alt="جدول لیگ پایه" className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 right-2 bg-slate-950/90 px-2 py-0.5 rounded text-[10px] text-blue-300 border border-slate-800">نمایش جدول لیگ پایه</div>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-slate-950/80 border border-purple-900/40 p-4 rounded-2xl flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-2.5 mb-1.5">
-                          <Users className="w-6 h-6 text-purple-400" />
-                          <h4 className="text-sm font-bold text-white">لیگ نخبگان مقطع</h4>
-                        </div>
-                        <p className="text-[11px] text-slate-400">رقابت سراسری مقطع با جوایز بزرگ پایان سال تحصیلی.</p>
-                      </div>
-                      <div className="mt-3 h-32 rounded-xl overflow-hidden border border-slate-800 relative shadow-inner">
-                        <img src={images.leagueEliteTable} alt="جدول لیگ نخبگان" className="w-full h-full object-cover" />
-                        <div className="absolute bottom-2 right-2 bg-slate-950/90 px-2 py-0.5 rounded text-[10px] text-purple-300 border border-slate-800">نمایش جدول نخبگان</div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-              )}
-
-              {/* اسلاید ۵: امتیازدهی */}
-              {activeId === "scores" && (
-                <div className="space-y-4">
-                  <h3 className="text-xl font-black text-white text-center">معیارهای جامع امتیازدهی دانش‌آموزان</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-xs space-y-2">
-                      <div className="font-bold text-blue-400 border-b border-slate-800 pb-1">امتیاز کلاس</div>
-                      {classScores.map((item: string[], i: number) => (
-                        <div key={i} className="flex justify-between"><span>{item[0]}</span><span className="text-emerald-400 font-bold">+{item[1]}</span></div>
                       ))}
-                    </div>
-                    <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-xs space-y-2">
-                      <div className="font-bold text-purple-400 border-b border-slate-800 pb-1">فعالیت علمی</div>
-                      {scienceScores.slice(0, 3).map((item: string[], i: number) => (
-                        <div key={i} className="flex justify-between"><span>{item[0]}</span><span className="text-emerald-400 font-bold">+{item[1]}</span></div>
-                      ))}
-                    </div>
-                    <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-xs space-y-2">
-                      <div className="font-bold text-amber-400 border-b border-slate-800 pb-1">اثرگذاری</div>
-                      {impactScores.slice(0, 3).map((item: string[], i: number) => (
-                        <div key={i} className="flex justify-between"><span>{item[0]}</span><span className="text-emerald-400 font-bold">+{item[1]}</span></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* اسلاید ۶: سطح‌بندی */}
-              {activeId === "levels" && (
-                <div className="space-y-4">
-                  <h3 className="text-xl font-black text-white text-center">سطح‌بندی علمی دانش‌آموزان (نشان شهدا)</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {levels.map((lvl: any, idx: number) => (
-                      <motion.div key={idx} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05 }} className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl flex items-center gap-3">
-                        <span className="text-2xl">{lvl.icon}</span>
-                        <div>
-                          <div className="text-xs font-bold text-white">{lvl.name}</div>
-                          <div className="text-[10px] text-blue-400">{lvl.from} تا {lvl.to} امتیاز</div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* اسلاید ۷: دوره‌های آموزشی با انیمیشن ظهور یکی‌یکی هر ۱ ثانیه */}
-              {activeId === "academy" && (
-                <div className="space-y-4 text-center">
-                  <h3 className="text-2xl font-black text-white">دوره‌های آموزشی اختصاصی</h3>
-                  <p className="text-xs text-slate-400">بارگذاری شده در سایت و کانال آپارات مجموعه</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl mx-auto">
-                    {[
-                      { title: "آموزش آفیس", icon: <FileSpreadsheet className="w-6 h-6 text-blue-400 animate-bounce" /> },
-                      { title: "ریاضی راهنمایی", icon: <BookOpen className="w-6 h-6 text-purple-400 animate-bounce" /> },
-                      { title: "فیزیک کنکور", icon: <Zap className="w-6 h-6 text-amber-400 animate-bounce" /> },
-                      { title: "فتوشاپ با هوش مصنوعی", icon: <Cpu className="w-6 h-6 text-cyan-400 animate-bounce" /> },
-                      { title: "پایتون پیشرفته", icon: <Terminal className="w-6 h-6 text-emerald-400 animate-bounce" /> },
-                      { title: "بازی‌سازی با هوش مصنوعی", icon: <Gamepad2 className="w-6 h-6 text-rose-400 animate-bounce" /> },
-                    ].map((item, i) => (
-                      <motion.div 
-                        key={i} 
-                        initial={{ opacity: 0, y: 30, scale: 0.9 }} 
-                        animate={{ opacity: 1, y: 0, scale: 1 }} 
-                        transition={{ duration: 0.5, delay: i * 0.25 }}
-                        whileHover={{ scale: 1.05 }}
-                        className="bg-slate-950/90 border border-slate-800 hover:border-blue-500/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2.5 shadow-2xl"
-                      >
-                        <div className="p-3 bg-slate-900 rounded-2xl shadow-inner">{item.icon}</div>
-                        <span className="text-xs font-bold text-slate-200">{item.title}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* اسلاید ۸: گفتینو با ۳ جای عکس و ظاهر جذاب‌تر */}
-              {activeId === "goftino" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-3 text-right">
-                    <MessageSquare className="w-8 h-8 text-blue-400 animate-pulse" />
-                    <h3 className="text-2xl font-black text-white">گفتینو (مشاور تحصیلی هوشمند)</h3>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      پاسخگویی آنی به سوالات متداول و راهنمایی تخصصی انتخاب رشته دانش‌آموزان به صورت چت‌باکس هوشمند و تعاملی.
-                    </p>
-                  </motion.div>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl overflow-hidden border border-slate-800 h-36">
-                      <img src={images.goftino1} alt="گفتینو ۱" className="w-full h-full object-cover" />
-                    </motion.div>
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl overflow-hidden border border-slate-800 h-36 mt-4">
-                      <img src={images.goftino2} alt="گفتینو ۲" className="w-full h-full object-cover" />
-                    </motion.div>
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl overflow-hidden border border-slate-800 h-36">
-                      <img src={images.goftino3} alt="گفتینو ۳" className="w-full h-full object-cover" />
                     </motion.div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* اسلاید ۹: پنل دانش‌آموز (عکس مجزا برای هر ویژگی با انیمیشن آبشاری) */}
-              {activeId === "studentPanel" && (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-black text-white">پنل اختصاصی دانش‌آموز</h3>
-                    <p className="text-xs text-slate-400">امکانات پیشرفته پیگیری وضعیت علمی</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { title: "رادار تعقیب‌کننده جدول", img: images.studentRadar, desc: "مشاهده جایگاه خود نسبت به رقبا" },
-                      { title: "محاسبه فاصله تا برترین‌ها", img: images.studentRank, desc: "تحلیل آنی امتیازات لازم تا صعود" },
-                      { title: "مدال‌های افتخار و کارنامه", img: images.studentMedals, desc: "نمایش دستاوردها و نمودار پیشرفت" },
-                    ].map((feat, idx) => (
-                      <motion.div 
-                        key={idx}
-                        initial={{ opacity: 0, y: 25 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.2 }}
-                        className="bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden p-3 flex flex-col justify-between shadow-xl"
-                      >
-                        <div className="h-28 rounded-xl overflow-hidden mb-2 border border-slate-800/60">
-                          <img src={feat.img} alt={feat.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-white text-xs">{feat.title}</h4>
-                          <p className="text-[10px] text-slate-400 mt-1">{feat.desc}</p>
-                        </div>
+                {/* ۱۳: تشکر */}
+                {step.id === "thanksSlide" && (
+                  <>
+                    <motion.div variants={rise}>
+                      <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} className="flex h-28 w-28 items-center justify-center rounded-[2rem] bg-gradient-to-tr from-emerald-500 to-teal-500 shadow-2xl shadow-emerald-500/40">
+                        <Heart className="h-14 w-14 fill-white/25 text-white" />
                       </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </motion.div>
+                    <motion.h2 variants={rise} className="text-5xl font-black text-white xl:text-7xl">با تشکر از همراهی شما</motion.h2>
+                    <motion.p variants={rise} className="max-w-2xl text-xl leading-10 text-slate-300">امیدواریم قدمی مؤثر در راستای رشد، اعتلا و پیشرفت علمی آینده‌سازان میهن عزیز برداشته باشیم.</motion.p>
+                    <motion.div variants={rise} className="border-t border-white/10 pt-5 text-base text-slate-500">سامانه علمی آموزشی منتظران</motion.div>
+                  </>
+                )}
 
-              {/* اسلاید ۱۰: پنل معین‌ها (عکس برای هر کدام با ظاهر آبشاری) */}
-              {activeId === "mentorPanel" && (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-black text-white">پنل معین‌های ارشد علمی</h3>
-                    <p className="text-xs text-slate-400">ابزارهای نظارتی و مدیریتی کادر آموزشی</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { title: "چک‌لیست نکات کلاس‌های آموزشی", img: images.mentorChecklist },
-                      { title: "ثبت کارنامه درسی دانش‌آموزان", img: images.mentorReportCard },
-                      { title: "ثبت امتیازات لیگ نخبگان", img: images.mentorLeagueScores },
-                    ].map((item, idx) => (
-                      <motion.div 
-                        key={idx}
-                        initial={{ opacity: 0, y: 25 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.2 }}
-                        className="bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden p-3 space-y-2 shadow-xl"
-                      >
-                        <div className="h-32 rounded-xl overflow-hidden border border-slate-800">
-                          <img src={item.img} alt={item.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform" />
-                        </div>
-                        <h4 className="font-bold text-white text-xs text-center">{item.title}</h4>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                {/* گالری عکس معمولی */}
+                {!side && galleryEl}
 
-              {/* اسلاید ۱۱: ایستگاه کنجکاوی (۳ عکس) */}
-              {activeId === "media" && (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <FlaskConical className="w-7 h-7 text-amber-400 mx-auto mb-1 animate-bounce" />
-                    <h3 className="text-2xl font-black text-white">ایستگاه کنجکاوی & پخش زنده</h3>
-                    <p className="text-xs text-slate-400">پاسخ مقاله‌ای به سوالات چالشی علمی و فناوری‌های نوین</p>
+                {/* چیدمان کناری: عکس عمودی سمت راست، متن سمت چپ (اسلایدهای ۳ و ۱۲) */}
+                {side && (
+                  <div className="flex min-h-0 flex-1 gap-10">
+                    {galleryEl}
+                    <div className="flex min-w-0 flex-1 flex-col justify-center gap-8">
+                      {headerEl}
+                      {extrasEl}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto">
-                    {[
-                      { title: "مقالات داغ علمی", img: images.curiosity1 },
-                      { title: "پخش زنده کلاس‌ها", img: images.curiosity2 },
-                      { title: "پادکست‌های تخصصی", img: images.curiosity3 },
-                    ].map((item, idx) => (
-                      <motion.div 
-                        key={idx}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.15 }}
-                        className="rounded-2xl overflow-hidden border border-slate-800 h-36 relative shadow-xl"
-                      >
-                        <img src={item.img} alt={item.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent p-2.5 flex items-end">
-                          <span className="text-[11px] font-bold text-amber-300">{item.title}</span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* اسلاید ۱۲: سایر امکانات سامانه */}
-              {activeId === "extra" && (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-black text-white">سایر امکانات تخصصی سامانه</h3>
-                    <p className="text-xs text-slate-400">زیرساخت‌های جامع پژوهشی و اجرایی</p>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {[
-                      { title: "پخش زنده", img: images.extraLive, icon: <Radio className="w-3.5 h-3.5 text-rose-400" /> },
-                      { title: "پادکست‌ها", img: images.extraPodcast, icon: <Video className="w-3.5 h-3.5 text-blue-400" /> },
-                      { title: "روزشمار", img: images.extraCountdown, icon: <Calendar className="w-3.5 h-3.5 text-amber-400" /> },
-                      { title: "تیم برهان", img: images.extraBorhan, icon: <Users className="w-3.5 h-3.5 text-emerald-400" /> },
-                      { title: "ویترین فعالیت", img: images.extraShowcase, icon: <Sparkles className="w-3.5 h-3.5 text-purple-400" /> },
-                    ].map((item, i) => (
-                      <motion.div 
-                        key={i}
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="bg-slate-950/80 border border-slate-800 rounded-xl overflow-hidden p-2.5 flex flex-col justify-between shadow-lg"
-                      >
-                        <div className="h-20 rounded-lg overflow-hidden mb-2">
-                          <img src={item.img} alt={item.title} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {item.icon}
-                          <span className="text-[11px] font-bold text-slate-200">{item.title}</span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+                )}
+              </motion.div>
             </motion.div>
           )}
-
         </AnimatePresence>
-      </div>
+      </main>
 
-      {/* کنترل‌گر اسلایدر پایین */}
+      {/* فوتر */}
       {viewMode === "slider" && (
-        <div className="flex flex-col gap-3 pt-3 border-t border-slate-800/80">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                currentIndex === 0 
-                  ? "opacity-30 cursor-not-allowed bg-slate-900 text-slate-600" 
-                  : "bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 shadow-md"
-              }`}
-            >
-              <ChevronRight className="w-4 h-4" /> بخش قبلی
+        <footer className="relative z-10 shrink-0 px-6 pb-4 pt-2 xl:px-8">
+          {playing && (
+            <div className="mb-2 h-1 overflow-hidden rounded-full bg-white/10">
+              <motion.div key={index} className="h-full rounded-full" style={{ background: step.accent }} initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: durationOf(index), ease: "linear" }} />
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-4">
+            <button onClick={prev} disabled={index === 0} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-5 py-2 text-base font-medium text-slate-200 transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30">
+              <ChevronRight className="h-5 w-5" /> قبلی
             </button>
-
-            <span className="text-xs text-slate-400 font-mono bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
-              {currentStep?.title} ({currentIndex + 1} از {conferenceSteps.length})
-            </span>
-
-            <button
-              onClick={handleNext}
-              disabled={currentIndex === conferenceSteps.length - 1}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                currentIndex === conferenceSteps.length - 1 
-                  ? "opacity-30 cursor-not-allowed bg-slate-900 text-slate-600" 
-                  : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25"
-              }`}
-            >
-              بخش بعدی <ChevronLeft className="w-4 h-4" />
+            <div className="flex items-center gap-5">
+              <button onClick={() => setPlaying((v) => !v)} title="پخش خودکار (P)" className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-base text-slate-200 transition-colors hover:bg-white/10">
+                {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />} {playing ? "توقف" : "پخش خودکار"}
+              </button>
+              <div className="flex items-center gap-2">
+                {steps.map((s, i) => (
+                  <button key={s.id} aria-label={s.title} title={s.title} onClick={() => go(i)} className="h-2.5 rounded-full transition-all duration-300" style={{ width: i === index ? 34 : 10, background: i === index ? step.accent : "rgba(255,255,255,0.2)" }} />
+                ))}
+              </div>
+              <span className="min-w-[72px] text-center text-base text-slate-400">{fa(index + 1)} از {fa(total)}</span>
+            </div>
+            <button onClick={next} disabled={index === total - 1} className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-base font-medium text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30">
+              بعدی <ChevronLeft className="h-5 w-5" />
             </button>
           </div>
-
-          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1">
-            {conferenceSteps.map((s: ShowcaseStep) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveId(s.id)}
-                className={`h-2 rounded-full transition-all ${
-                  activeId === s.id ? "w-8 bg-blue-500 shadow-md shadow-blue-500/50" : "w-2 bg-slate-800 hover:bg-slate-700"
-                }`}
-                title={s.title}
-              />
-            ))}
-          </div>
-        </div>
+        </footer>
       )}
 
+      {/* نمایش تمام‌صفحه عکس (کلیک روی هر عکس). عکس‌های بلند و عمودی با چرخ ماوس اسکرول می‌شوند */}
+      <AnimatePresence>
+        {zoom && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setZoom(null)} className="fixed inset-0 z-50 flex cursor-zoom-out flex-col items-center gap-4 overflow-y-auto bg-black/90 p-6 backdrop-blur-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={zoom.src} alt={zoom.caption ?? ""}
+              className={`my-auto rounded-2xl shadow-2xl ${(ratios[zoom.src] ?? 1) < 0.75 ? "h-auto w-[min(62vw,860px)]" : "max-h-[88vh] max-w-[94vw] object-contain"}`}
+            />
+            {zoom.caption && <div className="shrink-0 text-2xl font-bold text-white">{zoom.caption}</div>}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
